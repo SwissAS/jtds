@@ -1,0 +1,202 @@
+===============================================================================
+09/06/2002 - jTDS 0.3.1 released
+===============================================================================
+
+Changes from jTDS 0.3
+=====================
+
+09/06/2002 - Alin Sinpalean
+
+ o The modifications to EncodingHelper did not take into account multiple-byte
+   charsets (they were hardcoded before). Now this is automagically determined
+   based on the size of the resulting String (if same, then it's a single-byte
+   charset).
+ o Modifications to the EncodingHelper and Tds for a better encoder management
+   and changed the default encoding to Cp1252 (when SQL Server responds with
+   'iso_1' - that's inexact, SQL Server is, in fact, using Cp1252).
+ o Tds.discardResultSet fix: if an error or warning was returned immediately
+   after a ResultSet that was not read completely, but discarded, jTDS crashed
+   because it only expected TDS_DONE* tokens.
+
+09/05/2002 - Alin Sinpalean
+
+ o Added jdbc3_0-ext.jar to the lib folder, containing the .class files for
+   java.sql.Savepoint and java.sql.ParameterMetaData and changed the libraries
+   used by JBuilder to include this jar, too. This allows compilation of the
+   changes made by Justin under JDK 1.3 and should not affect compilation under
+   JDK 1.4.
+ o Fixed CursorResultSet.createCursor(): SCROLL_INSENSITIVE cursors could not
+   be created because of a syntax error.
+
+09/03/2002 - Justin SB
+
+ o Added stubs to enable compilation with JDK 1.4 (no new functionality)
+
+08/30/2002 - Alin Sinpalean
+
+ o TdsResultSetMetaData.get* fixed (Bug #598911). Still a couple of
+   incompatibilities with the JDBC-ODBC bridge, due to the fact that I consider
+   their implementation to be incorrect.
+ o Synchronized TdsConnection. Still need to do some similar work on Statements
+   and ResultSets, but it's a good job, anyway (I hope no deadlocks were
+   introduced because of this).
+ o Implemented TdsConnection.setCatalog. The dirty way, but it works.
+
+08/28/2002 - Alin Sinpalean
+
+ o Modifications to the javadoc comments in a lot of places (warnings were
+   thrown by javasoc).
+ o Beautification of TdsDefinitions.
+ o TdsConnection.getMetaData() no longer allocates a Tds, because it didn't use
+   it anyway. The Tds instance DatabaseMetaData contains is used only for calls
+   to methods returning constant values (for that Tds instance).
+ o Started fixing Bug #598911 (ResultSetMetaData.get* incorrect):
+   Tds.lookupColumnSize() returns the display size rather than the length in
+   bytes for fixed size columns, TdsResultSetMetaData.getColumnTypeName()
+   returns the SQL Server-specific names of columns, rather than INT1, INT2
+   etc.
+ o DatabaseMetaData changes: implemented getCrossReference(), changed
+   getCatalogs() implementation, removed makeTypeTable() -- no longer used.
+ o Changed the implementation of almost all methods in DatabaseMetaData to use
+   standard stored procedures instead of the custom but unsafe code. Only a
+   couple of methods are still using the old way (getColumns because of custom
+   types and getSchemas because the result would be the second column and it's
+   currently impossible to hide any columns but the last ones).
+
+08/26/2002 - Alin Sinpalean
+
+ o Database name is no longer explicitly required in the URL for the driver or
+   to be set for the DataSource. The default value for it (if not specified) is
+   "master", which is ok for SQL Server, but of which I'm not so sure of for
+   Sybase (Bug #598886).
+ o Changed the implementation of DatabaseMetaData methods getProcedures,
+   getProcedureColumns and ... to use SQL Server-defined stored procedures, for
+   increased performance and better compatibility with other drivers.
+
+08/23/2002 - Alin Sinpalean
+
+ o Improved NULL, 0-length and single-space string handling (both when sending
+   parameters and receiving values.
+ o Tds.rollback() just drops all procedures submitted during the last
+   transaction rather than resubmitting them (no one can guarantee they will be
+   used again, so better just drop them).
+ o Removed TdsComm.backup() - wasn't used anymore and was pretty dangerous
+   anyway.
+ o Changes to AsTest and CSUnitTest to reflect the way update counts are
+   returned from PreparedStatements and CallableStatements.
+ o Added a freetds.SAfeTest test to test the NULL, 0-length and single-space
+   string handling.
+
+08/21/2002 - Alin Sinpalean
+
+ o jTDS officially became "jTDS Type 4 JDBC 2.0 driver for MS SQL Server", as
+   DatabaseMetaData.getDriverName() returns this value.
+ o Not directly related to the development of jTDS, The jTDS Project finally
+   has its own homepage: http://jtds.sourceforge.net
+
+08/20/2002 - Alin Sinpalean
+
+ o Added a Statement member to the Tds class, that should point to the
+   Statement currently using the object (if any, null if not used). Using this
+   the Tds can decide whether to return update counts from DONEINPROC packets
+   if the current Statement is a PreparedStatement. This way, PreparedStatement
+   can return update counts from inside stored procedures while Statement
+   doesn't.
+ o Fixed the tests that failed because of the fact that more Statements were
+   allocated at once (meaning some of them were not able to create the
+   temporary tables/stored procedures created by others) by closing the
+   Statements when they were no longer needed.
+ o Implemented all methods of ResultSetMetaData except getColumnClassName and
+   used case sensitivity and table name from result packets (both TDS 4.2 and
+   TDS 7.0). (Request #587751)
+ o Fixed TdsStatement.rollback(): calls Tds.rollback() when not in autocommit
+   mode, in order to redefine all missing stored procedures.
+
+
+===============================================================================
+08/19/2002 - jTDS 0.3 released
+===============================================================================
+
+Changes from jTDS 0.2
+=====================
+
+08/19/2002 - Alin Sinpalean
+
+ o Check for ENVCHANGE packets in TdsStatement.getMoreResultsImpl (if a query
+   that changed the environment was executed, the driver crashed because of
+   unrecognized packet types - ENVCHANGE).
+ o Added a fakeColumnCount to Columns to mask columns to the end user (e.g. for
+   meta data use).
+ o Implemented methods in DatabaseMetaData: getColumnPrivileges,
+   getTablePrivileges, getTypeInfo, getBestRowIdentifier, getVersionColumns.
+   Also some minor changes to methods returning constant values.
+ o Bugfix (#595022): Hidden the rowstat column returned by CursorResultSets.
+
+08/16/2002 - Alin Sinpalean
+
+ o DatabaseMetaData.getSchemas() fix: TABLE_CATALOG column was also returned as
+   a result column; removed it.
+ o TdsResultSet.fetchNextRow() fix: the Tds was not released when the end of
+   data was reached; now it is.
+ o TdsConnection.prepareCall() fix: a useless call to allocateTds() was made,
+   which locked a Tds that was never released again; commented out.
+ o Fixes in the tests: AsTest, CSUnitTest, PreparedStatementTest, TestBase,
+   TimestampTest.
+ o Condition in Microsoft7MetaData.getProcedures() to avoid
+   NullPointerExceptions when a null schema pattern was provided.
+
+08/15/2002 - Alin Sinpalean
+
+ o Rewrote build.xml.
+
+08/14/2002 - Alin Sinpalean
+
+ o Added support for the UNIQUEIDENTIFIER datatype.
+ o Created a com.internetcds.jdbcx.tds package containing a DataSource
+   implementation and an object factory (alpha version, not even tested with
+   JNDI - I tried to do it but it doesn't seem that easy). Anyway, it's a
+   starting point.
+
+08/13/2002 - Alin Sinpalean
+
+ o Fix in CursorResultSet: if no rows were returned by the query, loadContext
+   failed with a NullPointerException when trying to get the current row's
+   context. Now the context is loaded in internalFetch -- not very elegant, but
+   at least it works. ;o)
+
+08/08/2002 - Alin Sinpalean
+
+ o DatabaseMetaData.getInstance() now returns a DatabaseMetaData or
+   Microsoft7MetaData based on the TDS version rather than the server version.
+
+08/06/2002 - Alin Sinpalean
+
+ o Optimized the implementations of TdsComm.getBytes(int) and TdsComm.peek();
+   they are no longer using TdsComm.getByte(), which was slowing them down.
+ o Implemented getExportedKeys.
+ o TDS 7.0 is now the default protocol used by jTDS.
+
+08/05/2002 - Alin Sinpalean
+
+ o Added a databaseMajorVersion member to the Tds class to help make the
+   difference between SQL Server versions (e.g. for DatabaseMetaData usage).
+ o Fixed some of the additions Jason made, most of them due to the fact that
+   he probably used SQLServer 2000 while I am using 7.0 (there could be some
+   even bigger problems for people using SQLServer 6.5, if there are any) and
+   a problem related to getTables - catalog name for tables in other databases
+   (catalogs) were wrong (pubs was used instead of the catalog name).
+ o Added implementations to methods without parameters returning boolean values
+   in DatabaseMetaData (based on values returned by the JDBC-ODBC and some
+   other drivers).
+ o Bugfix 587749: Bit to Int conversion works. So does Binary to String.
+
+08/05/2002 - Jason Banes (patch)
+
+ o Fixed the following methods in DatabaseMetaData: getSchemas, getTables,
+   getColumns, supportSchemasInTableDefinitions.
+ o Implemented the following methods of DatabaseMetaData: getIndexes,
+   getPrimaryKeys, getImportedKeys.
+
+07/xx/2002
+ o TdsStatement checks if it isn't already closed on a call to close() and the
+   allocated Tds object isn't freed until no more results are available
