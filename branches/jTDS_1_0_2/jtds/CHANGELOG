@@ -9,6 +9,7 @@ Changes from jTDS 1.0.1
  o Corrected bug [1122481] how handle new behavior since 1.0.1. The DataSource
    factory failed with NPE because the properties are no longer initialized in
    the constructor. Added tests to ensure no regressions.
+ o Updated version number to 1.0.2.
 
 ===============================================================================
 02/09/2005 - jTDS 1.0.1 released
