@@ -47,9 +47,11 @@ import net.sourceforge.jtds.util.Logger;
  * @author     Igor Petrovski
  * @author     The FreeTDS project
  * @created    March 17, 2001
- * @version    $Id: Tds.java,v 1.59 2004-05-30 22:06:53 bheineman Exp $
+ * @version    $Id: Tds.java,v 1.59.2.1 2004-07-07 19:11:20 bheineman Exp $
  */
 public class Tds implements TdsDefinitions {
+    public final static int BOOLEAN = 16; // java.sql.Types.BOOLEAN
+
     private static GregorianCalendar cal = new GregorianCalendar();
 
     private TdsSocket sock = null;
@@ -78,7 +80,7 @@ public class Tds implements TdsDefinitions {
 
     private int maxRows = 0;
 
-    public final static String cvsVersion = "$Id: Tds.java,v 1.59 2004-05-30 22:06:53 bheineman Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.59.2.1 2004-07-07 19:11:20 bheineman Exp $";
 
     /**
      * The context of the result set currently being parsed.
@@ -3304,7 +3306,7 @@ public class Tds implements TdsDefinitions {
             return SYBINT4;
 
         case java.sql.Types.BIT:
-        case java.sql.Types.BOOLEAN:
+        case Tds.BOOLEAN: // java.sql.Types.BOOLEAN
             return SYBBIT;
 
         case java.sql.Types.FLOAT:
