@@ -39,14 +39,14 @@ import java.sql.*;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  * @created  17 March 2001
- * @version  $Id: DatabaseMetaData.java,v 1.24 2004-05-07 04:38:07 bheineman Exp $
+ * @version  $Id: DatabaseMetaData.java,v 1.24.2.1 2004-06-27 16:57:06 bheineman Exp $
  */
 public class DatabaseMetaData implements java.sql.DatabaseMetaData
 {
     /**
      * CVS version of the file.
      */
-    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.24 2004-05-07 04:38:07 bheineman Exp $";
+    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.24.2.1 2004-06-27 16:57:06 bheineman Exp $";
 
     // internal data needed by this implemention.
     Tds tds;
@@ -1703,10 +1703,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     public java.sql.ResultSet getTableTypes() throws SQLException
     {
         // XXX see if this is still true for Sybase
-        String sql =
-                "select 'TABLE' TABLE_TYPE              " +
-                "union select 'VIEW' TABLE_TYPE         " +
-                "union select 'SYSTEM TABLE' TABLE_TYPE ";
+        String sql = "select 'SYSTEM TABLE' TABLE_TYPE "
+                     + "union select 'TABLE' TABLE_TYPE "
+                     + "union select 'VIEW' TABLE_TYPE "
+                     + "order by TABLE_TYPE";
         java.sql.Statement stmt = connection.createStatement();
         java.sql.ResultSet rs = stmt.executeQuery( sql );
 
