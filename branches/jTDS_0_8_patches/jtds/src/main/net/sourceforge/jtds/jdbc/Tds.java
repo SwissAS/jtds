@@ -47,7 +47,7 @@ import net.sourceforge.jtds.util.Logger;
  * @author     Igor Petrovski
  * @author     The FreeTDS project
  * @created    March 17, 2001
- * @version    $Id: Tds.java,v 1.59.2.1 2004-07-07 19:11:20 bheineman Exp $
+ * @version    $Id: Tds.java,v 1.59.2.2 2004-07-08 15:30:36 bheineman Exp $
  */
 public class Tds implements TdsDefinitions {
     public final static int BOOLEAN = 16; // java.sql.Types.BOOLEAN
@@ -80,7 +80,7 @@ public class Tds implements TdsDefinitions {
 
     private int maxRows = 0;
 
-    public final static String cvsVersion = "$Id: Tds.java,v 1.59.2.1 2004-07-07 19:11:20 bheineman Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.59.2.2 2004-07-08 15:30:36 bheineman Exp $";
 
     /**
      * The context of the result set currently being parsed.
@@ -1344,8 +1344,8 @@ public class Tds implements TdsDefinitions {
                 seconds = time / 300;
                 cal.set(Calendar.SECOND, seconds);
                 time = time - seconds * 300;
-                time = time * 1000 / 300;
-                cal.set(Calendar.MILLISECOND, (int)(time));
+                time = (int) Math.round(time * 1000 / 300f);
+                cal.set(Calendar.MILLISECOND, time);
 //
 //              getTimeInMillis() is protected in java vm 1.3 :-(
 //              return new Timestamp(cal.getTimeInMillis());
