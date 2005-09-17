@@ -25,24 +25,23 @@ import java.util.Properties;
  * Abstract class used to test the default properties set on a variety of methods.
  * <p/>
  * Implements the Command pattern.
- * 
+ *
  * @author David D. Kilzer
- * @version $Id: DefaultPropertiesTester.java,v 1.3 2004-08-24 17:45:07 bheineman Exp $
+ * @version $Id: DefaultPropertiesTester.java,v 1.3.4.1 2005-09-17 10:58:59 alin_sinpalean Exp $
  */
 public abstract class DefaultPropertiesTester {
 
 
     /**
      * Asserts that a default property is set properly.
-     * 
+     *
      * @param message The message to display if the default property is not set.
-     * @param url The JDBC url.
      * @param properties The initial properties set before testing the method.
      * @param fieldName The field name of the object if using reflection.
      * @param key The message key used to obtain the property name.
      * @param expected The expected value.
      */
     public abstract void assertDefaultProperty(
-            String message, String url, Properties properties, String fieldName, String key, String expected);
+            String message, Properties properties, String fieldName, String key, String expected);
 
 }

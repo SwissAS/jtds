@@ -2,7 +2,6 @@ package net.sourceforge.jtds.test;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
-import java.util.Properties;
 import java.sql.Connection;
 import java.sql.SQLException;
 
@@ -10,16 +9,11 @@ import net.sourceforge.jtds.jdbcx.JtdsDataSource;
 import net.sourceforge.jtds.jdbc.Messages;
 import net.sourceforge.jtds.jdbc.Driver;
 
-import javax.naming.Reference;
-import javax.naming.NamingException;
-
-
-
 /**
  * Unit tests for the {@link JtdsDataSource} class.
  *
  * @author David D. Kilzer
- * @version $Id: JtdsDataSourceUnitTest.java,v 1.12 2005-02-07 13:47:45 alin_sinpalean Exp $
+ * @version $Id: JtdsDataSourceUnitTest.java,v 1.12.4.1 2005-09-17 10:58:59 alin_sinpalean Exp $
  */
 public class JtdsDataSourceUnitTest extends UnitTestBase {
 
@@ -149,7 +143,6 @@ public class JtdsDataSourceUnitTest extends UnitTestBase {
             ds.setPassword(TestBase.props.getProperty(Messages.get(Driver.PASSWORD)));
             ds.setDatabaseName(TestBase.props.getProperty(Messages.get(Driver.DATABASENAME)));
             ds.setTds(TestBase.props.getProperty(Messages.get(Driver.TDS)));
-            ds.setServerType("2".equals(TestBase.props.getProperty(Messages.get(Driver.SERVERTYPE))) ? 2 : 1);
             try {
                 ds.setPortNumber(Integer.parseInt(
                         TestBase.props.getProperty(Messages.get(Driver.PORTNUMBER))));
@@ -185,7 +178,6 @@ public class JtdsDataSourceUnitTest extends UnitTestBase {
             ds.setUser(TestBase.props.getProperty(Messages.get(Driver.USER)));
             ds.setPassword(TestBase.props.getProperty(Messages.get(Driver.PASSWORD)));
             ds.setDatabaseName(TestBase.props.getProperty(Messages.get(Driver.DATABASENAME)));
-            ds.setServerType("2".equals(TestBase.props.getProperty(Messages.get(Driver.SERVERTYPE))) ? 2 : 1);
             try {
                 ds.setPortNumber(Integer.parseInt(
                         TestBase.props.getProperty(Messages.get(Driver.PORTNUMBER))));

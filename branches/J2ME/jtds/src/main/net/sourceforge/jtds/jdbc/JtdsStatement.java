@@ -54,7 +54,7 @@ import java.util.LinkedList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.35 2005-03-26 22:10:58 alin_sinpalean Exp $
+ * @version $Id: JtdsStatement.java,v 1.35.2.1 2005-09-17 10:58:59 alin_sinpalean Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -82,16 +82,8 @@ public class JtdsStatement implements java.sql.Statement {
     private int updateCount = -1;
     /** The fetch direction for result sets. */
     protected int fetchDirection = ResultSet.FETCH_FORWARD;
-    /** The type of result sets created by this statement. */
-    protected int resultSetType = ResultSet.TYPE_FORWARD_ONLY;
-    /** The concurrency of result sets created by this statement. */
-    protected int resultSetConcurrency = ResultSet.CONCUR_READ_ONLY;
-    /** The fetch size (default 100, only used by cursor
-     * <code>ResultSet</code>s).
-     */
+    /** The fetch size (default 100, only used by cursor <code>ResultSet</code>s). */
     protected int fetchSize = 100;
-    /** The cursor name to be used for positioned updates. */
-    protected String cursorName;
     /** True if this statement is closed. */
     protected boolean closed = false;
     /** The maximum field size (not used at present). */
@@ -118,52 +110,10 @@ public class JtdsStatement implements java.sql.Statement {
      * Construct a new Statement object.
      *
      * @param connection The parent connection.
-     * @param resultSetType The result set type for example TYPE_FORWARD_ONLY.
-     * @param resultSetConcurrency The concurrency for example CONCUR_READ_ONLY.
      */
-    JtdsStatement(ConnectionJDBC2 connection,
-                  int resultSetType,
-                  int resultSetConcurrency) throws SQLException {
-        //
-        // This is a good point to do common validation of the result set type
-        //
-        if (resultSetType != ResultSet.TYPE_FORWARD_ONLY
-                && resultSetType != ResultSet.TYPE_SCROLL_INSENSITIVE
-                && resultSetType != ResultSet.TYPE_SCROLL_SENSITIVE) {
-            String method;
-            if (this instanceof JtdsCallableStatement) {
-                method = "prepareCall";
-            } else if (this instanceof JtdsPreparedStatement) {
-                method = "prepareStatement";
-            } else {
-                method = "createStatement";
-            }
-            throw new SQLException(
-                       Messages.get("error.generic.badparam", "TYPE", method),
-                                   "HY092");
-        }
-        //
-        // ditto for the result set concurrency
-        //
-        if (resultSetConcurrency != ResultSet.CONCUR_READ_ONLY
-                && resultSetConcurrency != ResultSet.CONCUR_UPDATABLE) {
-                String method;
-                if (this instanceof JtdsCallableStatement) {
-                    method = "prepareCall";
-                } else if (this instanceof JtdsPreparedStatement) {
-                    method = "prepareStatement";
-                } else {
-                    method = "createStatement";
-                }
-                throw new SQLException(
-                           Messages.get("error.generic.badparam", "CONCURRENCY", method),
-                                       "HY092");
-        }
-
+    JtdsStatement(ConnectionJDBC2 connection) {
         this.connection = connection;
-        this.resultSetType = resultSetType;
-        this.resultSetConcurrency = resultSetConcurrency;
-        this.messages = new SQLDiagnostic(connection.getServerType());
+        this.messages = new SQLDiagnostic();
         this.tds = new TdsCore(this.connection, messages);
     }
 
@@ -186,15 +136,6 @@ public class JtdsStatement implements java.sql.Statement {
      */
     TdsCore getTds() {
         return tds;
-    }
-
-    /**
-     * Get the statement's warnings list.
-     *
-     * @return The warnings list as a <code>SQLDiagnostic</code>.
-     */
-    SQLDiagnostic getMessages() {
-        return messages;
     }
 
     /**
@@ -295,45 +236,6 @@ public class JtdsStatement implements java.sql.Statement {
         String warningMessage = null;
 
         //
-        // Try to open a cursor result set if required
-        //
-        if (resultSetType != ResultSet.TYPE_FORWARD_ONLY
-            || resultSetConcurrency != ResultSet.CONCUR_READ_ONLY
-            || cursorName != null) {
-            try {
-                if (connection.getServerType() == Driver.SQLSERVER) {
-                    currentResult =
-                            new MSCursorResultSet(this,
-                                    sql,
-                                    spName,
-                                    params,
-                                    resultSetType,
-                                    resultSetConcurrency);
-
-                    return currentResult;
-                } else {
-                    // Use client side cursor for Sybase
-                    currentResult =
-                        new CachedResultSet(this,
-                                sql,
-                                spName,
-                                params,
-                                resultSetType,
-                                resultSetConcurrency);
-
-                    return currentResult;
-                }
-            } catch (SQLException e) {
-                if (connection == null || connection.isClosed()
-                        || "HYT00".equals(e.getSQLState())) {
-                    // Serious error or timeout so return exception to caller
-                    throw e;
-                }
-                warningMessage = "[" + e.getSQLState() + "] " + e.getMessage();
-            }
-        }
-
-        //
         // Could not open a Cursor so try a direct select
         //
         tds.executeSQL(sql, spName, params, false, queryTimeout, maxRows,
@@ -343,10 +245,7 @@ public class JtdsStatement implements java.sql.Statement {
         while (!tds.getMoreResults() && !tds.isEndOfResponse());
 
         if (tds.isResultSet()) {
-            currentResult = new JtdsResultSet(this,
-                                              ResultSet.TYPE_FORWARD_ONLY,
-                                              ResultSet.CONCUR_READ_ONLY,
-                                              tds.getColumns());
+            currentResult = new JtdsResultSet(this, tds.getColumns());
         } else {
                 throw new SQLException(
                             Messages.get("error.statement.noresult"), "24000");
@@ -374,42 +273,11 @@ public class JtdsStatement implements java.sql.Statement {
      */
     protected boolean executeSQL(String sql,
                                  String spName,
-                                 String sqlWord,
                                  ParamInfo[] params,
                                  boolean returnKeys,
                                  boolean update)
             throws SQLException {
         String warningMessage = null;
-
-        //
-        // For SQL Server, try to open a cursor result set if required
-        // (and possible).
-        //
-        if (connection.getServerType() == Driver.SQLSERVER
-            &&  (resultSetType != ResultSet.TYPE_FORWARD_ONLY
-                || resultSetConcurrency != ResultSet.CONCUR_READ_ONLY
-                || cursorName != null)
-                && !returnKeys
-                && (sqlWord.equals("select") || sqlWord.startsWith("exec"))) {
-            try {
-                 currentResult = new MSCursorResultSet(
-                            this,
-                            sql,
-                            spName,
-                            params,
-                            resultSetType,
-                            resultSetConcurrency);
-
-                    return true;
-            } catch (SQLException e) {
-                if (connection == null || connection.isClosed()
-                        || "HYT00".equals(e.getSQLState())) {
-                    // Serious error or timeout so return exception to caller
-                    throw e;
-                }
-                warningMessage = "[" + e.getSQLState() + "] " + e.getMessage();
-            }
-        }
 
         //
         // We are talking to a Sybase server or we could not open a cursor
@@ -485,11 +353,7 @@ public class JtdsStatement implements java.sql.Statement {
                                 Messages.get("error.statement.nocount"), "07000");
                     }
 
-                    resultQueue.add(new JtdsResultSet(
-                            this,
-                            ResultSet.TYPE_FORWARD_ONLY,
-                            ResultSet.CONCUR_READ_ONLY,
-                            tds.getColumns()));
+                    resultQueue.add(new JtdsResultSet(this, tds.getColumns()));
                     break;
                 }
             }
@@ -520,22 +384,6 @@ public class JtdsStatement implements java.sql.Statement {
         genKeyResultSet = null;
         tds.clearResponseQueue();
         closeAllResultSets();
-    }
-
-    /**
-     * Returns the first update count in {@link #resultQueue} or the specified
-     * default value if the queue is empty.
-     *
-     * @param defaultValue the value to return if there are no queued update
-     *                     counts (0 if called from <code>executeUpdate</code>,
-     *                     -1 if called from <code>getMoreResults</code>)
-     * @return             the first queued update count or the default value
-     *                     if the queue is empty
-     */
-    protected int getUpdateCount(int defaultValue) {
-        return resultQueue.isEmpty() || !(resultQueue.getFirst() instanceof Integer)
-                ? defaultValue
-                : ((Integer) resultQueue.getFirst()).intValue();
     }
 
 // ------------------ java.sql.Statement methods ----------------------
@@ -573,7 +421,7 @@ public class JtdsStatement implements java.sql.Statement {
     public int getResultSetConcurrency() throws SQLException {
         checkOpen();
 
-        return this.resultSetConcurrency;
+        return ResultSet.CONCUR_READ_ONLY;
     }
 
     public int getResultSetHoldability() throws SQLException {
@@ -585,7 +433,7 @@ public class JtdsStatement implements java.sql.Statement {
     public int getResultSetType() throws SQLException {
         checkOpen();
 
-        return resultSetType;
+        return ResultSet.TYPE_FORWARD_ONLY;
     }
 
     public int getUpdateCount() throws SQLException {
@@ -673,7 +521,6 @@ public class JtdsStatement implements java.sql.Statement {
         SQLException sqlEx = null;
 
         try {
-            tds.startBatch();
             for (int i = 0; i < size;) {
                 Object value = batchValues.get(i);
                 ++i;
@@ -859,8 +706,7 @@ public class JtdsStatement implements java.sql.Statement {
                 if (openResultSets == null) {
                     openResultSets = new ArrayList();
                 }
-                if (currentResult instanceof MSCursorResultSet
-                        || currentResult instanceof CachedResultSet) {
+                if (currentResult instanceof CachedResultSet) {
                     // NB. Due to restrictions on the way API cursors are
                     // created, MSCursorResultSet can never be followed by
                     // any other result sets, update counts or return variables.
@@ -922,12 +768,7 @@ public class JtdsStatement implements java.sql.Statement {
 
     public void setCursorName(String name) throws SQLException {
         checkOpen();
-        this.cursorName = name;
-        if (name != null) {
-            // Reset statement type to JDBC 1 default.
-            this.resultSetType = ResultSet.TYPE_FORWARD_ONLY;
-            this.fetchSize = 1; // Needed for positioned updates
-        }
+        Support.notImplemented("setCursorName");
     }
 
     public boolean execute(String sql) throws SQLException {
@@ -946,7 +787,7 @@ public class JtdsStatement implements java.sql.Statement {
         String sqlWord = "";
         if (escapeProcessing) {
             ArrayList params = new ArrayList();
-            String tmp[] = new SQLParser(sql, params, connection).parse(false);
+            String tmp[] = new SQLParser(sql, params, connection).parse();
 
             if (tmp[1].length() != 0 || params.size() > 0) {
                 throw new SQLException(
@@ -968,8 +809,7 @@ public class JtdsStatement implements java.sql.Statement {
             returnKeys = sqlWord.equals("insert");
 
             if (returnKeys) {
-                if (connection.getServerType() == Driver.SQLSERVER
-                        && connection.getDatabaseMajorVersion() >= 8) {
+                if (connection.getDatabaseMajorVersion() >= 8) {
                     sql += " SELECT SCOPE_IDENTITY() AS ID";
                 } else {
                     sql += " SELECT @@IDENTITY AS ID";
@@ -985,7 +825,7 @@ public class JtdsStatement implements java.sql.Statement {
                     "HY092");
         }
 
-        executeSQL(sql, null, sqlWord, null, returnKeys, true);
+        executeSQL(sql, null, null, returnKeys, true);
 
         int res = getUpdateCount();
         return res == -1 ? 0 : res;
@@ -1003,7 +843,7 @@ public class JtdsStatement implements java.sql.Statement {
         String sqlWord = "";
         if (escapeProcessing) {
             ArrayList params = new ArrayList();
-            String tmp[] = new SQLParser(sql, params, connection).parse(false);
+            String tmp[] = new SQLParser(sql, params, connection).parse();
 
             if (tmp[1].length() != 0 || params.size() > 0) {
                 throw new SQLException(
@@ -1033,15 +873,14 @@ public class JtdsStatement implements java.sql.Statement {
         }
 
         if (returnKeys) {
-            if (connection.getServerType() == Driver.SQLSERVER
-                && connection.getDatabaseMajorVersion() >= 8) {
+            if (connection.getDatabaseMajorVersion() >= 8) {
                 sql += " SELECT SCOPE_IDENTITY() AS ID";
             } else {
                 sql += " SELECT @@IDENTITY AS ID";
             }
         }
 
-        return executeSQL(sql, null, sqlWord, null, returnKeys, false);
+        return executeSQL(sql, null, null, returnKeys, false);
     }
 
     public int executeUpdate(String sql, int[] columnIndexes) throws SQLException {
@@ -1088,7 +927,7 @@ public class JtdsStatement implements java.sql.Statement {
             // Return an empty result set
             //
             CachedResultSet rs = new CachedResultSet(this, colNames, colTypes);
-            rs.setConcurrency(ResultSet.CONCUR_READ_ONLY);
+            rs.initDone();
             genKeyResultSet = rs;
         }
 
@@ -1097,23 +936,6 @@ public class JtdsStatement implements java.sql.Statement {
 
     public ResultSet getResultSet() throws SQLException {
         checkOpen();
-        //
-        if (currentResult instanceof MSCursorResultSet ||
-            currentResult instanceof CachedResultSet) {
-            return currentResult;
-        }
-        //
-        // See if we are returning a forward read only resultset
-        //
-        if (currentResult == null ||
-            (resultSetType == ResultSet.TYPE_FORWARD_ONLY &&
-             resultSetConcurrency == ResultSet.CONCUR_READ_ONLY)) {
-            return currentResult;
-        }
-        //
-        // OK Now create a CachedResultSet based on the existng result set.
-        //
-        currentResult = new CachedResultSet(currentResult, true);
 
         return currentResult;
     }
@@ -1159,7 +981,7 @@ public class JtdsStatement implements java.sql.Statement {
         }
         if (escapeProcessing) {
             ArrayList params = new ArrayList();
-            String tmp[] = new SQLParser(sql, params, connection).parse(false);
+            String tmp[] = new SQLParser(sql, params, connection).parse();
 
             if (tmp[1].length() != 0 || params.size() > 0) {
                 throw new SQLException(

@@ -50,13 +50,14 @@ public class CallableStatementJDBC3Test extends TestBase {
 
         CallableStatement cstmt = con.prepareCall("{?=call #sp_csn1(?)}");
 
-        cstmt.registerOutParameter("@return_status", Types.INTEGER);
-        cstmt.setString("@data", data);
-        cstmt.registerOutParameter("@data", Types.VARCHAR);
+        cstmt.registerOutParameter(1, Types.INTEGER);
+        cstmt.setString(2, data);
+        cstmt.registerOutParameter(2, Types.VARCHAR);
         assertEquals(1, cstmt.executeUpdate());
         assertFalse(cstmt.getMoreResults());
         assertEquals(-1, cstmt.getUpdateCount());
-        assertEquals(outData, cstmt.getString("@data"));
+        assertEquals(13, cstmt.getInt(1));
+        assertEquals(outData, cstmt.getString(2));
         cstmt.close();
 
         stmt = con.createStatement();

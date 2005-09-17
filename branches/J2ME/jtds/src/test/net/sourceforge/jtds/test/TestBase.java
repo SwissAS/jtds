@@ -9,10 +9,13 @@ import java.sql.*;
 
 import java.util.*;
 import junit.framework.TestCase;
+import net.sourceforge.jtds.jdbcx.JtdsDataSource;
+import net.sourceforge.jtds.jdbc.Messages;
+import net.sourceforge.jtds.jdbc.Driver;
 
 /**
  * @author  builder
- * @version $Id: TestBase.java,v 1.20 2004-12-10 13:17:30 alin_sinpalean Exp $
+ * @version $Id: TestBase.java,v 1.20.4.1 2005-09-17 10:59:00 alin_sinpalean Exp $
  */
 public abstract class TestBase extends TestCase {
 
@@ -35,9 +38,11 @@ public abstract class TestBase extends TestCase {
     }
 
     public Connection getConnection() throws Exception {
-        Class.forName(props.getProperty("driver"));
-        String url = props.getProperty("url");
-        Connection con = DriverManager.getConnection(url, props);
+        JtdsDataSource ds = new JtdsDataSource();
+        ds.setServerName(props.getProperty(Messages.get(Driver.SERVERNAME)));
+        ds.setUser(props.getProperty(Messages.get(Driver.USER)));
+        ds.setPassword(props.getProperty(Messages.get(Driver.PASSWORD)));
+        Connection con = ds.getConnection();
 //        showWarnings(con.getWarnings());
         initLanguage(con);
 

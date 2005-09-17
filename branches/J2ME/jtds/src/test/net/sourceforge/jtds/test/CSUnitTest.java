@@ -6,7 +6,6 @@
 package net.sourceforge.jtds.test;
 
 import java.sql.*;
-import java.math.BigDecimal;
 import junit.framework.TestSuite;
 import java.io.*;
 
@@ -268,19 +267,19 @@ public class CSUnitTest extends DatabaseTestCase {
     public void testMoneyHandling0019() throws Exception {
         java.sql.Statement  stmt;
         int                 i;
-        BigDecimal          money[] = {
-            new BigDecimal("922337203685477.5807"),
-            new BigDecimal("-922337203685477.5807"),
-            new BigDecimal("1.0000"),
-            new BigDecimal("0.0000"),
-            new BigDecimal("-1.0000")
+        String money[] = {
+            "922337203685477.5807",
+            "-922337203685477.5807",
+            "1.0000",
+            "0.0000",
+            "-1.0000"
         };
-        BigDecimal          smallmoney[] = {
-            new BigDecimal("214748.3647"),
-            new BigDecimal("-214748.3648"),
-            new BigDecimal("1.0000"),
-            new BigDecimal("0.0000"),
-            new BigDecimal("-1.0000")
+        String smallmoney[] = {
+            "214748.3647",
+            "-214748.3648",
+            "1.0000",
+            "0.0000",
+            "-1.0000"
         };
 
         if (smallmoney.length != money.length) {
@@ -311,11 +310,11 @@ public class CSUnitTest extends DatabaseTestCase {
         ResultSet rs = stmt.executeQuery("select * from #t0019 order by i");
 
         for (i=0; rs.next(); i++) {
-            BigDecimal  m;
-            BigDecimal  sm;
+            String m;
+            String sm;
 
-            m = (BigDecimal)rs.getObject("mymoney");
-            sm = (BigDecimal)rs.getObject("mysmallmoney");
+            m = (String) rs.getObject("mymoney");
+            sm = (String) rs.getObject("mysmallmoney");
 
             assertEquals(m, money[i]);
             assertEquals(sm, smallmoney[i]);
@@ -929,15 +928,7 @@ public class CSUnitTest extends DatabaseTestCase {
 
         assertTrue(passed);
     }
-    static String longString(char ch) {
-        int                 i;
-        StringBuffer        str255 = new StringBuffer(255);
 
-        for (i=0; i<255; i++) {
-            str255.append(ch);
-        }
-        return str255.toString();
-    }
     public void testExceptionByUpdate0033() throws Exception {
         boolean passed;
         Statement   stmt = con.createStatement();

@@ -6,7 +6,6 @@
 package net.sourceforge.jtds.test;
 
 import java.sql.*;
-import java.math.BigDecimal;
 
 import junit.framework.TestSuite;
 
@@ -466,9 +465,9 @@ public class AsTest extends DatabaseTestCase {
         stmt.executeUpdate(crtab);
         stmt.close();
         PreparedStatement pstmt = con.prepareStatement("insert into #testBigDecimal values (?)");
-        pstmt.setObject(1, new BigDecimal("10.200"));
+        pstmt.setObject(1, "10.200", Types.NUMERIC);
         pstmt.execute();
-        pstmt.setObject(1, new BigDecimal(10.200));
+        pstmt.setObject(1, "10.200", Types.DECIMAL);
         pstmt.execute();
         pstmt.setObject(1, null);
         pstmt.execute();
@@ -476,7 +475,15 @@ public class AsTest extends DatabaseTestCase {
         pstmt.execute();
         pstmt.setObject(1, new Double(2.10));
         pstmt.execute();
-        pstmt.setObject(1, new BigDecimal(-10.200));
+        pstmt.setObject(1, "-10.200", Types.NUMERIC);
+        pstmt.execute();
+        pstmt.setObject(1, "0.200", Types.NUMERIC);
+        pstmt.execute();
+        pstmt.setObject(1, "-0.200", Types.NUMERIC);
+        pstmt.execute();
+        pstmt.setObject(1, "10", Types.NUMERIC);
+        pstmt.execute();
+        pstmt.setObject(1, "-10", Types.NUMERIC);
         pstmt.execute();
         pstmt.setObject(1, new Long(200));
         pstmt.execute();

@@ -19,28 +19,21 @@ package net.sourceforge.jtds.jdbc;
 
 import java.io.InputStream;
 import java.io.Reader;
-import java.math.BigDecimal;
 import java.net.URL;
-import java.sql.Array;
 import java.sql.Blob;
 import java.sql.Clob;
 import java.sql.Date;
-import java.sql.ParameterMetaData;
 import java.sql.PreparedStatement;
-import java.sql.Ref;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Calendar;
-import java.util.Collection;
 import java.util.ArrayList;
 import java.util.TimeZone;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Constructor;
-import java.text.NumberFormat;
 
 /**
  * jTDS implementation of the java.sql.PreparedStatement interface.
@@ -58,7 +51,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.39 2005-02-27 14:47:17 alin_sinpalean Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.39.2.1 2005-09-17 10:58:59 alin_sinpalean Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -73,30 +66,20 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     private boolean returnKeys = false;
     /** The cached column meta data. */
     protected ColInfo[] colMetaData = null;
-    /** The cached parameter meta data. */
-    protected ParamInfo[] paramMetaData = null;
-    /** Used to format numeric values when scale is specified. */
-    private static NumberFormat f = NumberFormat.getInstance();
-    /** Collection of handles used by this statement */
-    Collection handles = null;
 
     /**
      * Construct a new preparedStatement object.
      *
      * @param connection The parent connection.
      * @param sql   The SQL statement to prepare.
-     * @param resultSetType The result set type eg SCROLLABLE etc.
-     * @param concurrency The result set concurrency eg READONLY.
      * @param returnKeys True if generated keys should be returned.
      * @throws SQLException
      */
     JtdsPreparedStatement(ConnectionJDBC2 connection,
                           String sql,
-                          int resultSetType,
-                          int concurrency,
                           boolean returnKeys)
         throws SQLException {
-        super(connection, resultSetType, concurrency);
+        super(connection);
 
         // Parse the SQL looking for escapes and parameters
         if (this instanceof JtdsCallableStatement) {
@@ -104,7 +87,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         }
 
         ArrayList params = new ArrayList();
-        String[] parsedSql = new SQLParser(sql, params, connection).parse(false);
+        String[] parsedSql = new SQLParser(sql, params, connection).parse();
 
         if (parsedSql[0].length() == 0) {
             throw new SQLException(Messages.get("error.prepare.nosql"), "07000");
@@ -121,8 +104,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         sqlWord = parsedSql[2];
 
         if (returnKeys && sqlWord.equals("insert")) {
-            if (connection.getServerType() == Driver.SQLSERVER
-                    && connection.getDatabaseMajorVersion() >= 8) {
+            if (connection.getDatabaseMajorVersion() >= 8) {
                 this.sql += " SELECT SCOPE_IDENTITY() AS ID";
             } else {
                 this.sql += " SELECT @@IDENTITY AS ID";
@@ -285,15 +267,10 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
             x = Support.convert(this, x, targetSqlType, connection.getCharset());
 
             if (scale >= 0) {
-                if (x instanceof BigDecimal) {
-                    x = ((BigDecimal) x).setScale(scale, BigDecimal.ROUND_HALF_UP);
-                } else if (x instanceof Number) {
-                    synchronized (f) {
-                        f.setGroupingUsed(false);
-                        f.setMaximumFractionDigits(scale);
-                        x = Support.convert(this, f.format(x), targetSqlType,
-                                connection.getCharset());
-                    }
+                if (x instanceof String || x instanceof Number) {
+                    x = Support.convert(this,
+                            Support.setDecimalScale(x.toString(), scale),
+                            targetSqlType, connection.getCharset());
                 }
             }
 
@@ -332,12 +309,12 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         pi.scale = (scale < 0) ? 0 : scale;
         // Update parameter descriptor
         if (targetSqlType == java.sql.Types.DECIMAL
-            || targetSqlType == java.sql.Types.NUMERIC) {
+                || targetSqlType == java.sql.Types.NUMERIC) {
             pi.precision = connection.getMaxPrecision();
 
-            if (x instanceof BigDecimal) {
-                x = Support.normalizeBigDecimal((BigDecimal) x, pi.precision);
-                pi.scale = ((BigDecimal) x).scale();
+            if (x instanceof String) {
+                x = Support.normalizeDecimal((String) x, pi.precision);
+                pi.scale = Support.getDecimalScale((String) x);
             }
         }
 
@@ -355,51 +332,13 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         pi.isUnicode = connection.isUseUnicode();
     }
 
-    /**
-     * Update the cached column meta data information.
-     *
-     * @param value The Column meta data array.
-     */
-    void setColMetaData(ColInfo[] value) {
-        this.colMetaData = value;
-    }
-
-    /**
-     * Update the cached parameter meta data information.
-     *
-     * @param value The Column meta data array.
-     */
-    void setParamMetaData(ParamInfo[] value) {
-        for (int i = 0; i < value.length && i < parameters.length; i++) {
-            if (!parameters[i].isSet) {
-                // Only update parameter descriptors if the user
-                // has not yet set them.
-                parameters[i].jdbcType = value[i].jdbcType;
-                parameters[i].isOutput = value[i].isOutput;
-                parameters[i].precision = value[i].precision;
-                parameters[i].scale = value[i].scale;
-                parameters[i].sqlType = value[i].sqlType;
-            }
-        }
-    }
-
 // -------------------- java.sql.PreparedStatement methods follow -----------------
 
     public int executeUpdate() throws SQLException {
         checkOpen();
         initialize();
 
-        if (procName == null && !(this instanceof JtdsCallableStatement)) {
-            // Sync on the connection to make sure rollback() isn't called
-            // between the moment when the statement is prepared and the moment
-            // when it's executed.
-            synchronized (connection) {
-                String spName = connection.prepareSQL(this, sql, parameters, returnKeys);
-                executeSQL(sql, spName, sqlWord, parameters, returnKeys, true);
-            }
-        } else {
-            executeSQL(sql, procName, sqlWord, parameters, returnKeys, true);
-        }
+        executeSQL(sql, procName, parameters, returnKeys, true);
 
         int res = getUpdateCount();
         return res == -1 ? 0 : res;
@@ -442,17 +381,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         checkOpen();
         initialize();
 
-        if (procName == null && !(this instanceof JtdsCallableStatement)) {
-            // Sync on the connection to make sure rollback() isn't called
-            // between the moment when the statement is prepared and the moment
-            // when it's executed.
-            synchronized (connection) {
-                String spName = connection.prepareSQL(this, sql, parameters, returnKeys);
-                return executeSQL(sql, spName, sqlWord, parameters, returnKeys, false);
-            }
-        } else {
-            return executeSQL(sql, procName, sqlWord, parameters, returnKeys, false);
-        }
+        return executeSQL(sql, procName, parameters, returnKeys, false);
     }
 
     public void setByte(int parameterIndex, byte x) throws SQLException {
@@ -521,31 +450,6 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         }
     }
 
-    public void setUnicodeStream(int parameterIndex, InputStream inputStream, int length)
-        throws SQLException {
-        if (inputStream == null || length < 0) {
-            setString(parameterIndex, null);
-        } else {
-            try {
-               length = length / 2;
-               char[] tmp = new char[length];
-               int pos = 0;
-               int b1 = inputStream.read();
-               int b2 = inputStream.read();
-
-               while (b1 >= 0 && b2 >= 0 && pos < length) {
-                   tmp[pos++] = (char) (((b1 << 8) &0xFF00) | (b2 & 0xFF));
-                   b1 = inputStream.read();
-                   b2 = inputStream.read();
-               }
-               setString(parameterIndex, new String(tmp, 0, pos));
-            } catch (java.io.IOException e) {
-                throw new SQLException(Messages.get("error.generic.ioerror",
-                                                           e.getMessage()), "HY000");
-            }
-        }
-    }
-
     public void setCharacterStream(int parameterIndex, Reader reader, int length)
         throws SQLException {
         if (reader == null || length < 0) {
@@ -580,16 +484,8 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         setParameter(parameterIndex, x, java.sql.Types.VARCHAR, 0, 0);
     }
 
-    public void setBigDecimal(int parameterIndex, BigDecimal x) throws SQLException {
-        setParameter(parameterIndex, x, java.sql.Types.DECIMAL, -1, 0);
-    }
-
     public void setURL(int parameterIndex, URL url) throws SQLException {
         setString(parameterIndex, (url == null)? null: url.toString());
-    }
-
-    public void setArray(int arg0, Array arg1) throws SQLException {
-        this.notImplemented("PreparedStatement.setArray");
     }
 
     public void setBlob(int parameterIndex, Blob x) throws SQLException {
@@ -624,50 +520,11 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         setParameter(parameterIndex, x, java.sql.Types.DATE, 0, 0);
     }
 
-    public ParameterMetaData getParameterMetaData() throws SQLException {
-        checkOpen();
-
-        //
-        // NB. This is usable only with the JDBC3 version of the interface.
-        //
-        if (connection.getServerType() == Driver.SYBASE) {
-            // Sybase does return the parameter types for prepared sql.
-            connection.prepareSQL(this, sql, new ParamInfo[0], false);
-        }
-
-        try {
-            Class pmdClass = Class.forName("net.sourceforge.jtds.jdbc.ParameterMetaDataImpl");
-            Class[] parameterTypes = new Class[] {ParamInfo[].class};
-            Object[] arguments = new Object[] {parameters};
-            Constructor pmdConstructor = pmdClass.getConstructor(parameterTypes);
-
-            return (ParameterMetaData) pmdConstructor.newInstance(arguments);
-        } catch (Exception e) {
-            notImplemented("PreparedStatement.getParameterMetaData");
-        }
-
-        return null;
-    }
-
-    public void setRef(int parameterIndex, Ref x) throws SQLException {
-        notImplemented("PreparedStatement.setRef");
-    }
-
     public ResultSet executeQuery() throws SQLException {
         checkOpen();
         initialize();
 
-        if (procName == null && !(this instanceof JtdsCallableStatement)) {
-            // Sync on the connection to make sure rollback() isn't called
-            // between the moment when the statement is prepared and the moment
-            // when it's executed.
-            synchronized (connection) {
-                String spName = connection.prepareSQL(this, sql, parameters, false);
-                return executeSQLQuery(sql, spName, parameters);
-            }
-        } else {
-            return executeSQLQuery(sql, procName, parameters);
-        }
+        return executeSQLQuery(sql, procName, parameters);
     }
 
     public ResultSetMetaData getMetaData() throws SQLException {
@@ -676,13 +533,6 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         if (colMetaData == null) {
             if (currentResult != null) {
                 colMetaData = currentResult.columns;
-            } else if (connection.getServerType() == Driver.SYBASE) {
-                // Sybase can provide meta data as a by product of preparing the call.
-                connection.prepareSQL(this, sql, new ParamInfo[0], false);
-
-                if (colMetaData == null) {
-                    return null; // Sorry still no go
-                }
             } else {
                 // For Microsoft set all parameters to null and execute the query.
                 // SET FMTONLY ON asks the server just to return meta data.
@@ -702,10 +552,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
                 // Substitute nulls into SQL String
                 StringBuffer testSql = new StringBuffer(sql.length() + 128);
                 testSql.append("SET FMTONLY ON ");
-                testSql.append(
-                        Support.substituteParameters(sql,
-                                params,
-                                connection.getTdsVersion()));
+                testSql.append(Support.substituteParameters(sql, params));
                 testSql.append(" SET FMTONLY OFF");
 
                 try {

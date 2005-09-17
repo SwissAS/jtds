@@ -21,16 +21,13 @@ import net.sourceforge.jtds.jdbc.DefaultProperties;
 import net.sourceforge.jtds.jdbc.Messages;
 import net.sourceforge.jtds.jdbc.Driver;
 import java.util.Properties;
-import java.util.Map;
-import java.util.HashMap;
-
 
 
 /**
  * Unit tests for the {@link net.sourceforge.jtds.jdbc.DefaultProperties} class.
  *
  * @author David D. Kilzer
- * @version $Id: DefaultPropertiesUnitTest.java,v 1.7 2004-11-15 13:29:11 alin_sinpalean Exp $
+ * @version $Id: DefaultPropertiesUnitTest.java,v 1.7.4.1 2005-09-17 10:58:59 alin_sinpalean Exp $
  */
 public class DefaultPropertiesUnitTest extends UnitTestBase {
 
@@ -79,119 +76,6 @@ public class DefaultPropertiesUnitTest extends UnitTestBase {
     }
 
 
-    /**
-     * Tests that
-     * {@link DefaultProperties#addDefaultPropertyIfNotSet(java.util.Properties, java.lang.String, java.lang.String, java.util.Map)}
-     * does <em>not</em> set a default property if the <code>defaultKey</code> is not set.
-     */
-    public void test_addDefaultPropertyIfNotSet_DefaultKeyNotSet() {
-        final Properties properties = new Properties();
-        final String defaultKey = Driver.SERVERTYPE;
-        final String key = Driver.PORTNUMBER;
-        final HashMap defaults = new HashMap();
-        invokeStaticMethod(DefaultProperties.class, "addDefaultPropertyIfNotSet",
-                           new Class[]{Properties.class, String.class, String.class, Map.class},
-                           new Object[]{properties, key, defaultKey, defaults});
-        assertEquals(0, properties.size());
-    }
-
-
-    /**
-     * Tests that
-     * {@link DefaultProperties#addDefaultPropertyIfNotSet(java.util.Properties, java.lang.String, java.lang.String, java.util.Map)}
-     * sets a default property if the property is not already set.
-     */
-    public void test_addDefaultPropertyIfNotSet_DefaultKeySet_PropertyNotSet() {
-        final Properties properties = new Properties();
-        final String defaultKey = Driver.SERVERTYPE;
-        final String defaultKeyValue = "foobar";
-        properties.put(Messages.get(defaultKey), defaultKeyValue);
-        final String key = Driver.PORTNUMBER;
-        final String defaultValue = "2004";
-        final HashMap defaults = new HashMap();
-        defaults.put(defaultKeyValue, defaultValue);
-        invokeStaticMethod(DefaultProperties.class, "addDefaultPropertyIfNotSet",
-                           new Class[]{Properties.class, String.class, String.class, Map.class},
-                           new Object[]{properties, key, defaultKey, defaults});
-        assertEquals(defaultValue, properties.get(Messages.get(key)));
-    }
-
-
-    /**
-     * Tests that
-     * {@link DefaultProperties#addDefaultPropertyIfNotSet(java.util.Properties, java.lang.String, java.lang.String, java.util.Map)}
-     * does <em>not</em> set a default property if the property is already set.
-     */
-    public void test_addDefaultPropertyIfNotSet_DefaultKeySet_PropertyAlreadySet() {
-        final Properties properties = new Properties();
-        final String defaultKey = Driver.SERVERTYPE;
-        final String defaultKeyValue = "foobar";
-        properties.put(Messages.get(defaultKey), defaultKeyValue);
-        final String key = Driver.PORTNUMBER;
-        final String presetValue = "2020";
-        properties.put(Messages.get(key), presetValue);
-        final String defaultValue = "2004";
-        final HashMap defaults = new HashMap();
-        defaults.put(defaultKeyValue, defaultValue);
-        invokeStaticMethod(DefaultProperties.class, "addDefaultPropertyIfNotSet",
-                           new Class[]{Properties.class, String.class, String.class, Map.class},
-                           new Object[]{properties, key, defaultKey, defaults});
-        assertEquals(presetValue, properties.get(Messages.get(key)));
-    }
-
-
-    public void test_getServerType_intToString_Null() {
-        final String message = "Did not return null for unknown server type ";
-        final int[] testValues = new int[]{ -99, -1, 0, 3, 99 };
-        for (int i = 0; i < testValues.length; i++) {
-            assertNull(
-                    message + String.valueOf(testValues[i]),
-                    DefaultProperties.getServerType(testValues[i]));
-        }
-    }
-
-
-    public void test_getServerType_intToString_SQLSERVER() {
-        assertEquals(
-                "Server type for SQL Server did not map correctly",
-                DefaultProperties.SERVER_TYPE_SQLSERVER,
-                DefaultProperties.getServerType(Driver.SQLSERVER));
-    }
-
-
-    public void test_getServerType_intToString_SYBASE() {
-        assertEquals("Server type for Sybase did not map correctly",
-                     DefaultProperties.SERVER_TYPE_SYBASE,
-                     DefaultProperties.getServerType(Driver.SYBASE));
-    }
-
-
-    public void test_getServerType_StringToInteger_Null() {
-        final String message = "Did not return null for unknown server type: ";
-        final String[] testValues = new String[]{ null, "", "SQLServer", "Sybase", "sibase", "sq1server" };
-        for (int i = 0; i < testValues.length; i++) {
-            assertNull(
-                    message + String.valueOf(testValues[i]),
-                    DefaultProperties.getServerType(testValues[i]));
-        }
-    }
-
-
-    public void test_getServerType_StringToInteger_SQLSERVER() {
-        assertEquals(
-                "Server type for SQL Server did not map correctly",
-                new Integer(Driver.SQLSERVER),
-                DefaultProperties.getServerType(DefaultProperties.SERVER_TYPE_SQLSERVER));
-    }
-
-
-    public void test_getServerType_StringToInteger_SYBASE() {
-        assertEquals("Server type for Sybase did not map correctly",
-                     new Integer(Driver.SYBASE),
-                     DefaultProperties.getServerType(DefaultProperties.SERVER_TYPE_SYBASE));
-    }
-
-
     public void test_getTdsVersion_StringToInteger_Null() {
         final String message = "Did not return null for unknown TDS version: ";
         final String[] testValues = new String[]{ null, "", "4.0", "5.2", "0.0", "8:0" };
@@ -200,22 +84,6 @@ public class DefaultPropertiesUnitTest extends UnitTestBase {
                     message + String.valueOf(testValues[i]),
                     DefaultProperties.getTdsVersion(testValues[i]));
         }
-    }
-
-
-    public void test_getTdsVersion_StringToInteger_TDS42() {
-        assertEquals(
-                "Tds version for TDS 4.2 did not map correctly",
-                new Integer(Driver.TDS42),
-                DefaultProperties.getTdsVersion(DefaultProperties.TDS_VERSION_42));
-    }
-
-
-    public void test_getTdsVersion_StringToInteger_TDS50() {
-        assertEquals(
-                "Tds version for TDS 5.0 did not map correctly",
-                new Integer(Driver.TDS50),
-                DefaultProperties.getTdsVersion(DefaultProperties.TDS_VERSION_50));
     }
 
 

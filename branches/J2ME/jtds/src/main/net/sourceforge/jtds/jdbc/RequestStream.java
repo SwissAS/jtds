@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.io.InputStream;
 import java.io.Reader;
-import java.math.BigDecimal;
 import java.math.BigInteger;
 import net.sourceforge.jtds.util.*;
 
@@ -36,7 +35,7 @@ import net.sourceforge.jtds.util.*;
  * </ol>
  *
  * @author Mike Hutchinson.
- * @version $Id: RequestStream.java,v 1.13 2005-01-06 15:45:06 alin_sinpalean Exp $
+ * @version $Id: RequestStream.java,v 1.13.4.1 2005-09-17 10:58:59 alin_sinpalean Exp $
  */
 public class RequestStream {
     /** The shared network socket. */
@@ -86,15 +85,6 @@ public class RequestStream {
         byte[] tmp = new byte[size];
         System.arraycopy(buffer, 0, tmp, 0, bufferPtr);
         buffer = tmp;
-    }
-
-    /**
-     * Retrieve the current output packet size.
-     *
-     * @return the packet size as an <code>int</code>.
-     */
-    int getBufferSize() {
-        return bufferSize;
     }
 
     /**
@@ -267,21 +257,6 @@ public class RequestStream {
     }
 
     /**
-     * Write a float value to the output stream.
-     *
-     * @param f The float value to write.
-     * @throws IOException
-     */
-    void write(float f) throws IOException {
-        int l = Float.floatToIntBits(f);
-
-        write((byte) l);
-        write((byte) (l >> 8));
-        write((byte) (l >> 16));
-        write((byte) (l >> 24));
-    }
-
-    /**
      * Write a String object to the output stream.
      * If the TDS version is >= 7.0 write a UNICODE string otherwise
      * wrote a translated byte stream.
@@ -290,41 +265,10 @@ public class RequestStream {
      * @throws IOException
      */
     void write(String s) throws IOException {
-        if (socket.getTdsVersion() >= Driver.TDS70) {
-            int len = s.length();
+        int len = s.length();
 
-            for (int i = 0; i < len; ++i) {
-                int c = s.charAt(i);
-
-                if (bufferPtr == buffer.length) {
-                    putPacket(0);
-                }
-
-                buffer[bufferPtr++] = (byte) c;
-
-                if (bufferPtr == buffer.length) {
-                    putPacket(0);
-                }
-
-                buffer[bufferPtr++] = (byte) (c >> 8);
-            }
-        } else {
-            writeAscii(s);
-        }
-    }
-
-    /**
-     * Write a char array object to the output stream.
-     *
-     * @param s The char[] to write.
-     * @throws IOException
-     */
-    void write(char s[], int off, int len) throws IOException {
-        int i = off;
-        int limit = (off + len) > s.length ? s.length : off + len;
-
-        for ( ; i < limit; i++) {
-            char c = s[i];
+        for (int i = 0; i < len; ++i) {
+            int c = s.charAt(i);
 
             if (bufferPtr == buffer.length) {
                 putPacket(0);
@@ -337,26 +281,6 @@ public class RequestStream {
             }
 
             buffer[bufferPtr++] = (byte) (c >> 8);
-        }
-    }
-
-    /**
-     * Write a String to the output stream as translated bytes.
-     *
-     * @param s The String to write.
-     * @throws IOException
-     */
-    void writeAscii(String s) throws IOException {
-        String charsetName = socket.getCharset();
-
-        if (charsetName != null) {
-            try {
-                write(s.getBytes(charsetName));
-            } catch (UnsupportedEncodingException e) {
-                write(s.getBytes());
-            }
-        } else {
-            write(s.getBytes());
         }
     }
 
@@ -453,12 +377,11 @@ public class RequestStream {
     }
 
     /**
-     * Write a BigDecimal value to the output stream.
+     * Write a BigInteger value to the output stream.
      *
-     * @param value The BigDecimal value to write.
-     * @throws IOException
+     * @param value the BigInteger value to write
      */
-    void write(BigDecimal value) throws IOException {
+    void write(BigInteger value) throws IOException {
         final byte prec = (byte)maxPrecision;
         final byte maxLen = (prec <= 28) ? (byte) 13 : (byte) 17;
 
@@ -466,31 +389,19 @@ public class RequestStream {
             write((byte) 0);
         } else {
             byte signum = (byte) (value.signum() < 0 ? 0 : 1);
-            BigInteger bi = value.unscaledValue();
-            byte mantisse[] = bi.abs().toByteArray();
+            byte mantisse[] = value.abs().toByteArray();
             byte len = (byte) (mantisse.length + 1);
 
             if (len > maxLen) {
                 // Should never happen now as value is normalized elsewhere
-                throw new IOException("BigDecimal to big to send");
+                throw new IOException("Decimal to big to send");
             }
 
-            if (socket.getServerType() == Driver.SYBASE) {
-                write((byte) len);
-                // Sybase TDS5 stores MSB first opposite sign!
-                // length, prec, scale already sent in parameter descriptor.
-                write((byte) ((signum == 0) ? 1 : 0));
+            write((byte) len);
+            write((byte) signum);
 
-                for (int i = 0; i < mantisse.length; i++) {
-                    write((byte) mantisse[i]);
-                }
-            } else {
-                write((byte) len);
-                write((byte) signum);
-
-                for (int i = mantisse.length - 1; i >= 0; i--) {
-                    write((byte) mantisse[i]);
-                }
+            for (int i = mantisse.length - 1; i >= 0; i--) {
+                write((byte) mantisse[i]);
             }
         }
     }
@@ -521,15 +432,6 @@ public class RequestStream {
     }
 
     /**
-     * Retrieve the Server type.
-     *
-     * @return The Server type as an <code>int</code>.
-     */
-    int getServerType() {
-        return socket.getServerType();
-    }
-
-    /**
      * Write the TDS packet to the network.
      *
      * @param last Set to 1 if this is the last packet else 0.
@@ -546,7 +448,7 @@ public class RequestStream {
         buffer[3] = (byte) bufferPtr;
         buffer[4] = 0;
         buffer[5] = 0;
-        buffer[6] = (byte) ((socket.getTdsVersion() >= Driver.TDS70) ? 1 : 0);
+        buffer[6] = 1;
         buffer[7] = 0;
 
         if (Logger.isActive()) {

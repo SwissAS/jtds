@@ -20,19 +20,13 @@ package net.sourceforge.jtds.jdbc;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.EOFException;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.RandomAccessFile;
 import java.net.Socket;
-import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.LinkedList;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 
 import net.sourceforge.jtds.ssl.SocketFactories;
 import net.sourceforge.jtds.util.Logger;
@@ -65,7 +59,7 @@ import net.sourceforge.jtds.util.Logger;
  * (even if the memory threshold has been passed) in the interests of efficiency.
  *
  * @author Mike Hutchinson.
- * @version $Id: SharedSocket.java,v 1.29 2005-03-14 12:51:10 alin_sinpalean Exp $
+ * @version $Id: SharedSocket.java,v 1.29.2.1 2005-09-17 10:58:59 alin_sinpalean Exp $
  */
 class SharedSocket {
     /**
@@ -81,26 +75,6 @@ class SharedSocket {
          */
         LinkedList pktQueue;
         /**
-         * True to discard network data.
-         */
-        boolean flushInput;
-        /**
-         * True if output is complete TDS packet.
-         */
-        boolean complete;
-        /**
-         * File object for disk packet queue.
-         */
-        File queueFile;
-        /**
-         * I/O Stream for disk packet queue.
-         */
-        RandomAccessFile diskQueue;
-        /**
-         * Number of packets cached to disk.
-         */
-        int pktsOnDisk;
-        /**
          * Total of input packets in memory or disk.
          */
         int inputPkts;
@@ -111,11 +85,6 @@ class SharedSocket {
         VirtualSocket(int streamId) {
             this.owner = streamId;
             this.pktQueue = new LinkedList();
-            this.flushInput = false;
-            this.complete = false;
-            this.queueFile = null;
-            this.diskQueue = null;
-            this.pktsOnDisk = 0;
             this.inputPkts = 0;
         }
     }
@@ -136,10 +105,6 @@ class SharedSocket {
      * Input stream for network socket.
      */
     private DataInputStream in;
-    /**
-     * Current maxium input buffer size.
-     */
-    private int maxBufSize = TdsCore.MIN_PKT_SIZE;
     /**
      * Table of stream objects sharing this socket.
      */
@@ -164,30 +129,9 @@ class SharedSocket {
      */
     private static int peakMemUsage = 0;
     /**
-     * Max memory limit to use for buffers.
-     * Only when this limit is exceeded will the driver
-     * start caching to disk.
-     */
-    private static int memoryBudget = 100000; // 100K
-    /**
-     * Minimum number of packets that will be cached in memory
-     * before the driver tries to write to disk even if
-     * memoryBudget has been exceeded.
-     */
-    private static int minMemPkts = 8;
-    /**
-     * Global flag to indicate that security constraints mean
-     * that attempts to create work files will fail.
-     */
-    private static boolean securityViolation;
-    /**
      * Tds protocol version
      */
     private int tdsVersion;
-    /**
-     * The servertype one of Driver.SQLSERVER or Driver.SYBASE
-     */
-    private int serverType;
     /**
      * The character set to use for converting strings to/from bytes.
      */
@@ -230,9 +174,6 @@ class SharedSocket {
      */
     private static final int TDS_HDR_LEN   = 8;
 
-    protected SharedSocket() {
-    }
-
     /**
      * Construct a <code>SharedSocket</code> object specifying host name and
      * port.
@@ -242,56 +183,14 @@ class SharedSocket {
      * @param tdsVersion the TDS protocol version
      * @param tcpNoDelay <code>true</code> to enable TCP_NODELAY on the
      *                   underlying socket; <code>false</code> to disable
-     * @param timeout    timeout for establishing connection, in seconds
-     *                   (only used with Java 1.4+, no support in earlier
-     *                   versions)
      * @throws IOException if socket open fails
      */
-    SharedSocket(String host, int port, int tdsVersion, int serverType,
-    		boolean tcpNoDelay, int timeout)
+    SharedSocket(String host, int port, int tdsVersion, boolean tcpNoDelay)
             throws IOException, UnknownHostException {
         setTdsVersion(tdsVersion);
-        setServerType(serverType);
         this.host = host;
         this.port = port;
-        if (Driver.JDBC3) {
-            try {
-                // Create the Socket
-                Constructor constructor =
-                        Socket.class.getConstructor(new Class[] {});
-                this.socket =
-                        (Socket) constructor.newInstance(new Object[] {});
-
-                // Create the InetSocketAddress
-                constructor = Class.forName("java.net.InetSocketAddress")
-                        .getConstructor(new Class[] {String.class, int.class});
-                Object address = constructor.newInstance(
-                                new Object[] {host, new Integer(port)});
-
-                // Call Socket.connect(InetSocketAddress, int)
-                Method connect = Socket.class.getMethod("connect", new Class[]
-                        {Class.forName("java.net.SocketAddress"), int.class});
-                connect.invoke(this.socket,
-                        new Object[] {address, new Integer(timeout * 1000)});
-            } catch (InvocationTargetException ite) {
-                // Reflection was OK but invocation of socket.connect()
-                // has failed. Try to report the underlying reason
-                Throwable cause = ite.getTargetException();
-                if (cause instanceof IOException) {
-                    // OK was an IOException or subclass so just throw it
-                    throw (IOException) cause;
-                }
-                // Something else so return invocation exception anyway
-                // (This should not normally occur)
-                throw new IOException("Could not create socket: " + cause);
-            } catch (Exception e) {
-                // Reflection has failed for some reason e.g. security so
-                // try to create a socket in the old way.
-                this.socket = new Socket(host, port);
-            }
-        } else {
-            this.socket = new Socket(host, port);
-        }
+        this.socket = new Socket(host, port);
         setOut(new DataOutputStream(socket.getOutputStream()));
         setIn(new DataInputStream(socket.getInputStream()));
         this.socket.setTcpNoDelay(tcpNoDelay);
@@ -412,66 +311,6 @@ class SharedSocket {
     }
 
     /**
-     * Retrieve the SQL Server type that is associated with the connection
-     * supported by this socket.
-     * <ol>
-     * <li>Microsoft SQL Server.
-     * <li>Sybase SQL Server.
-     * </ol>
-     *
-     * @return the SQL Server type as an <code>int</code>
-     */
-    int getServerType() {
-        return serverType;
-    }
-
-    /**
-     * Set the SQL Server type field.
-     *
-     * @param serverType the SQL Server type as an <code>int</code>
-     */
-    protected void setServerType(int serverType) {
-        this.serverType = serverType;
-    }
-
-    /**
-     * Set the global buffer memory limit for all instances of this driver.
-     *
-     * @param memoryBudget the global memory budget
-     */
-    static void setMemoryBudget(int memoryBudget) {
-        SharedSocket.memoryBudget = memoryBudget;
-    }
-
-    /**
-     * Get the global buffer memory limit for all instancs of this driver.
-     *
-     * @return the memory limit as an <code>int</code>
-     */
-    static int getMemoryBudget() {
-        return SharedSocket.memoryBudget;
-    }
-
-    /**
-     * Set the minimum number of packets to cache in memory before
-     * writing to disk.
-     *
-     * @param minMemPkts the minimum number of packets to cache
-     */
-    static void setMinMemPkts(int minMemPkts) {
-        SharedSocket.minMemPkts = minMemPkts;
-    }
-
-    /**
-     * Get the minimum number of memory cached packets.
-     *
-     * @return minimum memory packets as an <code>int</code>
-     */
-    static int getMinMemPkts() {
-        return SharedSocket.minMemPkts;
-    }
-
-    /**
      * Get the connected status of this socket.
      *
      * @return <code>true</code> if the underlying socket is connected
@@ -540,19 +379,6 @@ class SharedSocket {
         }
 
         synchronized (socketTable) {
-            // See if any temporary files need deleting
-            for (int i = 0; i < socketTable.size(); i++) {
-                VirtualSocket vsock = (VirtualSocket) socketTable.get(i);
-
-                if (vsock != null && vsock.diskQueue != null) {
-                    try {
-                        vsock.diskQueue.close();
-                        vsock.queueFile.delete();
-                    } catch (IOException ioe) {
-                        // Ignore errors
-                    }
-                }
-            }
             try {
                 if (sslSocket != null) {
                     sslSocket.close();
@@ -592,17 +418,6 @@ class SharedSocket {
      */
     void closeStream(int streamId) {
         synchronized (socketTable) {
-            VirtualSocket vsock = lookup(streamId);
-
-            if (vsock.diskQueue != null) {
-                try {
-                    vsock.diskQueue.close();
-                    vsock.queueFile.delete();
-                } catch (IOException ioe) {
-                    // Ignore errors
-                }
-            }
-
             socketTable.set(streamId, null);
         }
     }
@@ -721,49 +536,13 @@ class SharedSocket {
      * @param vsock  the virtual socket owning this data
      * @param buffer the data to queue
      */
-    private void enqueueInput(VirtualSocket vsock, byte[] buffer)
-            throws IOException {
-        //
-        // Check to see if we should start caching to disk
-        //
-        if (globalMemUsage + buffer.length > memoryBudget &&
-                vsock.pktQueue.size() >= minMemPkts &&
-                !securityViolation &&
-                vsock.diskQueue == null) {
-            // Try to create a disk file for the queue
-            try {
-                vsock.queueFile = File.createTempFile("jtds", ".tmp");
-                vsock.queueFile.deleteOnExit();
-                vsock.diskQueue = new RandomAccessFile(vsock.queueFile, "rw");
+    private void enqueueInput(VirtualSocket vsock, byte[] buffer) {
+        // Will cache in memory
+        vsock.pktQueue.addLast(buffer);
+        globalMemUsage += buffer.length;
 
-                // Write current cache contents to disk and free memory
-                byte[] tmpBuf;
-
-                while (vsock.pktQueue.size() > 0) {
-                    tmpBuf = (byte[]) vsock.pktQueue.removeFirst();
-                    vsock.diskQueue.write(tmpBuf, 0, getPktLen(tmpBuf, 2));
-                    vsock.pktsOnDisk++;
-                }
-            } catch (java.lang.SecurityException se) {
-                // Not allowed to cache to disk so carry on in memory
-                securityViolation = true;
-                vsock.queueFile = null;
-                vsock.diskQueue = null;
-            }
-        }
-
-        if (vsock.diskQueue != null) {
-            // Cache file exists so append buffer to it
-            vsock.diskQueue.write(buffer, 0, getPktLen(buffer, 2));
-            vsock.pktsOnDisk++;
-        } else {
-            // Will cache in memory
-            vsock.pktQueue.addLast(buffer);
-            globalMemUsage += buffer.length;
-
-            if (globalMemUsage > peakMemUsage) {
-                peakMemUsage = globalMemUsage;
-            }
+        if (globalMemUsage > peakMemUsage) {
+            peakMemUsage = globalMemUsage;
         }
 
         vsock.inputPkts++;
@@ -776,43 +555,13 @@ class SharedSocket {
      * @param vsock the virtual socket owning this data
      * @return a buffer containing the packet
      */
-    private byte[] dequeueInput(VirtualSocket vsock)
-            throws IOException {
+    private byte[] dequeueInput(VirtualSocket vsock) {
         byte[] buffer = null;
 
-        if (vsock.pktsOnDisk > 0) {
-            // Data is cached on disk
-            if (vsock.diskQueue.getFilePointer() == vsock.diskQueue.length()) {
-                // First read so rewind() file
-                vsock.diskQueue.seek(0L);
-            }
-
-            vsock.diskQueue.readFully(hdrBuf, 0, TDS_HDR_LEN);
-
-            int len = getPktLen(hdrBuf, 2);
-
-            buffer = new byte[len];
-            System.arraycopy(hdrBuf, 0, buffer, 0, TDS_HDR_LEN);
-            vsock.diskQueue.readFully(buffer, TDS_HDR_LEN, len - TDS_HDR_LEN);
-            vsock.pktsOnDisk--;
-
-            if (vsock.pktsOnDisk < 1) {
-                // File now empty so close and delete it
-                try {
-                    vsock.diskQueue.close();
-                    vsock.queueFile.delete();
-                } finally {
-                    vsock.queueFile = null;
-                    vsock.diskQueue = null;
-                }
-            }
-        } else if (vsock.pktQueue.size() > 0) {
+        if (vsock.pktQueue.size() > 0) {
             buffer = (byte[]) vsock.pktQueue.removeFirst();
-            globalMemUsage -= buffer.length;
-        }
-
-        if (buffer != null) {
             vsock.inputPkts--;
+            globalMemUsage -= buffer.length;
         }
 
         return buffer;
@@ -854,10 +603,6 @@ class SharedSocket {
         if (buffer == null || len > buffer.length) {
             // Create or expand the buffer as required
             buffer = new byte[len];
-
-            if (len > maxBufSize) {
-                maxBufSize = len;
-            }
         }
 
         // Preserve the packet header in the buffer
@@ -875,7 +620,7 @@ class SharedSocket {
         // If this is the first packet and the length is correct
         // force the last packet flag on.
         //
-        if (++packetCount == 1 && serverType == Driver.SQLSERVER
+        if (++packetCount == 1
                 && "NTLMSSP".equals(new String(buffer, 11, 7))) {
             buffer[1] = 1;
         }
@@ -969,15 +714,6 @@ class SharedSocket {
         int hi = (((int) buf[offset] & 0xff) << 8);
 
         return hi | lo;
-    }
-
-    /**
-     * Set the socket timeout.
-     *
-     * @param timeout the timeout value in milliseconds
-     */
-    protected void setTimeout(int timeout) throws SocketException {
-        socket.setSoTimeout(timeout);
     }
 
     /**

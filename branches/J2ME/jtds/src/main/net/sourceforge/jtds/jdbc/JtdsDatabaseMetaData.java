@@ -43,21 +43,19 @@ import java.util.List;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  *  created  17 March 2001
- * @version $Id: JtdsDatabaseMetaData.java,v 1.26 2005-02-16 22:15:29 alin_sinpalean Exp $
+ * @version $Id: JtdsDatabaseMetaData.java,v 1.26.2.1 2005-09-17 10:58:59 alin_sinpalean Exp $
  */
 public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     static final int sqlStateXOpen = 1;
 
     // internal data needed by this implemention.
-    int tdsVersion;
-    int serverType;
     ConnectionJDBC2 connection;
 
     /**
      * Length of a sysname object (table name, catalog name etc.) -- 128 for
      * TDS 7.0, 30 for earlier versions.
      */
-    int sysnameLength = 30;
+    int sysnameLength = 128;
 
     /**
      * <code>Boolean.TRUE</code> if identifiers are case sensitive (the server
@@ -68,11 +66,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
 
     public JtdsDatabaseMetaData(ConnectionJDBC2 connection) {
         this.connection = connection;
-        tdsVersion = connection.getTdsVersion();
-        serverType = connection.getServerType();
-        if (tdsVersion >= Driver.TDS70) {
-            sysnameLength = 128;
-        }
     }
 
     //----------------------------------------------------------------------
@@ -98,8 +91,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean allTablesAreSelectable() throws SQLException {
-        // Sybase sp_tables may return tables that you are not able to access.
-        return connection.getServerType() == Driver.SQLSERVER;
+        return true;
     }
 
     /**
@@ -218,7 +210,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         rs.close();
         s.close();
         rsTmp.moveToCurrentRow();
-        rsTmp.setConcurrency(ResultSet.CONCUR_READ_ONLY);
+        rsTmp.initDone();
         return rsTmp;
     }
 
@@ -426,54 +418,20 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         // The result data is copied to a cached result set and modified on the fly.
         //
         while (rs.next()) {
-            if (serverType == Driver.SYBASE) {
-                // Sybase servers (older versions only return 14 columns)
-                for (int i = 1; i <= 4; i++) {
-                    rsTmp.updateObject(i, rs.getObject(i));
-                }
-                rsTmp.updateInt(5, TypeInfo.normalizeDataType(rs.getInt(5)));
-                String typeName = rs.getString(6);
-                rsTmp.updateString(6, typeName);
-                for (int i = 8; i <= 12; i++) {
-                    rsTmp.updateObject(i, rs.getObject(i));
-                }
-                if (colCnt >= 20) {
-                    // SYBASE 12.5
-                    rsTmp.updateObject(13, rs.getObject(15));
-                    rsTmp.updateObject(16, rs.getObject(18));
-                    rsTmp.updateObject(17, rs.getObject(17));
-                    rsTmp.updateObject(18, rs.getObject(20));
+            // MS SQL Server - Mainly OK but we need to fix some data types.
+            for (int i = 1; i <= colCnt; i++) {
+                if (i == 5) {
+                    int type = TypeInfo.normalizeDataType(rs.getInt(i));
+                    rsTmp.updateInt(i, type);
                 } else {
-                    // SYBASE 11.92
-                    rsTmp.updateObject(17, rs.getObject(14));
-                    rsTmp.updateObject(16, rs.getObject(8));
-                }
-                if (typeName.equals("image") || typeName.equals("text")) {
-                    rsTmp.updateInt(7, Integer.MAX_VALUE);
-                    rsTmp.updateInt(16, Integer.MAX_VALUE);
-                } else
-                if (typeName.equals("univarchar") || typeName.equals("unichar")) {
-                    rsTmp.updateInt(7, rs.getInt(7) / 2);
-                    rsTmp.updateObject(16, rs.getObject(7));
-                } else {
-                    rsTmp.updateInt(7, rs.getInt(7));
-                }
-            } else {
-                // MS SQL Server - Mainly OK but we need to fix some data types.
-                for (int i = 1; i <= colCnt; i++) {
-                    if (i == 5) {
-                        int type = TypeInfo.normalizeDataType(rs.getInt(i));
-                        rsTmp.updateInt(i, type);
-                    } else {
-                        rsTmp.updateObject(i, rs.getObject(i));
-                    }
+                    rsTmp.updateObject(i, rs.getObject(i));
                 }
             }
             rsTmp.insertRow();
         }
         rs.close();
         rsTmp.moveToCurrentRow();
-        rsTmp.setConcurrency(ResultSet.CONCUR_READ_ONLY);
+        rsTmp.initDone();
 
         return rsTmp;
     }
@@ -611,7 +569,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         }
         rs.close();
         rsTmp.moveToCurrentRow();
-        rsTmp.setConcurrency(ResultSet.CONCUR_READ_ONLY);
+        rsTmp.initDone();
 
         return rsTmp;
     }
@@ -969,7 +927,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         }
         rs.close();
         rsTmp.moveToCurrentRow();
-        rsTmp.setConcurrency(ResultSet.CONCUR_READ_ONLY);
+        rsTmp.initDone();
 
         return rsTmp;
     }
@@ -1042,7 +1000,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         // MS JDBC says 16
         // per "Programming ODBC for SQLServer" Appendix A
         // Actual MS value is 8060 / average bytes per column
-        return (tdsVersion >= Driver.TDS70) ? 0 : 16;
+        return 0;
     }
 
     /**
@@ -1068,7 +1026,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         // per "Programming ODBC for SQLServer" Appendix A
         // Sybase 12.5 is 31
         // Actual MS value is 8060 / average bytes per column
-        return (tdsVersion >= Driver.TDS70) ? 0 : 16;
+        return 0;
     }
 
     /**
@@ -1094,7 +1052,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         // per "Programming ODBC for SQLServer" Appendix A
         // MS 2000 should be 4096
         // Sybase 12.5 is now 1024
-        return (tdsVersion >= Driver.TDS70) ? 1024 : 250;
+        return 1024;
     }
 
     /**
@@ -1132,7 +1090,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         // Sybase JConnect says 255
         // Actual Sybase 12.5 is 600 - 5300 depending on page size
         // per "Programming ODBC for SQLServer" Appendix A
-        return (tdsVersion >= Driver.TDS70) ? 900 : 255;
+        return 900;
     }
 
     /**
@@ -1156,7 +1114,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         // Sybase jConnect says 1962 but this can be more with wide tables.
         // per SQL Server Books Online "Administrator's Companion",
         // Part 1, Chapter 1.
-        return (tdsVersion >= Driver.TDS70) ? 8060 : 1962;
+        return 8060;
     }
 
     /**
@@ -1217,7 +1175,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         // MS JDBC says 32!
         // Actual Sybase 12.5 is 50
         // per "Programming ODBC for SQLServer" Appendix A
-        return (tdsVersion > Driver.TDS50) ? 256 : 16;
+        return 256;
     }
 
     /**
@@ -1286,7 +1244,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         JtdsResultSet rs = (JtdsResultSet)s.executeQuery();
         CachedResultSet rsTmp = new CachedResultSet((JtdsStatement)s, colNames, colTypes);
         rsTmp.moveToInsertRow();
-        int colCnt = rs.getMetaData().getColumnCount();
+        int colCnt = rsTmp.getMetaData().getColumnCount();
         while (rs.next()) {
             for (int i = 1; i <= colCnt; i++) {
                 rsTmp.updateObject(i, rs.getObject(i));
@@ -1295,7 +1253,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         }
         rs.close();
         rsTmp.moveToCurrentRow();
-        rsTmp.setConcurrency(ResultSet.CONCUR_READ_ONLY);
+        rsTmp.initDone();
 
         return rsTmp;
     }
@@ -1424,7 +1382,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         }
         rs.close();
         rsTmp.moveToCurrentRow();
-        rsTmp.setConcurrency(ResultSet.CONCUR_READ_ONLY);
+        rsTmp.initDone();
         return rsTmp;
     }
 
@@ -1515,7 +1473,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
             rsTmp.insertRow();
         }
         rsTmp.moveToCurrentRow();
-        rsTmp.setConcurrency(ResultSet.CONCUR_READ_ONLY);
+        rsTmp.initDone();
         rs.close();
         return rsTmp;
     }
@@ -1547,20 +1505,9 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     public java.sql.ResultSet getSchemas() throws SQLException {
         java.sql.Statement statement = connection.createStatement();
 
-        String sql = Driver.JDBC3
-                ? "SELECT name AS TABLE_SCHEM, NULL as TABLE_CATALOG FROM dbo.sysusers"
-                : "SELECT name AS TABLE_SCHEM FROM dbo.sysusers";
-
-        //
-        // MJH - isLogin column only in MSSQL >= 7.0
-        //
-        if (tdsVersion >= Driver.TDS70) {
-            sql += " WHERE islogin=1";
-        } else {
-            sql += " WHERE uid>0";
-        }
-
-        sql += " ORDER BY TABLE_SCHEM";
+        String sql =
+                "SELECT name AS TABLE_SCHEM, NULL as TABLE_CATALOG FROM dbo.sysusers"
+                + " WHERE islogin=1 ORDER BY TABLE_SCHEM";
 
         return statement.executeQuery(sql);
     }
@@ -1623,13 +1570,8 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException  if a database-access error occurs.
      */
     public String getStringFunctions() throws SQLException {
-        if (connection.getServerType() == Driver.SQLSERVER) {
-            return "ascii,char,concat,difference,insert,lcase,left,length,locate,"
-                 + "ltrim,repeat,replace,right,rtrim,soundex,space,substring,ucase";
-        } else {
-            return "ascii,char,concat,difference,insert,lcase,length,"
-                 + "ltrim,repeat,right,rtrim,soundex,space,substring,ucase";
-        }
+        return "ascii,char,concat,difference,insert,lcase,left,length,locate,"
+             + "ltrim,repeat,replace,right,rtrim,soundex,space,substring,ucase";
     }
 
     /**
@@ -1796,7 +1738,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
             rsTmp.insertRow();
         }
         rsTmp.moveToCurrentRow();
-        rsTmp.setConcurrency(ResultSet.CONCUR_READ_ONLY);
+        rsTmp.initDone();
         rs.close();
         return rsTmp;
     }
@@ -1959,18 +1901,8 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         //
         JtdsStatement dummyStmt = (JtdsStatement) connection.createStatement();
         CachedResultSet rs = new CachedResultSet(dummyStmt, colNames, colTypes);
-        rs.setConcurrency(ResultSet.CONCUR_READ_ONLY);
+        rs.initDone();
         return rs;
-    }
-
-    /**
-     * What's the URL for this database?
-     *
-     * @return the URL or null if it can't be generated
-     * @throws SQLException if a database-access error occurs
-     */
-    public String getURL() throws SQLException {
-        return connection.getURL();
     }
 
     /**
@@ -1988,11 +1920,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
             s = connection.createStatement();
 
             // MJH Sybase does not support system_user
-            if (connection.getServerType() == Driver.SYBASE) {
-                rs = s.executeQuery("select suser_name()");
-            } else {
-                rs = s.executeQuery("select system_user");
-            }
+            rs = s.executeQuery("select system_user");
 
             if (!rs.next()) {
                 throw new SQLException(Messages.get("error.dbmeta.nouser"), "HY000");
@@ -2079,7 +2007,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
             rsTmp.insertRow();
         }
         rsTmp.moveToCurrentRow();
-        rsTmp.setConcurrency(ResultSet.CONCUR_READ_ONLY);
+        rsTmp.initDone();
         rs.close();
         return rsTmp;
     }
@@ -2517,10 +2445,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean supportsFullOuterJoins() throws SQLException {
-        if (connection.getServerType() == Driver.SYBASE) {
-            // Supported since version 12
-            return getDatabaseMajorVersion() >= 12;
-        }
         return true;
     }
 
@@ -2678,7 +2602,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsOpenCursorsAcrossRollback() throws SQLException {
         // JConnect says true
-        return connection.getServerType() == Driver.SYBASE;
+        return false;
     }
 
     /**
@@ -3146,7 +3070,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         //
         JtdsStatement dummyStmt = (JtdsStatement) connection.createStatement();
         CachedResultSet rs = new CachedResultSet(dummyStmt, colNames, colTypes);
-        rs.setConcurrency(ResultSet.CONCUR_READ_ONLY);
+        rs.initDone();
 
         return rs;
     }
@@ -3200,7 +3124,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         //
         JtdsStatement dummyStmt = (JtdsStatement) connection.createStatement();
         CachedResultSet rs = new CachedResultSet(dummyStmt, colNames, colTypes);
-        rs.setConcurrency(ResultSet.CONCUR_READ_ONLY);
+        rs.initDone();
         return rs;
     }
 
@@ -3219,7 +3143,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         //
         JtdsStatement dummyStmt = (JtdsStatement) connection.createStatement();
         CachedResultSet rs = new CachedResultSet(dummyStmt, colNames, colTypes);
-        rs.setConcurrency(ResultSet.CONCUR_READ_ONLY);
+        rs.initDone();
         return rs;
     }
 
@@ -3324,11 +3248,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         StringBuffer sql = new StringBuffer();
         sql.append("{call ");
         if (catalog != null) {
-            if (tdsVersion >= Driver.TDS70) {
-                sql.append('[').append(catalog).append(']');
-            } else {
-                sql.append(catalog);
-            }
+            sql.append('[').append(catalog).append(']');
             sql.append("..");
         }
         sql.append(call).append('}');
@@ -3358,12 +3278,11 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     }
 
     private static CachedResultSet createTypeInfoResultSet(JtdsResultSet rs) throws SQLException {
-        CachedResultSet result = new CachedResultSet(rs, false);
+        CachedResultSet result = new CachedResultSet(rs);
         result.setColumnCount(TypeInfo.NUM_COLS);
         result.setColLabel(3, "PRECISION");
         result.setColLabel(11, "FIXED_PREC_SCALE");
         upperCaseColumnNames(result);
-        result.setConcurrency(ResultSet.CONCUR_UPDATABLE);
         result.moveToInsertRow();
 
         for (Iterator iter = getSortedTypes(rs).iterator(); iter.hasNext();) {
@@ -3373,7 +3292,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         }
 
         result.moveToCurrentRow();
-        result.setConcurrency(ResultSet.CONCUR_READ_ONLY);
+        result.initDone();
 
         return result;
     }

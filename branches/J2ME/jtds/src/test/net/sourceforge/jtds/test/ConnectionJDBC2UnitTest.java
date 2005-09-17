@@ -4,13 +4,11 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 import java.util.Properties;
 import java.util.Enumeration;
+import java.util.Hashtable;
 import java.sql.*;
 
-import net.sourceforge.jtds.jdbc.ConnectionJDBC2;
-import net.sourceforge.jtds.jdbc.Driver;
-import net.sourceforge.jtds.jdbc.DefaultProperties;
-import net.sourceforge.jtds.jdbc.Messages;
-
+import net.sourceforge.jtds.jdbc.*;
+import net.sourceforge.jtds.jdbcx.JtdsDataSource;
 
 
 public class ConnectionJDBC2UnitTest extends UnitTestBase {
@@ -52,17 +50,13 @@ public class ConnectionJDBC2UnitTest extends UnitTestBase {
      */
     public void test_unpackProperties_invalidIntegerProperty() {
         assertSQLExceptionForBadWholeNumberProperty(Driver.PORTNUMBER);
-        assertSQLExceptionForBadWholeNumberProperty(Driver.SERVERTYPE);
-        assertSQLExceptionForBadWholeNumberProperty(Driver.PREPARESQL);
-        assertSQLExceptionForBadWholeNumberProperty(Driver.PACKETSIZE);
         assertSQLExceptionForBadWholeNumberProperty(Driver.LOGINTIMEOUT);
-        assertSQLExceptionForBadWholeNumberProperty(Driver.LOBBUFFER);
     }
 
 
     /**
      * Assert that an SQLException is thrown when
-     * {@link ConnectionJDBC2#unpackProperties(Properties)} is called
+     * {@link ConnectionJDBC3#unpackProperties(Properties)} is called
      * with an invalid integer (or long) string set on a property.
      * <p/>
      * Note that because Java 1.3 is still supported, the
@@ -73,26 +67,21 @@ public class ConnectionJDBC2UnitTest extends UnitTestBase {
      */
     private void assertSQLExceptionForBadWholeNumberProperty(final String key) {
 
-        final ConnectionJDBC2 instance =
-                (ConnectionJDBC2) invokeConstructor(
-                        ConnectionJDBC2.class, new Class[]{}, new Object[]{});
+        final ConnectionJDBC3 instance =
+                (ConnectionJDBC3) invokeConstructor(
+                        ConnectionJDBC3.class, new Class[]{}, new Object[]{});
 
         Properties properties =
                 (Properties) invokeStaticMethod(
-                        Driver.class, "parseURL",
-                        new Class[]{String.class, Properties.class},
-                        new Object[]{"jdbc:jtds:sqlserver://servername", new Properties()});
-        properties =
-                (Properties) invokeStaticMethod(
                         DefaultProperties.class, "addDefaultProperties",
-                        new Class[]{ Properties.class},
-                        new Object[]{ properties});
+                        new Class[]{Properties.class},
+                        new Object[]{new Properties()});
 
         properties.setProperty(Messages.get(key), "1.21 Gigawatts");
 
         try {
             invokeInstanceMethod(
-                    instance, "unpackProperties",
+                    ConnectionJDBC2.class, instance, "unpackProperties",
                     new Class[]{Properties.class},
                     new Object[]{properties});
             fail("RuntimeException expected");
@@ -132,7 +121,7 @@ public class ConnectionJDBC2UnitTest extends UnitTestBase {
                     new DefaultPropertiesTester() {
 
                         public void assertDefaultProperty(
-                                String message, String url, Properties properties, String fieldName,
+                                String message, Properties properties, String fieldName,
                                 String key, String expected) {
 
                             // FIXME: Hack for ConnectionJDBC2
@@ -141,26 +130,20 @@ public class ConnectionJDBC2UnitTest extends UnitTestBase {
                                     fieldName = "useUnicode";
                                 }
                             }
-
-                            Properties parsedProperties =
-                                    (Properties) invokeStaticMethod(
-                                            Driver.class, "parseURL",
-                                            new Class[]{ String.class, Properties.class},
-                                            new Object[]{ url, properties});
-                            parsedProperties =
-                                    (Properties) invokeStaticMethod(
-                                            DefaultProperties.class, "addDefaultProperties",
-                                            new Class[]{ Properties.class},
-                                            new Object[]{ parsedProperties});
-                            ConnectionJDBC2 instance =
-                                    (ConnectionJDBC2) invokeConstructor(
-                                            ConnectionJDBC2.class, new Class[]{}, new Object[]{});
-                            invokeInstanceMethod(
-                                    instance, "unpackProperties",
+                            ConnectionJDBC3 instance =
+                                    (ConnectionJDBC3) invokeConstructor(
+                                            ConnectionJDBC3.class, new Class[]{}, new Object[]{});
+                            invokeStaticMethod(
+                                    DefaultProperties.class, "addDefaultProperties",
                                     new Class[]{Properties.class},
-                                    new Object[]{parsedProperties});
+                                    new Object[]{properties});
+                            invokeInstanceMethod(
+                                    ConnectionJDBC2.class, instance, "unpackProperties",
+                                    new Class[]{Properties.class},
+                                    new Object[]{properties});
                             String actual =
-                                    String.valueOf(invokeGetInstanceField(instance, fieldName));
+                                    String.valueOf(invokeGetInstanceField(ConnectionJDBC2.class,
+                                            instance, fieldName));
 
                             // FIXME: Another hack for ConnectionJDBC2
                             {
@@ -183,19 +166,25 @@ public class ConnectionJDBC2UnitTest extends UnitTestBase {
      * @param override the overriding properties
      * @return a <code>Connection</code> object
      */
-    private Connection getConnectionOverrideProperties(Properties override)
+    private Connection getConnectionOverrideProperties(Hashtable override)
             throws Exception {
+        JtdsDataSource ds = new JtdsDataSource();
+        ds.setServerName(TestBase.props.getProperty(Messages.get(Driver.SERVERNAME)));
+        ds.setUser(TestBase.props.getProperty(Messages.get(Driver.USER)));
+        ds.setPassword(TestBase.props.getProperty(Messages.get(Driver.PASSWORD)));
+
         // Get properties, override with provided values
-        Properties props = (Properties) TestBase.props.clone();
         for (Enumeration e = override.keys(); e.hasMoreElements();) {
             String key = (String) e.nextElement();
-            props.setProperty(key, override.getProperty(key));
+            Object value = override.get(key);
+            invokeInstanceMethod(ds,
+                    "set" + key.toUpperCase().charAt(0) + key.substring(1),
+                    new Class[] {value instanceof Boolean ? boolean.class : value.getClass()},
+                    new Object[] {value});
         }
 
         // Obtain connection
-        Class.forName(props.getProperty("driver"));
-        String url = props.getProperty("url");
-        return DriverManager.getConnection(url, props);
+        return ds.getConnection();
     }
 
     /**
@@ -205,10 +194,9 @@ public class ConnectionJDBC2UnitTest extends UnitTestBase {
      */
     public void testForceCharset1() throws Exception {
         // Set charset to Cp1251 and Unicode parameters to false
-        Properties props = new Properties();
-        props.setProperty(Messages.get(Driver.CHARSET), "Cp1251");
-        props.setProperty(Messages.get(Driver.SENDSTRINGPARAMETERSASUNICODE),
-                "false");
+        Hashtable props = new Hashtable();
+        props.put("charset", "Cp1251");
+        props.put("sendStringParametersAsUnicode", Boolean.FALSE);
         // Obtain connection
         Connection con = getConnectionOverrideProperties(props);
 
@@ -236,10 +224,9 @@ public class ConnectionJDBC2UnitTest extends UnitTestBase {
      */
     public void testForceCharset2() throws Exception {
         // Set charset to Cp1251 and Unicode parameters to false
-        Properties props = new Properties();
-        props.setProperty(Messages.get(Driver.CHARSET), "Cp1251");
-        props.setProperty(Messages.get(Driver.SENDSTRINGPARAMETERSASUNICODE),
-                "false");
+        Hashtable props = new Properties();
+        props.put("charset", "Cp1251");
+        props.put("sendStringParametersAsUnicode", Boolean.FALSE);
         // Obtain connection
         Connection con = getConnectionOverrideProperties(props);
 

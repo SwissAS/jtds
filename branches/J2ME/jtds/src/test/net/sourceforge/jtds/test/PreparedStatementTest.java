@@ -17,7 +17,6 @@
 //
 package net.sourceforge.jtds.test;
 
-import java.math.BigDecimal;
 import java.sql.*;
 
 /**
@@ -39,38 +38,6 @@ public class PreparedStatementTest extends TestBase {
 
         ResultSet rs = pstmt.executeQuery();
         dump(rs);
-
-        rs.close();
-        pstmt.close();
-    }
-
-    public void testScrollablePreparedStatement() throws Exception {
-        Statement stmt = con.createStatement();
-        makeTestTables(stmt);
-        makeObjects(stmt, 10);
-        stmt.close();
-
-        PreparedStatement pstmt = con.prepareStatement("SELECT * FROM #test",
-                                                       ResultSet.TYPE_SCROLL_SENSITIVE,
-                                                       ResultSet.CONCUR_READ_ONLY);
-
-        ResultSet rs = pstmt.executeQuery();
-
-        assertTrue(rs.isBeforeFirst());
-
-        while (rs.next()) {
-        }
-
-        assertTrue(rs.isAfterLast());
-
-        //This currently fails because the PreparedStatement
-        //Doesn't know it needs to create a cursored ResultSet.
-        //Needs some refactoring!!
-        // SAfe Not any longer. ;o)
-        while (rs.previous()) {
-        }
-
-        assertTrue(rs.isBeforeFirst());
 
         rs.close();
         pstmt.close();
@@ -222,21 +189,21 @@ public class PreparedStatementTest extends TestBase {
      * Test for bug [938494] setObject(i, o, NUMERIC/DECIMAL) cuts off decimal places
      */
     public void testPreparedStatementSetObject1() throws Exception {
-        BigDecimal data = new BigDecimal(3.7D);
+        String data = String.valueOf(3.7D);
 
         Statement stmt = con.createStatement();
         stmt.execute("CREATE TABLE #psso1 (data MONEY)");
 
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO #psso1 (data) VALUES (?)");
 
-        pstmt.setObject(1, data);
+        pstmt.setObject(1, data, Types.DECIMAL);
         assertEquals(1, pstmt.executeUpdate());
         pstmt.close();
 
         ResultSet rs = stmt.executeQuery("SELECT data FROM #psso1");
 
         assertTrue(rs.next());
-        assertEquals(data.doubleValue(), rs.getDouble(1), 0);
+        assertEquals(data, rs.getObject(1).toString());
         assertFalse(rs.next());
         rs.close();
         stmt.close();
@@ -246,7 +213,7 @@ public class PreparedStatementTest extends TestBase {
      * Test for bug [938494] setObject(i, o, NUMERIC/DECIMAL) cuts off decimal places
      */
     public void testPreparedStatementSetObject2() throws Exception {
-        BigDecimal data = new BigDecimal(3.7D);
+        String data = String.valueOf(3.7D);
 
         Statement stmt = con.createStatement();
         stmt.execute("CREATE TABLE #psso2 (data MONEY)");
@@ -260,7 +227,7 @@ public class PreparedStatementTest extends TestBase {
         ResultSet rs = stmt.executeQuery("SELECT data FROM #psso2");
 
         assertTrue(rs.next());
-        assertEquals(data.doubleValue(), rs.getDouble(1), 0);
+        assertEquals(data, rs.getObject(1).toString());
         assertFalse(rs.next());
         rs.close();
         stmt.close();
@@ -270,7 +237,7 @@ public class PreparedStatementTest extends TestBase {
      * Test for bug [938494] setObject(i, o, NUMERIC/DECIMAL) cuts off decimal places
      */
     public void testPreparedStatementSetObject3() throws Exception {
-        BigDecimal data = new BigDecimal(3.7D);
+        String data = String.valueOf(3.7D);
 
         Statement stmt = con.createStatement();
         stmt.execute("CREATE TABLE #psso3 (data MONEY)");
@@ -284,7 +251,7 @@ public class PreparedStatementTest extends TestBase {
         ResultSet rs = stmt.executeQuery("SELECT data FROM #psso3");
 
         assertTrue(rs.next());
-        assertEquals(data.doubleValue(), rs.getDouble(1), 0);
+        assertEquals(data, rs.getObject(1).toString());
         assertFalse(rs.next());
         rs.close();
         stmt.close();
@@ -294,7 +261,7 @@ public class PreparedStatementTest extends TestBase {
      * Test for bug [938494] setObject(i, o, NUMERIC/DECIMAL) cuts off decimal places
      */
     public void testPreparedStatementSetObject4() throws Exception {
-        BigDecimal data = new BigDecimal(3.7D);
+        String data = String.valueOf(3.7D);
 
         Statement stmt = con.createStatement();
         stmt.execute("CREATE TABLE #psso4 (data MONEY)");
@@ -308,7 +275,7 @@ public class PreparedStatementTest extends TestBase {
         ResultSet rs = stmt.executeQuery("SELECT data FROM #psso4");
 
         assertTrue(rs.next());
-        assertEquals(data.doubleValue(), rs.getDouble(1), 0);
+        assertEquals(Double.parseDouble(data), rs.getDouble(1), 0);
         assertFalse(rs.next());
         rs.close();
         stmt.close();
@@ -318,7 +285,7 @@ public class PreparedStatementTest extends TestBase {
      * Test for bug [938494] setObject(i, o, NUMERIC/DECIMAL) cuts off decimal places
      */
     public void testPreparedStatementSetObject5() throws Exception {
-        BigDecimal data = new BigDecimal(3.7D);
+        String data = String.valueOf(3.7D);
 
         Statement stmt = con.createStatement();
         stmt.execute("CREATE TABLE #psso5 (data MONEY)");
@@ -332,7 +299,7 @@ public class PreparedStatementTest extends TestBase {
         ResultSet rs = stmt.executeQuery("SELECT data FROM #psso5");
 
         assertTrue(rs.next());
-        assertEquals(data.doubleValue(), rs.getDouble(1), 0);
+        assertEquals(Double.parseDouble(data), rs.getDouble(1), 0);
         assertFalse(rs.next());
         rs.close();
         stmt.close();
@@ -401,34 +368,6 @@ public class PreparedStatementTest extends TestBase {
         ResultSet rs = pstmt.executeQuery();
         assertNotNull(rs);
         assertTrue(rs.next());
-    }
-
-    /**
-     * Test for bug [1022968] Long SQL expression error.
-     * NB. Test must be run with TDS=7.0 to fail.
-     */
-    public void testLongStatement() throws Exception {
-        Statement stmt = con.createStatement(
-                ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
-
-        stmt.execute("CREATE TABLE #longStatement (id int primary key, data varchar(8000))");
-
-        StringBuffer buf = new StringBuffer(4096);
-        buf.append("SELECT * FROM #longStatement WHERE data = '");
-
-        for (int i = 0; i < 4000; i++) {
-            buf.append('X');
-        }
-
-        buf.append("'");
-
-        ResultSet rs = stmt.executeQuery(buf.toString());
-
-        assertNotNull(rs);
-        assertFalse(rs.next());
-
-        rs.close();
-        stmt.close();
     }
 
     /**
@@ -507,8 +446,7 @@ public class PreparedStatementTest extends TestBase {
      * Test for bug [1050660] PreparedStatement.getMetaData() clears resultset.
      */
     public void testMetaDataClearsResultSet() throws Exception {
-        Statement stmt = con.createStatement(
-                ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
+        Statement stmt = con.createStatement();
 
         stmt.executeUpdate(
                 "CREATE TABLE #metaDataClearsResultSet (id int primary key, data varchar(8000))");
@@ -550,8 +488,7 @@ public class PreparedStatementTest extends TestBase {
      * Server).
      */
     public void testMetaData() throws Exception {
-        Statement stmt = con.createStatement(
-                ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
+        Statement stmt = con.createStatement();
 
         stmt.executeUpdate("CREATE TABLE #metaData (id int, data varchar(8000))");
         stmt.executeUpdate("INSERT INTO #metaData (id, data)"
@@ -653,8 +590,7 @@ public class PreparedStatementTest extends TestBase {
             try {
                 con.rollback();
                 PreparedStatement pstmt = con.prepareStatement(
-                        "SELECT id, data FROM #TEST WHERE id = ?",
-                        ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+                        "SELECT id, data FROM #TEST WHERE id = ?");
 
                 for (int i = 1; i <= LOOP_MAX; i++) {
                     pstmt.clearParameters();
@@ -728,15 +664,14 @@ public class PreparedStatementTest extends TestBase {
         Statement stmt = con.createStatement();
         stmt.execute(
                 "create table #test (id int primary key, val decimal(38,0))");
-        BigDecimal bd =
-                new BigDecimal("99999999999999999999999999999999999999");
+        String bd = "99999999999999999999999999999999999999";
         PreparedStatement pstmt =
                 con.prepareStatement("insert into #test values(?,?)");
         pstmt.setInt(1, 1);
-        pstmt.setBigDecimal(2, bd);
+        pstmt.setObject(2, bd, Types.DECIMAL);
         assertEquals(1, pstmt.executeUpdate()); // Worked OK
         pstmt.setInt(1, 2);
-        pstmt.setBigDecimal(2, bd.negate());
+        pstmt.setObject(2, '-' + bd, Types.DECIMAL);
         assertEquals(1, pstmt.executeUpdate()); // Failed
     }
 

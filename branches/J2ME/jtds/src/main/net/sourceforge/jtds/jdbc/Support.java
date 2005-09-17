@@ -19,8 +19,6 @@ package net.sourceforge.jtds.jdbc;
 
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.sql.*;
 import java.util.*;
 
@@ -41,7 +39,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.38 2005-03-12 22:39:29 alin_sinpalean Exp $
+ * @version $Id: Support.java,v 1.38.2.1 2005-09-17 10:58:59 alin_sinpalean Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -53,12 +51,8 @@ public class Support {
     private static final Float FLOAT_ONE = new Float(1.0);
     private static final Double DOUBLE_ZERO = new Double(0.0);
     private static final Double DOUBLE_ONE = new Double(1.0);
-    private static final BigDecimal BIG_DECIMAL_ZERO = new BigDecimal(0.0);
-    private static final BigDecimal BIG_DECIMAL_ONE = new BigDecimal(1.0);
     private static final java.sql.Date DATE_ZERO = new java.sql.Date(0);
     private static final java.sql.Time TIME_ZERO = new java.sql.Time(0);
-    private static final BigInteger maxValue28 = new BigInteger("9999999999999999999999999999");
-    private static final BigInteger maxValue38 = new BigInteger("99999999999999999999999999999999999999");
 
     /**
      * Convert java clases to java.sql.Type constant.
@@ -72,7 +66,6 @@ public class Support {
         typeMap.put(Long.class,               new Integer(java.sql.Types.BIGINT));
         typeMap.put(Float.class,              new Integer(java.sql.Types.REAL));
         typeMap.put(Double.class,             new Integer(java.sql.Types.DOUBLE));
-        typeMap.put(BigDecimal.class,         new Integer(java.sql.Types.DECIMAL));
         typeMap.put(Boolean.class,            new Integer(JtdsStatement.BOOLEAN));
         typeMap.put(byte[].class,             new Integer(java.sql.Types.VARBINARY));
         typeMap.put(java.sql.Date.class,      new Integer(java.sql.Types.DATE));
@@ -123,74 +116,156 @@ public class Support {
     }
 
     /**
-     * Normalize a BigDecimal value so that it fits within the
-     * available precision.
+     * Normalize a decimal value so that it fits within the available
+     * precision.
      *
-     * @param value The decimal value to normalize.
-     * @param maxPrecision The decimal precision supported by the server
-     *        (assumed to be a value of either 28 or 38).
-     * @return The possibly normalized decimal value as a <code>BigDecimal</code>.
-     * @throws SQLException If the number is too big.
+     * @param value        the decimal value to normalize
+     * @param maxPrecision the decimal precision supported by the server
+     *        (assumed to be a value of either 28 or 38)
+     * @return yhe possibly normalized decimal value as a <code>String</code>
+     * @throws SQLException if the number is too big
      */
-    static BigDecimal normalizeBigDecimal(BigDecimal value, int maxPrecision)
+    static String normalizeDecimal(String value, int maxPrecision)
             throws SQLException {
         if (value == null) {
             return null;
         }
 
-        if (value.scale() > maxPrecision) {
-            // This is an optimization to quickly adjust the scale of a
-            // very precise BD value. For example
-            // BigDecimal((double)1.0/3.0) yields a BD 54 digits long!
-            value = value.setScale(maxPrecision, BigDecimal.ROUND_HALF_UP);
-        }
+        boolean negative = value.charAt(0) == '-';
 
-        BigInteger max = (maxPrecision == 28) ? maxValue28 : maxValue38;
-
-        while (value.abs().unscaledValue().compareTo(max) > 0) {
-            // OK we need to reduce the scale if possible to preserve
-            // the integer part of the number and still fit within the
-            // available precision.
-            int scale = value.scale() - 1;
-
-            if (scale < 0) {
-                // Can't do it number just too big
-                throw new SQLException(Messages.get("error.normalize.numtoobig",
-                        String.valueOf(maxPrecision)), "22000");
+        int pos = value.indexOf('.');
+        if (pos > maxPrecision + (negative ? 1 : 0)) {
+            // Can't do it number just too big
+            throw new SQLException(Messages.get("error.normalize.numtoobig",
+                    String.valueOf(maxPrecision)), "22000");
+        } else {
+            // Return at most maxPrecision digits plus the decimal separator
+            int max = maxPrecision + (negative ? 2 : 1);
+            if (value.length() <= max) {
+                return value;
+            } else {
+                return value.substring(0, max);
             }
-
-            value = value.setScale(scale, BigDecimal.ROUND_HALF_UP);
         }
-
-        return value;
     }
 
     /**
-     * Convert a <code>BigDecimal</code> value to <code>String</code>,
-     * stripping any trailing zeroes.
+     * Returns the scale of a decimal value represented as a String.
      *
-     * @param x the <code>BigDecimal</code> value to convert
-     * @return  the value converted to <code>String</code>
+     * @param decimal the decimal value
+     * @return the number of digits after the decimal point
      */
-    private static String bigDecimalToString(BigDecimal x) {
-        if (((BigDecimal) x).scale() > 0) {
-            // Eliminate trailing zeros
-            String tmp = x.toString();
+    static int getDecimalScale(String decimal) {
+        int pos = decimal.indexOf('.');
+        return (pos < 0) ? 0 : decimal.length() - pos - 1;
+    }
 
-            for (int i = tmp.length() - 1; i > 0; i--) {
-                if (tmp.charAt(i) != '0') {
-                    if (tmp.charAt(i) == '.') {
-                        return tmp.substring(0, i);
-                    }
-
-                    return tmp.substring(0, i + 1);
-                }
-            }
-
-            return tmp;
+    /**
+     * Returns a decimal value with the requested scale, by appending zeroes or
+     * cutting of digits, as needed. Non-zero digits after the decimal
+     * separator are cut off silently if necessary.
+     *
+     * @param decimal the decimal value
+     * @param scale   the desired scale
+     * @return a String representing the same decimal value with the requested
+     *         scale
+     */
+    static String setDecimalScale(String decimal, int scale) {
+        // J2ME Test this!
+        int len = decimal.length();
+        int pos = decimal.indexOf(".");
+        if (pos == -1 && scale == 0) {
+            return decimal;
         }
 
-        return x.toString();
+        StringBuffer res = new StringBuffer(len + scale + 1);
+        res.append(decimal);
+
+        if (pos == -1) {
+            pos = len;
+            res.append('.');
+        }
+
+        if (scale == 0) {
+            // Truncate to decimal separator
+            res.setLength(pos);
+        } else if (len - pos - 1 > scale) {
+            // Reduce scale; truncate zeros
+            res.setLength(pos + scale + 1);
+        } else {
+            // Extend precision; append zeros
+            for (int i = pos + scale + 1 - len; i > 0; i--) {
+                res.append('0');
+            }
+        }
+
+        return res.toString();
+    }
+
+    /**
+     * Create a decimal value from the unscaled value (like a BigInteger) by
+     * bringing it to a required scale.
+     *
+     * @param unscaledValue the value, without scale
+     * @param scale         the required scale
+     * @return the scaled value as a String
+     */
+    static String createDecimal(String unscaledValue, int scale) {
+        if (scale < 0) {
+            throw new IllegalArgumentException("Negative scale");
+        }
+
+        // Scale os 0, return same String
+        if (scale == 0) {
+            return unscaledValue;
+        }
+
+        boolean negative = false;
+        if (unscaledValue.charAt(0) == '-') {
+            unscaledValue = unscaledValue.substring(1);
+            negative = true;
+        }
+
+        int len = unscaledValue.length();
+        StringBuffer buf;
+        if (len <= scale) {
+            // Value is less than 1; prepend zeroes
+            buf = new StringBuffer(scale + 3);
+            buf.append("0.");
+            for (int i = len; i < scale; i++) {
+                buf.append('0');
+            }
+            buf.append(unscaledValue);
+        } else {
+            // Value is greater than 1; insert decimal separator
+            buf = new StringBuffer(len + 2);
+            buf.append(unscaledValue);
+            buf.insert(len - scale, '.');
+        }
+
+        if (negative) {
+            buf.insert(0, '-');
+        }
+
+        return buf.toString();
+    }
+
+    /**
+     * Returns the unscaled value for a decimal.
+     *
+     * @param decimal the decimal value
+     * @return the decimal value with the decimal separator removed
+     */
+    static String getUnscaledValue(String decimal) {
+        int pos = decimal.indexOf('.');
+
+        // No decimal separator
+        if (pos < 0) {
+            return decimal;
+        }
+
+        // Remove decimal separator
+        return decimal.substring(0, pos) + decimal.substring(pos + 1);
     }
 
     /**
@@ -221,7 +296,7 @@ public class Support {
                     } else if (x instanceof Number) {
                         return new Integer(((Number) x).intValue());
                     } else if (x instanceof String) {
-                        return new Integer(((String) x).trim());
+                        return new Integer(Support.setDecimalScale(((String) x).trim(), 0));
                     } else if (x instanceof Boolean) {
                         return ((Boolean) x).booleanValue() ? INTEGER_ONE : INTEGER_ZERO;
                     }
@@ -237,7 +312,7 @@ public class Support {
                     } else if (x instanceof Number) {
                         return new Long(((Number) x).longValue());
                     } else if (x instanceof String) {
-                        return new Long(((String) x).trim());
+                        return new Long(Support.setDecimalScale(((String) x).trim(), 0));
                     } else if (x instanceof Boolean) {
                         return ((Boolean) x).booleanValue() ? LONG_ONE : LONG_ZERO;
                     }
@@ -281,28 +356,12 @@ public class Support {
 
                 case java.sql.Types.NUMERIC:
                 case java.sql.Types.DECIMAL:
-                    if (x == null) {
-                        return null;
-                    } else if (x instanceof BigDecimal) {
-                        return x;
-                    } else if (x instanceof Number) {
-                        return new BigDecimal(((Number) x).doubleValue());
-                    } else if (x instanceof String) {
-                        return new BigDecimal((String) x);
-                    } else if (x instanceof Boolean) {
-                        return ((Boolean) x).booleanValue() ? BIG_DECIMAL_ONE : BIG_DECIMAL_ZERO;
-                    }
-
-                    break;
-
                 case java.sql.Types.VARCHAR:
                 case java.sql.Types.CHAR:
                     if (x == null) {
                         return null;
                     } else if (x instanceof String) {
                         return x;
-                    } else if (x instanceof BigDecimal) {
-                        return bigDecimalToString((BigDecimal) x);
                     } else if (x instanceof Number) {
                         return x.toString();
                     } else if (x instanceof Boolean) {
@@ -347,7 +406,7 @@ public class Support {
                     } else if (x instanceof Number) {
                         return(((Number) x).intValue() == 0) ? Boolean.FALSE : Boolean.TRUE;
                     } else if (x instanceof String) {
-                        String tmp = ((String) x).trim();
+                        String tmp = Support.setDecimalScale(((String) x).trim(), 0);
 
                         return (tmp.equals("1") || tmp.equalsIgnoreCase("true")) ? Boolean.TRUE : Boolean.FALSE;
                     }
@@ -507,8 +566,6 @@ public class Support {
 
                         x = blob.getBytes(1, (int) blob.length());
                         // FIXME - Use input stream to populate Clob
-                    } else if (x instanceof BigDecimal) {
-                        x = bigDecimalToString((BigDecimal) x);
                     } else if (x instanceof Boolean) {
                         x = ((Boolean) x).booleanValue() ? "1" : "0";
                     } else if (!(x instanceof byte[])) {
@@ -636,10 +693,6 @@ public class Support {
             case java.sql.Types.BIGINT:
                 return "java.lang.Long";
 
-            case java.sql.Types.NUMERIC:
-            case java.sql.Types.DECIMAL:
-                return "java.math.BigDecimal";
-
             case java.sql.Types.REAL:
                 return "java.lang.Float";
 
@@ -649,6 +702,8 @@ public class Support {
 
             case java.sql.Types.CHAR:
             case java.sql.Types.VARCHAR:
+            case java.sql.Types.NUMERIC:
+            case java.sql.Types.DECIMAL:
                 return "java.lang.String";
 
             case java.sql.Types.BINARY:
@@ -682,7 +737,7 @@ public class Support {
      * @param buf The buffer in which the data will be embeded.
      * @param value The data object.
      */
-    static void embedData(StringBuffer buf, Object value, boolean isUnicode, int tdsVersion)
+    static void embedData(StringBuffer buf, Object value, boolean isUnicode)
             throws SQLException {
         buf.append(' ');
         if (value == null) {
@@ -707,16 +762,11 @@ public class Support {
 
             if (len >= 0) {
                 buf.append('0').append('x');
-                if (len == 0 && tdsVersion < Driver.TDS70) {
-                    // Zero length binary values are not allowed
-                    buf.append('0').append('0');
-                } else {
-                    for (int i = 0; i < len; i++) {
-                        int b1 = bytes[i] & 0xFF;
+                for (int i = 0; i < len; i++) {
+                    int b1 = bytes[i] & 0xFF;
 
-                        buf.append(hex[b1 >> 4]);
-                        buf.append(hex[b1 & 0x0F]);
-                    }
+                    buf.append(hex[b1 >> 4]);
+                    buf.append(hex[b1 & 0x0F]);
                 }
             }
         } else if (value instanceof String) {
@@ -806,55 +856,10 @@ public class Support {
             }
         } else if (value instanceof Boolean) {
             buf.append(((Boolean) value).booleanValue() ? '1' : '0');
-        } else if (value instanceof BigDecimal) {
-            //
-            // Ensure large decimal number does not overflow the
-            // maximum precision of the server.
-            // Main problem is with small numbers e.g. BigDecimal(1.0).toString() =
-            // 0.1000000000000000055511151231....
-            //
-            String tmp = value.toString();
-            int maxlen = (tdsVersion == Driver.TDS42 || tdsVersion == Driver.TDS70) ? 28 : 38;
-            if (tmp.charAt(0) == '-') {
-                maxlen++;
-            }
-            if (tmp.indexOf('.') >= 0) {
-                maxlen++;
-            }
-            if (tmp.length() > maxlen) {
-                buf.append(tmp.substring(0, maxlen));
-            } else {
-                buf.append(tmp);
-            }
         } else {
             buf.append(value.toString());
         }
         buf.append(' ');
-    }
-
-    /**
-     * Generates a unique statement key for a given SQL statement.
-     *
-     * @param sql the sql statment to generate the key for
-     * @param params the statement parameters
-     * @param serverType the type of server to generate the key for
-     * @param catalog the catalog is required for uniqueness on Microsoft SQL Server
-     * @return the unique statement key
-     */
-    static String getStatementKey(String sql, ParamInfo[] params, int serverType, String catalog) {
-        StringBuffer key = new StringBuffer(sql.length() + catalog.length() + 10 * params.length);
-
-        key.append(catalog); // Not sure if this is required for sybase
-        key.append(sql);
-
-        //
-        // Append parameter data types to key (not needed for sybase).
-        //
-        for (int i = 0; i < params.length && serverType != Driver.SYBASE; i++) {
-            key.append(params[i].sqlType);
-        }
-
-    	return key.toString();
     }
 
     /**
@@ -947,7 +952,7 @@ public class Support {
      * @param list The parameter descriptors.
      * @return The modified SQL statement.
      */
-    static String substituteParameters(String sql, ParamInfo[] list, int tdsVersion)
+    static String substituteParameters(String sql, ParamInfo[] list)
             throws SQLException {
         int len = sql.length();
 
@@ -998,8 +1003,7 @@ public class Support {
             if (pos > 0) {
                 buf.append(sql.substring(start, list[i].markerPos));
                 start = pos + 1;
-                Support.embedData(buf, list[i].value,
-                        tdsVersion >= Driver.TDS70 && list[i].isUnicode, tdsVersion);
+                Support.embedData(buf, list[i].value, list[i].isUnicode);
             }
         }
 
@@ -1088,6 +1092,11 @@ public class Support {
         }
 
         return (ConnectionJDBC2) connection;
+    }
+
+    static void notImplemented(String method) throws SQLException {
+        throw new SQLException(
+                Messages.get("error.generic.notimp", method), "07000");
     }
 
     // ------------- Private methods  ---------

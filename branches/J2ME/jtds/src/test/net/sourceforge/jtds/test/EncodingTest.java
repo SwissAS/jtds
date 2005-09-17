@@ -65,26 +65,13 @@ public class EncodingTest extends TestBase {
 
         assertEquals(pstmt.executeUpdate(), 1);
         pstmt.setInt(1, 2);
-        pstmt.setBytes(2, null);
+        pstmt.setBytes(2, "This is a another test".getBytes("ISO-8859-1"));
 
         assertEquals(pstmt.executeUpdate(), 1);
         pstmt.close();
 
-        stmt = con.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
-        ResultSet rs = stmt.executeQuery("SELECT * FROM #test");
-
-        while (rs.next()) {
-            if (rs.getInt(1) == 2) {
-                rs.updateBytes(2, "This is a another test".getBytes("ISO-8859-1"));
-                rs.updateRow();
-            }
-        }
-
-        rs.close();
-        stmt.close();
-
         stmt = con.createStatement();
-        rs = stmt.executeQuery("SELECT id, data FROM #test ORDER BY id");
+        ResultSet rs = stmt.executeQuery("SELECT id, data FROM #test ORDER BY id");
 
         assertTrue(rs.next());
         assertEquals("This is a test", rs.getString("data"));

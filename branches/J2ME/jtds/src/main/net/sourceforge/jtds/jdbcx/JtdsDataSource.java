@@ -24,16 +24,8 @@ import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Properties;
-import javax.naming.NamingException;
-import javax.naming.Reference;
-import javax.naming.Referenceable;
-import javax.naming.StringRefAddr;
 import javax.sql.DataSource;
-import javax.sql.XAConnection;
-import javax.sql.XADataSource;
-import javax.sql.ConnectionPoolDataSource;
 
-import net.sourceforge.jtds.jdbc.DefaultProperties;
 import net.sourceforge.jtds.jdbc.Driver;
 import net.sourceforge.jtds.jdbc.Messages;
 import net.sourceforge.jtds.util.Logger;
@@ -44,35 +36,26 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Alin Sinplean
  * @since  jTDS 0.3
- * @version $Id: JtdsDataSource.java,v 1.28 2005-03-18 11:46:52 alin_sinpalean Exp $
+ * @version $Id: JtdsDataSource.java,v 1.28.2.1 2005-09-17 10:58:59 alin_sinpalean Exp $
  */
 public class JtdsDataSource
-        implements DataSource, ConnectionPoolDataSource, XADataSource, Referenceable, Serializable {
+        implements DataSource, Serializable {
     protected String serverName;
-    protected String serverType;
     protected String portNumber;
     protected String databaseName;
     protected String tdsVersion;
     protected String charset;
     protected String language;
-    protected String domain;
-    protected String instance;
     protected String lastUpdateCount;
     protected String sendStringParametersAsUnicode;
-    protected String namedPipe;
     protected String macAddress;
-    protected String prepareSql;
-    protected String packetSize;
     protected String tcpNoDelay;
     protected String user;
     protected String password;
     protected String loginTimeout;
-    protected String lobBuffer;
-    protected String maxStatements;
     protected String appName;
     protected String progName;
     protected String wsid;
-    protected String xaEmulation;
     protected String logFile;
     protected String ssl;
     protected String batchSize;
@@ -91,27 +74,6 @@ public class JtdsDataSource
         // Do not set default property values here. Properties whose default
         // values depend on server type will likely be incorrect unless the
         // user specified them explicitly.
-    }
-
-    /**
-     * Returns a new XA database connection.
-     *
-     * @return a new database connection
-     * @throws SQLException if an error occurs
-     */
-    public XAConnection getXAConnection() throws SQLException {
-        return new JtdsXAConnection(this, getConnection(user, password));
-    }
-    /**
-     * Returns a new XA database connection for the user and password specified.
-     *
-     * @param user     the user name to connect with
-     * @param password the password to connect with
-     * @return a new database connection
-     * @throws SQLException if an error occurs
-     */
-    public XAConnection getXAConnection(String user, String password) throws SQLException {
-        return new JtdsXAConnection(this, getConnection(user, password));
     }
 
     /**
@@ -172,35 +134,17 @@ public class JtdsDataSource
         if (language != null) {
             props.setProperty(Messages.get(Driver.LANGUAGE), language);
         }
-        if (domain != null) {
-            props.setProperty(Messages.get(Driver.DOMAIN), domain);
-        }
-        if (instance != null) {
-            props.setProperty(Messages.get(Driver.INSTANCE), instance);
-        }
         if (lastUpdateCount != null) {
             props.setProperty(Messages.get(Driver.LASTUPDATECOUNT), lastUpdateCount);
         }
         if (sendStringParametersAsUnicode != null) {
             props.setProperty(Messages.get(Driver.SENDSTRINGPARAMETERSASUNICODE), sendStringParametersAsUnicode);
         }
-        if (namedPipe != null) {
-            props.setProperty(Messages.get(Driver.NAMEDPIPE), namedPipe);
-        }
         if (macAddress != null) {
             props.setProperty(Messages.get(Driver.MACADDRESS), macAddress);
         }
-        if (prepareSql != null) {
-            props.setProperty(Messages.get(Driver.PREPARESQL), prepareSql);
-        }
-        if (packetSize != null) {
-            props.setProperty(Messages.get(Driver.PACKETSIZE), packetSize);
-        }
         if (tcpNoDelay != null) {
             props.setProperty(Messages.get(Driver.TCPNODELAY), tcpNoDelay);
-        }
-        if (xaEmulation != null) {
-            props.setProperty(Messages.get(Driver.XAEMULATION), xaEmulation);
         }
         if (user != null) {
             props.setProperty(Messages.get(Driver.USER), user);
@@ -210,12 +154,6 @@ public class JtdsDataSource
         }
         if (loginTimeout != null) {
             props.setProperty(Messages.get(Driver.LOGINTIMEOUT), loginTimeout);
-        }
-        if (lobBuffer != null) {
-            props.setProperty(Messages.get(Driver.LOBBUFFER), lobBuffer);
-        }
-        if (maxStatements != null) {
-            props.setProperty(Messages.get(Driver.MAXSTATEMENTS), maxStatements);
         }
         if (appName != null) {
             props.setProperty(Messages.get(Driver.APPNAME), appName);
@@ -233,93 +171,9 @@ public class JtdsDataSource
             props.setProperty(Messages.get(Driver.BATCHSIZE), batchSize);
         }
 
-        String url;
-
-        try {
-            // Determine the server type (for the URL stub) or use the default
-            int serverTypeDef = (serverType == null) ? 0
-                    : Integer.parseInt(serverType);
-            url = "jdbc:jtds:"
-                    + DefaultProperties.getServerTypeWithDefault(serverTypeDef)
-                    + ":";
-        } catch (RuntimeException ex) {
-            ex.printStackTrace();
-            throw new SQLException(
-                    Messages.get("error.connection.servertype", ex.toString()),
-                    "08001");
-        }
-
         // Connect with the URL stub and set properties. The defaults will be
         // filled in by connect().
-        return driver.connect(url, props);
-    }
-
-    public Reference getReference() throws NamingException {
-        Reference ref = new Reference(getClass().getName(),
-                                      JtdsObjectFactory.class.getName(),
-                                      null);
-
-        ref.add(new StringRefAddr(Messages.get(Driver.SERVERNAME), serverName));
-        ref.add(new StringRefAddr(Messages.get(Driver.SERVERTYPE), serverType));
-        ref.add(new StringRefAddr(Messages.get(Driver.PORTNUMBER), portNumber));
-        ref.add(new StringRefAddr(Messages.get(Driver.DATABASENAME), databaseName));
-        ref.add(new StringRefAddr(Messages.get(Driver.TDS), tdsVersion));
-        ref.add(new StringRefAddr(Messages.get(Driver.CHARSET), charset));
-        ref.add(new StringRefAddr(Messages.get(Driver.LANGUAGE), language));
-        ref.add(new StringRefAddr(Messages.get(Driver.DOMAIN), domain));
-        ref.add(new StringRefAddr(Messages.get(Driver.INSTANCE), instance));
-        ref.add(new StringRefAddr(Messages.get(Driver.LASTUPDATECOUNT), lastUpdateCount));
-        ref.add(new StringRefAddr(Messages.get(Driver.SENDSTRINGPARAMETERSASUNICODE), sendStringParametersAsUnicode));
-        ref.add(new StringRefAddr(Messages.get(Driver.NAMEDPIPE), namedPipe));
-        ref.add(new StringRefAddr(Messages.get(Driver.MACADDRESS), macAddress));
-        ref.add(new StringRefAddr(Messages.get(Driver.PREPARESQL), prepareSql));
-        ref.add(new StringRefAddr(Messages.get(Driver.PACKETSIZE), packetSize));
-        ref.add(new StringRefAddr(Messages.get(Driver.TCPNODELAY), tcpNoDelay));
-        ref.add(new StringRefAddr(Messages.get(Driver.XAEMULATION), xaEmulation));
-        ref.add(new StringRefAddr(Messages.get(Driver.USER), user));
-        ref.add(new StringRefAddr(Messages.get(Driver.PASSWORD), password));
-        ref.add(new StringRefAddr(Messages.get(Driver.LOGINTIMEOUT), loginTimeout));
-        ref.add(new StringRefAddr(Messages.get(Driver.LOBBUFFER), lobBuffer));
-        ref.add(new StringRefAddr(Messages.get(Driver.MAXSTATEMENTS), maxStatements));
-        ref.add(new StringRefAddr(Messages.get(Driver.APPNAME), appName));
-        ref.add(new StringRefAddr(Messages.get(Driver.PROGNAME), progName));
-        ref.add(new StringRefAddr(Messages.get(Driver.WSID), wsid));
-        ref.add(new StringRefAddr(Messages.get(Driver.LOGFILE), logFile));
-        ref.add(new StringRefAddr(Messages.get(Driver.SSL), ssl));
-        ref.add(new StringRefAddr(Messages.get(Driver.BATCHSIZE), batchSize));
-
-        ref.add(new StringRefAddr("description", description));
-
-        return ref;
-    }
-
-    //
-    // ConnectionPoolDataSource methods
-    //
-
-    /**
-     * Returns a new pooled database connection.
-     *
-     * @return a new pooled database connection
-     * @throws SQLException if an error occurs
-     */
-    public javax.sql.PooledConnection getPooledConnection()
-            throws SQLException {
-        return getPooledConnection(user, password);
-    }
-
-    /**
-     * Returns a new pooled database connection for the user and password specified.
-     *
-     * @param user the user name to connect with
-     * @param password the password to connect with
-     * @return a new pooled database connection
-     * @throws SQLException if an error occurs
-     */
-    public synchronized javax.sql.PooledConnection getPooledConnection(String user,
-                                                                       String password)
-            throws SQLException {
-        return new net.sourceforge.jtds.jdbcx.PooledConnection(getConnection(user, password));
+        return driver.connect(props);
     }
 
     //
@@ -404,34 +258,6 @@ public class JtdsDataSource
         return tdsVersion;
     }
 
-    // TODO Use sqlserver/sybase for this (instead of numeric values)
-    public void setServerType(int serverType) {
-        this.serverType = String.valueOf(serverType);
-    }
-
-    public int getServerType() {
-        if (serverType == null) {
-            return 0;
-        }
-        return Integer.parseInt(serverType);
-    }
-
-    public String getDomain() {
-        return domain;
-    }
-
-    public void setDomain(String domain) {
-        this.domain = domain;
-    }
-
-    public String getInstance() {
-        return instance;
-    }
-
-    public void setInstance(String instance) {
-        this.instance = instance;
-    }
-
     public boolean getSendStringParametersAsUnicode() {
         return Boolean.valueOf(sendStringParametersAsUnicode).booleanValue();
     }
@@ -440,28 +266,12 @@ public class JtdsDataSource
         this.sendStringParametersAsUnicode = String.valueOf(sendStringParametersAsUnicode);
     }
 
-    public boolean getNamedPipe() {
-        return Boolean.valueOf(namedPipe).booleanValue();
-    }
-
-    public void setNamedPipe(boolean namedPipe) {
-        this.namedPipe = String.valueOf(namedPipe);
-    }
-
     public boolean getLastUpdateCount() {
         return Boolean.valueOf(lastUpdateCount).booleanValue();
     }
 
     public void setLastUpdateCount(boolean lastUpdateCount) {
         this.lastUpdateCount = String.valueOf(lastUpdateCount);
-    }
-
-    public boolean getXaEmulation() {
-        return Boolean.valueOf(xaEmulation).booleanValue();
-    }
-
-    public void setXaEmulation(boolean xaEmulation) {
-        this.xaEmulation = String.valueOf(xaEmulation);
     }
 
     public String getCharset() {
@@ -488,56 +298,12 @@ public class JtdsDataSource
         this.macAddress = macAddress;
     }
 
-    public void setPacketSize(int packetSize) {
-        this.packetSize = String.valueOf(packetSize);
-    }
-
-    public int getPacketSize() {
-        if (packetSize == null) {
-            return 0;
-        }
-        return Integer.parseInt(packetSize);
-    }
-
     public boolean getTcpNoDelay() {
         return Boolean.valueOf(tcpNoDelay).booleanValue();
     }
 
     public void setTcpNoDelay(boolean tcpNoDelay) {
         this.tcpNoDelay = String.valueOf(tcpNoDelay);
-    }
-
-    public void setPrepareSql(int prepareSql) {
-        this.prepareSql = String.valueOf(prepareSql);
-    }
-
-    public int getPrepareSql() {
-        if (prepareSql == null) {
-            return 0;
-        }
-        return Integer.parseInt(prepareSql);
-    }
-
-    public void setLobBuffer(long lobBuffer) {
-        this.lobBuffer = String.valueOf(lobBuffer);
-    }
-
-    public long getLobBuffer() {
-        if (lobBuffer == null) {
-            return 0;
-        }
-        return Long.parseLong(lobBuffer);
-    }
-
-    public void setMaxStatements(int maxStatements) {
-        this.maxStatements = String.valueOf(maxStatements);
-    }
-
-    public int getMaxStatements() {
-        if (maxStatements == null) {
-            return 0;
-        }
-        return Integer.parseInt(maxStatements);
     }
 
     public void setAppName(String appName) {

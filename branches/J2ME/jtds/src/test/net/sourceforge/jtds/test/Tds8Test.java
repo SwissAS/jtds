@@ -23,7 +23,6 @@ import net.sourceforge.jtds.jdbc.DefaultProperties;
 import net.sourceforge.jtds.jdbc.Messages;
 import net.sourceforge.jtds.jdbc.Driver;
 
-import java.math.BigDecimal;
 import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -100,7 +99,6 @@ public class Tds8Test extends DatabaseTestCase {
         assertTrue(rs.getLong(1) == 1);
         assertTrue(rs.getFloat(1) == 1);
         assertTrue(rs.getDouble(1) == 1);
-        assertTrue(rs.getBigDecimal(1).longValue() == 1);
         assertEquals(rs.getString(1), "1");
 
         Object tmpData = rs.getObject(1);
@@ -133,7 +131,7 @@ public class Tds8Test extends DatabaseTestCase {
         pstmt.setInt(2, 255);
         assertEquals("Insert 2 failed", pstmt.executeUpdate(), 1);
         pstmt.setInt(1, 3);
-        pstmt.setBigDecimal(2, new BigDecimal("10.23"));
+        pstmt.setObject(2, "10.23", Types.DECIMAL);
         assertEquals("Insert 3 failed", pstmt.executeUpdate(), 1);
         pstmt.setInt(1, 4);
         byte bytes[] = {'X', 'X', 'X'};
@@ -146,7 +144,7 @@ public class Tds8Test extends DatabaseTestCase {
         assertTrue(rs.next());
         assertEquals(255, rs.getInt(2));
         assertTrue(rs.next());
-        assertEquals("java.math.BigDecimal", rs.getObject(2).getClass().getName());
+        assertEquals("java.lang.String", rs.getObject(2).getClass().getName());
         assertEquals("10.23", rs.getString(2));
         assertTrue(rs.next());
         assertEquals("XXX", rs.getString(2));
@@ -277,23 +275,6 @@ public class Tds8Test extends DatabaseTestCase {
         assertFalse(rs.next());
         rs.close();
         pstmt.close();
-        stmt.close();
-
-        // Test inserting and retrieving charset-specific values via updateable ResultSet
-        stmt = con.createStatement(
-                ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
-        rs = stmt.executeQuery("select * from #testColumnCollations");
-        assertTrue(rs.next());
-        for (int i = 2; i <= 10; i++) {
-            rs.updateString(i, rs.getString(i) + "updated");
-            values[i - 2] = values[i - 2] + "updated";
-        }
-        rs.updateRow();
-        for (int i = 2; i <= 10; i++) {
-            assertEquals("Column " + i + " doesn't match", values[i - 2], rs.getString(i));
-        }
-        assertFalse(rs.next());
-        rs.close();
         stmt.close();
     }
 

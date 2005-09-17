@@ -2,7 +2,6 @@ package net.sourceforge.jtds.test;
 
 import java.sql.*;
 import java.util.Map;
-import java.math.BigDecimal;
 
 public abstract class DatabaseTestCase extends TestBase {
     private static Map typemap = null;
@@ -92,7 +91,6 @@ public abstract class DatabaseTestCase extends TestBase {
         }
 
         Map map = new java.util.HashMap(15);
-        map.put(BigDecimal.class,         new Integer(java.sql.Types.DECIMAL));
         map.put(Boolean.class,            new Integer(java.sql.Types.BIT));
         map.put(Byte.class,               new Integer(java.sql.Types.TINYINT));
         map.put(byte[].class,             new Integer(java.sql.Types.VARBINARY));

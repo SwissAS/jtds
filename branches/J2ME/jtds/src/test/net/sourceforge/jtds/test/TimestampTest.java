@@ -1,6 +1,5 @@
 package net.sourceforge.jtds.test;
 
-import java.math.BigDecimal;
 import java.sql.*;
 import java.util.Calendar;
 import java.util.TimeZone;
@@ -709,7 +708,7 @@ public class TimestampTest extends DatabaseTestCase {
             0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f
             } },
 */
-            {"float(6)",      "65.4321",                new BigDecimal("65.4321")},
+            {"float(6)",      "65.4321",                "65.4321"},
             {"binary(5)",     "0x1213141516",           new byte[] { 0x12, 0x13, 0x14, 0x15, 0x16}},
             {"varbinary(4)",  "0x1718191A",             new byte[] { 0x17, 0x18, 0x19, 0x1A}},
             {"varchar(8)",    "'12345678'",             "12345678"},
@@ -719,17 +718,15 @@ public class TimestampTest extends DatabaseTestCase {
             {"float(14)",     "1.123456789",            new Double(1.123456789) /*new BigDecimal("1.123456789") */},
             {"real",          "7654321.0",              new Double(7654321.0)},
             {"int",           "4097",                   new Integer(4097)},
-            {"float(6)",      "65.4321",                new BigDecimal("65.4321")},
-            {"float(14)",     "1.123456789",            new BigDecimal("1.123456789")},
-            {"decimal(10,3)", "1234567.089",            new BigDecimal("1234567.089")},
-            {"numeric(5,4)",  "1.2345",                 new BigDecimal("1.2345")},
+            {"float(6)",      "65.4321",                "65.4321"},
+//            {"float(14)",     "1.123456789",            "1.123456789"},
+            {"decimal(10,3)", "1234567.089",            "1234567.089"},
+            {"numeric(5,4)",  "1.2345",                 "1.2345"},
             {"smallint",      "4094",                   new Short((short) 4094)},
-            // {"tinyint",       "127",                    new Byte((byte) 127)},
-            // {"tinyint",       "-128",                   new Byte((byte) -128)},
             {"tinyint",       "127",                    new Byte((byte) 127)},
             {"tinyint",       "128",                    new Short((short) 128)},
-            {"money",         "19.95",                  new BigDecimal("19.95")},
-            {"smallmoney",    "9.97",                   new BigDecimal("9.97")},
+            {"money",         "19.95",                  new Double(19.95)},
+            {"smallmoney",    "9.97",                   new Double(9.97)},
             {"bit",           "1",                      Boolean.TRUE},
 //			{ "text",          "'abcedefg'",             "abcdefg" },
 /*			{ "char(1000)",
@@ -1333,8 +1330,8 @@ public class TimestampTest extends DatabaseTestCase {
         pstmtA.close();
         pstmtB.close();
 
-        Statement stmtA = con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-        Statement stmtB = con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+        Statement stmtA = con.createStatement();
+        Statement stmtB = con.createStatement();
 
         count = 0;
         ResultSet rsA = stmtA.executeQuery("select * from #t0026a");
@@ -2350,10 +2347,6 @@ public class TimestampTest extends DatabaseTestCase {
             throws SQLException {
         Timestamp value = rs.getTimestamp(1);
         long ms = value.getTime();
-        if (!Driver.JDBC3) {
-            // Not Running under 1.4 so need to add milliseconds
-            ms += ((java.sql.Timestamp)value).getNanos() / 1000000;
-        }
         return ms;
     }
 }

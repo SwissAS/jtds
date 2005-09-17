@@ -44,7 +44,7 @@ import java.sql.SQLException;
  * Joel Fouse.
  * </ol>
  * @author Mike Hutchinson
- * @version $Id: SQLParser.java,v 1.19 2005-02-27 14:47:17 alin_sinpalean Exp $
+ * @version $Id: SQLParser.java,v 1.19.2.1 2005-09-17 10:58:59 alin_sinpalean Exp $
  */
 class SQLParser {
     /** Input buffer with SQL statement. */
@@ -65,8 +65,6 @@ class SQLParser {
     private String procName;
     /** First SQL keyword or identifier in statement. */
     private String keyWord;
-    /** First table name in from clause */
-    private String tableName;
     /** Connection object for server specific parsing. */
     private ConnectionJDBC2 connection;
 
@@ -525,25 +523,20 @@ class SQLParser {
         }
     }
 
-    /** Map of jdbc to sybase function names. */
-    private static HashMap fnMap = new HashMap();
     /** Map of jdbc to sql server function names. */
-    private static HashMap msFnMap = new HashMap();
+    private static HashMap fnMap = new HashMap();
     /** Map of jdbc to server data types for convert */
     private static HashMap cvMap = new HashMap();
 
     static {
-        // Microsoft only functions
-        msFnMap.put("length", "len($)");
-        msFnMap.put("truncate", "round($, 1)");
-        // Common functions
+        fnMap.put("length",   "len($)");
+        fnMap.put("truncate", "round($, 1)");
         fnMap.put("user",     "user_name($)");
         fnMap.put("database", "db_name($)");
         fnMap.put("ifnull",   "isnull($)");
         fnMap.put("now",      "getdate($)");
         fnMap.put("atan2",    "atn2($)");
         fnMap.put("mod",      "($)");
-        fnMap.put("length",   "char_length($)");
         fnMap.put("locate",   "charindex($)");
         fnMap.put("repeat",   "replicate($)");
         fnMap.put("insert",   "stuff($)");
@@ -676,15 +669,7 @@ class SQLParser {
         //
         // See if function mapped
         //
-        String fn;
-        if (connection.getServerType() == Driver.SQLSERVER) {
-            fn = (String)msFnMap.get(name);
-            if (fn == null) {
-                fn = (String)fnMap.get(name);
-            }
-        } else {
-            fn = (String)fnMap.get(name);
-        }
+        String fn = (String) fnMap.get(name);
         if (fn == null) {
             // Not mapped so assume simple case
             copyLiteral(name);
@@ -801,97 +786,12 @@ class SQLParser {
     }
 
     /**
-     * Extract the first table name following the keyword FROM.
-     *
-     * @return the table name as a <code>String</code>
-     */
-    private String getTableName()
-    {
-        // FIXME If the resulting table name contains a '(' (i.e. is a function) "rollback" and return null
-        StringBuffer name = new StringBuffer(128);
-        char c = (s < len)? in[s]: ' ';
-        while (s < len && Character.isWhitespace(c)) {
-            out[d++] = c; s++; c = (s < len)? in[s]: ' ';
-        }
-        if (c == '{') {
-            // Start of {oj ... } we can assume that there is
-            // more than one table in select and therefore
-            // it would not be updateable.
-            return "";
-        }
-        //
-        // Skip any leading comments before fist table name
-        //
-        while (c == '/' || c == '-') {
-            if ( c == '/') {
-                if (s+1 < len && in[s+1] == '*') {
-                    skipMultiComments();
-                    s++;
-                } else {
-                    break;
-                }
-            } else {
-                if (s+1 < len && in[s+1] == '-') {
-                    skipSingleComments();
-                } else {
-                    break;
-                }
-            }
-            c = (s < len)? in[s]: ' ';
-            while (s < len && Character.isWhitespace(c)) {
-                out[d++] = c; s++; c = (s < len)? in[s]: ' ';
-            }
-        }
-        if (c == '{') {
-            // See comment above
-            return "";
-        }
-        //
-        // Now process table name
-        //
-        while (s < len) {
-            if (c == '[' || c == '"') {
-                int start = d;
-                copyString();
-                name.append(String.valueOf(out, start, d-start));
-                c = (s < len)? in[s]: ' ';
-            } else {
-                int start = d;
-                while (s < len && !Character.isWhitespace(c) && c != '.' && c != ',') {
-                    out[d++] = c; s++;
-                    c = (s < len)? in[s]: ' ';
-                }
-                name.append(String.valueOf(out, start, d-start));
-            }
-            while (s < len && Character.isWhitespace(c)) {
-                out[d++] = c; s++;
-                c = (s < len)? in[s]: ' ';
-            }
-            if (c != '.') {
-                break;
-            }
-            name.append(c);
-            out[d++] = c; s++;
-            c = (s < len)? in[s]: ' ';
-            while (s < len && Character.isWhitespace(c)) {
-                out[d++] = c; s++;
-                c = (s < len)? in[s]: ' ';
-            }
-        }
-        return name.toString();
-    }
-
-    /**
      * Parse the SQL statement processing JDBC escapes and parameter markers.
      *
-     * @param extractTable true to return the first table name in the FROM clause of a select
-     * @return The processed SQL statement, any procedure name, the first
-     * SQL keyword and (optionally) the first table name as elements 0 1, 2 and 3 of the
-     * returned <code>String[]</code>.
-     * @throws SQLException
+     * @return The processed SQL statement, any procedure name and the first
+     * SQL keyword as elements 0, 1 and 2 of the returned <code>String[]</code>
      */
-    String[] parse(boolean extractTable) throws SQLException {
-        boolean isSelect = false;
+    String[] parse() throws SQLException {
         try {
             //
             while (s < len) {
@@ -927,18 +827,6 @@ class SQLParser {
                         if (Character.isLetter(c)) {
                             if (keyWord == null) {
                                 keyWord = copyKeyWord();
-                                if (keyWord.equals("select")) {
-                                    isSelect = true;
-                                }
-                                break;
-                            }
-                            if (extractTable && isSelect) {
-                                String sqlWord = copyKeyWord();
-                                if (sqlWord.equals("from")) {
-                                    // Ensure only first 'from' is processed
-                                    extractTable = false;
-                                    tableName = getTableName();
-                                }
                                 break;
                             }
                         }
@@ -953,37 +841,27 @@ class SQLParser {
             // building a plain query) and this is not a procedure call.
             //
             if (params.size() > 255
-                    && connection.getPrepareSql() != TdsCore.UNPREPARED
                     && procName != null) {
-                int limit = 255; // SQL 6.5 and Sybase < 12.50
-                if (connection.getServerType() == Driver.SYBASE) {
-                    if (connection.getDatabaseMajorVersion() > 12 ||
-                            connection.getDatabaseMajorVersion() == 12 &&
-                            connection.getDatabaseMinorVersion() >= 50) {
-                        limit = 2000; // Actually 2048 but allow some head room
-                    }
-                } else {
-                    if (connection.getDatabaseMajorVersion() == 7) {
-                        limit = 1000; // Actually 1024
-                    } else
-                    if (connection.getDatabaseMajorVersion() > 7) {
-                        limit = 2000; // Actually 2100
-                    }
-
+                int limit = 255; // SQL 6.5
+                if (connection.getDatabaseMajorVersion() == 7) {
+                    limit = 1000; // Actually 1024
+                } else
+                if (connection.getDatabaseMajorVersion() > 7) {
+                    limit = 2000; // Actually 2100
                 }
+
                 if (params.size() > limit) {
                     throw new SQLException(
                         Messages.get("error.parsesql.toomanyparams",
                                 Integer.toString(limit)), "22025");
                 }
             }
-            String result[] = new String[4];
+            String result[] = new String[3];
 
             // return sql and procname
             result[0] = new String(out, 0, d);
             result[1] = procName;
             result[2] = (keyWord == null)? "": keyWord;
-            result[3] = tableName;
             return result;
         } catch (IndexOutOfBoundsException e) {
             // Should only come here if string is invalid in some way.

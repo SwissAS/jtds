@@ -28,7 +28,7 @@ import java.util.HashMap;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: SQLDiagnostic.java,v 1.7 2005-02-09 08:28:51 alin_sinpalean Exp $
+ * @version $Id: SQLDiagnostic.java,v 1.7.4.1 2005-09-17 10:58:59 alin_sinpalean Exp $
  */
 class SQLDiagnostic {
     /**
@@ -37,13 +37,6 @@ class SQLDiagnostic {
      * FreeTDS project. Thank you for the hard work.
      */
     private final static HashMap mssqlStates = new HashMap();
-
-    /**
-     * Map to convert Sybase SQL server error codes to ANSI SQLSTATE codes.
-     * The values in this table are derived from the list compiled by the
-     * FreeTDS project. Thank you for the hard work.
-     */
-    private final static HashMap sybStates = new HashMap();
 
     static {
         // When adding values into this map please ensure that you maintain
@@ -224,104 +217,7 @@ class SQLDiagnostic {
         mssqlStates.put(new Integer(21049), "42000");
         mssqlStates.put(new Integer(21166), "42S22");
         mssqlStates.put(new Integer(21255), "42S21");
-
-        // When adding values into this map please ensure that you maintain
-        // the ascending order. This is for readability purposes only, but it's
-        // still important.
-        sybStates.put(new Integer(102), "37000");
-        sybStates.put(new Integer(109), "21S01");
-        sybStates.put(new Integer(110), "21S01");
-        sybStates.put(new Integer(113), "42000");
-        sybStates.put(new Integer(168), "22003");
-        sybStates.put(new Integer(201), "37000");
-        sybStates.put(new Integer(207), "42S22");
-        sybStates.put(new Integer(208), "42S02");
-        sybStates.put(new Integer(213), "21S01");
-        sybStates.put(new Integer(220), "22003");
-        sybStates.put(new Integer(227), "22003");
-        sybStates.put(new Integer(229), "42000");
-        sybStates.put(new Integer(230), "42000");
-        sybStates.put(new Integer(232), "22003");
-        sybStates.put(new Integer(233), "23000");
-        sybStates.put(new Integer(245), "22018");
-        sybStates.put(new Integer(247), "22003");
-        sybStates.put(new Integer(257), "37000");
-        sybStates.put(new Integer(262), "42000");
-        sybStates.put(new Integer(277), "25000");
-        sybStates.put(new Integer(307), "42S12");
-        sybStates.put(new Integer(512), "21000");
-        sybStates.put(new Integer(517), "22008");
-        sybStates.put(new Integer(535), "22008");
-        sybStates.put(new Integer(542), "22008");
-        sybStates.put(new Integer(544), "23000");
-        sybStates.put(new Integer(545), "23000");
-        sybStates.put(new Integer(546), "23000");
-        sybStates.put(new Integer(547), "23000");
-        sybStates.put(new Integer(548), "23000");
-        sybStates.put(new Integer(549), "23000");
-        sybStates.put(new Integer(550), "23000");
-        sybStates.put(new Integer(558), "24000");
-        sybStates.put(new Integer(559), "24000");
-        sybStates.put(new Integer(562), "24000");
-        sybStates.put(new Integer(565), "24000");
-        sybStates.put(new Integer(583), "24000");
-        sybStates.put(new Integer(611), "25000");
-        sybStates.put(new Integer(627), "25000");
-        sybStates.put(new Integer(628), "25000");
-        sybStates.put(new Integer(641), "25000");
-        sybStates.put(new Integer(642), "25000");
-        sybStates.put(new Integer(911), "08004");
-        sybStates.put(new Integer(1276), "25000");
-        sybStates.put(new Integer(1505), "23000");
-        sybStates.put(new Integer(1508), "23000");
-        sybStates.put(new Integer(1715), "21S02");
-        sybStates.put(new Integer(1720), "42S22");
-        sybStates.put(new Integer(1913), "42S11");
-        sybStates.put(new Integer(1921), "42S21");
-        sybStates.put(new Integer(2526), "37000");
-        sybStates.put(new Integer(2714), "42S01");
-        sybStates.put(new Integer(2812), "37000");
-        sybStates.put(new Integer(3606), "22003");
-        sybStates.put(new Integer(3607), "22012");
-        sybStates.put(new Integer(3621), "01000");
-        sybStates.put(new Integer(3701), "42S02");
-        sybStates.put(new Integer(3902), "25000");
-        sybStates.put(new Integer(3903), "25000");
-        sybStates.put(new Integer(4602), "42000");
-        sybStates.put(new Integer(4603), "42000");
-        sybStates.put(new Integer(4608), "42000");
-        sybStates.put(new Integer(4934), "42S22");
-        sybStates.put(new Integer(6104), "37000");
-        sybStates.put(new Integer(6235), "24000");
-        sybStates.put(new Integer(6259), "24000");
-        sybStates.put(new Integer(6260), "24000");
-        sybStates.put(new Integer(7010), "42S12");
-        sybStates.put(new Integer(7327), "37000");
-        sybStates.put(new Integer(9501), "01003");
-        sybStates.put(new Integer(9502), "22001");
-        sybStates.put(new Integer(10306), "42000");
-        sybStates.put(new Integer(10323), "42000");
-        sybStates.put(new Integer(10330), "42000");
-        sybStates.put(new Integer(10331), "42000");
-        sybStates.put(new Integer(10332), "42000");
-        sybStates.put(new Integer(11021), "37000");
-        sybStates.put(new Integer(11110), "42000");
-        sybStates.put(new Integer(11113), "42000");
-        sybStates.put(new Integer(11118), "42000");
-        sybStates.put(new Integer(11121), "42000");
-        sybStates.put(new Integer(17222), "42000");
-        sybStates.put(new Integer(17223), "42000");
-        sybStates.put(new Integer(18091), "42S12");
-        sybStates.put(new Integer(18117), "42S22");
-        sybStates.put(new Integer(18350), "42000");
-        sybStates.put(new Integer(18351), "42000");
     }
-
-    /**
-     * SQL Server type. Either <code>Driver.SQLSERVER</code> or
-     * <code>Driver.SYBASE</code>.
-     */
-    private final int serverType;
 
     SQLException exceptions = null;
     SQLWarning warnings = null;
@@ -362,18 +258,12 @@ class SQLDiagnostic {
                        int line) {
         if (serverity > 10) {
             SQLException e = new SQLException(message,
-                                              getStateCode(number, serverType, "S1000"),
+                                              getStateCode(number, "S1000"),
                                               number);
             //
             // See if the driver should return a DataTrunction exception
             //
-            if ((serverType == Driver.SQLSERVER &&
-                    (number == 8152 ||
-                     number == 8115 ||
-                     number == 220)) ||
-                (serverType == Driver.SYBASE &&
-                    (number == 247 ||
-                     number == 9502))) {
+            if (number == 8152 || number == 8115 || number == 220) {
                 SQLException tmp = e;
                 e = new DataTruncation(-1, false, false, -1, -1);
                 // Chain the original exception as this has useful info.
@@ -388,7 +278,7 @@ class SQLDiagnostic {
                 addWarning(w);
             } else {
                 SQLWarning w = new SQLWarning(message,
-                                              getStateCode(number, serverType, "01000"),
+                                              getStateCode(number, "01000"),
                                               number);
                 addWarning(w);
             }
@@ -426,27 +316,15 @@ class SQLDiagnostic {
     }
 
     /**
-     * Create an SQL message for a specific server type.
-     *
-     * @param serverType either <code>Driver.SQLSERVER</code> or <code>Driver.SYBASE</code>
-     */
-    SQLDiagnostic(final int serverType) {
-        this.serverType = serverType;
-    }
-
-    /**
      * Map an SQL Server error code to an ANSI SQLSTATE code.
      *
      * @param number the SQL Server error number
-     * @param serverType <code>Driver.SQLSERVER</code> or <code>Driver.SYBASE</code>
      * @param defState the default state code to return if the mapping fails
      * @return the SQLSTATE code as a <code>String</code>
      */
     private static String getStateCode(final int number,
-                                       final int serverType,
                                        final String defState) {
-        final HashMap stateTable = (serverType == Driver.SYBASE) ? sybStates : mssqlStates;
-        final String state = (String) stateTable.get(new Integer(number));
+        final String state = (String) mssqlStates.get(new Integer(number));
 
         if (state != null) {
             return state;

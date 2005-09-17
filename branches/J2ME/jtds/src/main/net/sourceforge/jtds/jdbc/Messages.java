@@ -18,8 +18,6 @@
 package net.sourceforge.jtds.jdbc;
 
 import java.text.MessageFormat;
-import java.util.Enumeration;
-import java.util.Map;
 import java.util.ResourceBundle;
 
 
@@ -28,7 +26,7 @@ import java.util.ResourceBundle;
  *
  * @author David D. Kilzer
  * @author Mike Hutchinson
- * @version $Id: Messages.java,v 1.7 2004-09-01 15:33:59 alin_sinpalean Exp $
+ * @version $Id: Messages.java,v 1.7.4.1 2005-09-17 10:58:59 alin_sinpalean Exp $
  */
 public final class Messages {
 
@@ -118,36 +116,6 @@ public final class Messages {
             }
         } catch (java.util.MissingResourceException mre) {
             throw new RuntimeException("No message resource found for message property " + key);
-        }
-    }
-
-
-    /**
-     * Retrieve the list of driver property names and driver property
-     * descriptions from <code>Messages.properties</code> and populate
-     * them into {@link Map} objects.
-     * <p/>
-     * The keys used to populate both <code>propertyMap</code> and
-     * <code>descriptionMap</code> are guaranteed to match up as long
-     * as the properties defined in <code>Messages.properties</code>
-     * are well-formed.
-     *
-     * @param propertyMap The map of property names to be populated.
-     * @param descriptionMap The map of property descriptions to be populated.
-     */
-    static void loadDriverProperties(Map propertyMap, Map descriptionMap) {
-        final ResourceBundle bundle = loadResourceBundle();
-        final Enumeration keys = bundle.getKeys();
-        while (keys.hasMoreElements()) {
-            final String key = (String) keys.nextElement();
-            final String descriptionPrefix = "prop.desc.";
-            final String propertyPrefix = "prop.";
-            if (key.startsWith(descriptionPrefix)) {
-                descriptionMap.put(key.substring(descriptionPrefix.length()), bundle.getString(key));
-            }
-            else if (key.startsWith(propertyPrefix)) {
-                propertyMap.put(key.substring(propertyPrefix.length()), bundle.getString(key));
-            }
         }
     }
 

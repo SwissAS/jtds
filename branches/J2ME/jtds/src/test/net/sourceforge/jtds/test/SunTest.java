@@ -21,9 +21,6 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 
 import java.sql.*;
-import java.math.BigDecimal;
-
-
 
 /**
  * Test case to illustrate errors reported by SUN JBDC compatibility test suite.
@@ -441,7 +438,7 @@ public class SunTest extends DatabaseTestCase {
 
         // Test BigDecimal to LONGVARCHAR conversion
         pstmt.setInt(1, ++id);
-        pstmt.setObject(2, new BigDecimal(decimalValue), java.sql.Types.LONGVARCHAR);
+        pstmt.setObject(2, decimalValue, java.sql.Types.LONGVARCHAR);
         pstmt.executeUpdate();
 
         // Test Boolean to LONGVARCHAR conversion

@@ -17,7 +17,6 @@
 //
 package net.sourceforge.jtds.util;
 
-import java.sql.*;
 import java.io.PrintWriter;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -33,7 +32,7 @@ import java.io.IOException;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: Logger.java,v 1.10 2005-02-09 08:28:59 alin_sinpalean Exp $
+ * @version $Id: Logger.java,v 1.10.4.1 2005-09-17 10:58:59 alin_sinpalean Exp $
  */
 public class Logger {
     /** PrintWriter stream set by DataSource. */
@@ -63,7 +62,7 @@ public class Logger {
      * @return <code>boolean</code> true if logging enabled
      */
     public static boolean isActive() {
-        return(log != null || DriverManager.getLogWriter() != null);
+        return log != null;
     }
 
     /**
@@ -75,8 +74,6 @@ public class Logger {
     public static void println(String message) {
         if (log != null) {
             log.println(message);
-        } else {
-            DriverManager.println(message);
         }
     }
     private static final char hex[] =
@@ -197,8 +194,6 @@ public class Logger {
     public static void logException(Exception e) {
         if (log != null) {
             e.printStackTrace(log);
-        } else if (DriverManager.getLogWriter() != null) {
-            e.printStackTrace(DriverManager.getLogWriter());
         }
     }
 

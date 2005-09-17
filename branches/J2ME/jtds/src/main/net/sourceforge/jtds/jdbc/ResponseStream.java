@@ -32,7 +32,7 @@ import net.sourceforge.jtds.util.*;
  * </ol>
  *
  * @author Mike Hutchinson.
- * @version $Id: ResponseStream.java,v 1.15 2005-02-23 20:40:09 alin_sinpalean Exp $
+ * @version $Id: ResponseStream.java,v 1.15.2.1 2005-09-17 10:58:59 alin_sinpalean Exp $
  */
 public class ResponseStream {
     /** The shared network socket. */
@@ -145,33 +145,6 @@ public class ResponseStream {
     }
 
     /**
-     * Retrieve a char array from the server response stream.
-     *
-     * @param c The char array.
-     * @return The byte array as a <code>byte[]</code>.
-     * @throws IOException
-     */
-    int read(char[] c) throws IOException {
-        for (int i = 0; i < c.length; i++) {
-            if (bufferPtr >= bufferLen) {
-                getPacket();
-            }
-
-            int b1 = buffer[bufferPtr++] & 0xFF;
-
-            if (bufferPtr >= bufferLen) {
-                getPacket();
-            }
-
-            int b2 = buffer[bufferPtr++] << 8;
-
-            c[i] = (char) (b2 | b1);
-        }
-
-        return c.length;
-    }
-
-    /**
      * Retrieve a String object from the server response stream.
      * If the TDS protocol is 4.2 or 5.0 decode the string using the default
      * server charset, otherwise use UCS2-LE (Unicode).
@@ -183,33 +156,7 @@ public class ResponseStream {
      * @throws IOException if an I/O error occurs
      */
     String readString(int len) throws IOException {
-        if (socket.getTdsVersion() >= Driver.TDS70) {
-            return readUnicodeString(len);
-        }
-
-        return readNonUnicodeString(len);
-    }
-
-    /**
-     * Skip a string from the server response stream. If the TDS protocol is
-     * 4.2 or 5.0 <code>len</code> is the length in bytes, otherwise it's the
-     * length in UCS2-LE characters (length in bytes == 2 * <code>len</code>).
-     *
-     * @param len the length of the string to skip <b>in bytes</b> in the case
-     *            of TDS 4.2/5.0 and <b>in characters</b> for TDS 7.0+
-     *            (UCS2-LE encoded strings)
-     * @throws IOException if an I/O error occurs
-     */
-    void skipString(int len) throws IOException {
-        if (len <= 0) {
-            return;
-        }
-
-        if (socket.getTdsVersion() >= Driver.TDS70) {
-            skip(len * 2);
-        } else {
-            skip(len);
-        }
+        return readUnicodeString(len);
     }
 
     /**
@@ -400,15 +347,6 @@ public class ResponseStream {
      */
     int getTdsVersion() {
         return socket.getTdsVersion();
-    }
-
-    /**
-     * Retrieve the Server type.
-     *
-     * @return The Server type as an <code>int</code>.
-     */
-    int getServerType() {
-        return socket.getServerType();
     }
 
     /**

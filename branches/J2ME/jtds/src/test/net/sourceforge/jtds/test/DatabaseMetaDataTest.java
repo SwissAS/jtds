@@ -22,7 +22,7 @@ import java.sql.*;
 /**
  * Test <code>DatabaseMetaData</code>.
  *
- * @version $Id: DatabaseMetaDataTest.java,v 1.12 2005-02-17 21:49:00 alin_sinpalean Exp $
+ * @version $Id: DatabaseMetaDataTest.java,v 1.12.2.1 2005-09-17 10:58:59 alin_sinpalean Exp $
  */
 public class DatabaseMetaDataTest extends MetaDataTestCase {
 
@@ -182,7 +182,6 @@ public class DatabaseMetaDataTest extends MetaDataTestCase {
         assertEquals("getSQLKeywords","ARITH_OVERFLOW,BREAK,BROWSE,BULK,CHAR_CONVERT,CHECKPOINT,CLUSTERED,COMPUTE,CONFIRM,CONTROLROW,DATA_PGS,DATABASE,DBCC,DISK,DUMMY,DUMP,ENDTRAN,ERRLVL,ERRORDATA,ERROREXIT,EXIT,FILLFACTOR,HOLDLOCK,IDENTITY_INSERT,IF,INDEX,KILL,LINENO,LOAD,MAX_ROWS_PER_PAGE,MIRROR,MIRROREXIT,NOHOLDLOCK,NONCLUSTERED,NUMERIC_TRUNCATION,OFF,OFFSETS,ONCE,ONLINE,OVER,PARTITION,PERM,PERMANENT,PLAN,PRINT,PROC,PROCESSEXIT,RAISERROR,READ,READTEXT,RECONFIGURE,REPLACE,RESERVED_PGS,RETURN,ROLE,ROWCNT,ROWCOUNT,RULE,SAVE,SETUSER,SHARED,SHUTDOWN,SOME,STATISTICS,STRIPE,SYB_IDENTITY,SYB_RESTREE,SYB_TERMINATE,TEMP,TEXTSIZE,TRAN,TRIGGER,TRUNCATE,TSEQUAL,UNPARTITION,USE,USED_PGS,USER_OPTION,WAITFOR,WHILE,WRITETEXT", dbmd.getSQLKeywords());
         assertEquals("getSystemFunctions","database,ifnull,user,convert", dbmd.getSystemFunctions());
         assertEquals("getTimeDateFunctions","curdate,curtime,dayname,dayofmonth,dayofweek,dayofyear,hour,minute,month,monthname,now,quarter,timestampadd,timestampdiff,second,week,year", dbmd.getTimeDateFunctions());
-        assertNotNull("getURL", dbmd.getURL());
         assertNotNull("getUserName", dbmd.getUserName());
         if (dbmd.getDatabaseProductName().startsWith("Microsoft")) {
             assertEquals("getStringFunctions","ascii,char,concat,difference,insert,lcase,left,length,locate,ltrim,repeat,replace,right,rtrim,soundex,space,substring,ucase", dbmd.getStringFunctions());
@@ -341,11 +340,7 @@ public class DatabaseMetaDataTest extends MetaDataTestCase {
             assertEquals("jtds_spmeta", rs.getString(3));
             //
             rs = dbmd.getSchemas();
-            if (net.sourceforge.jtds.jdbc.Driver.JDBC3) {
-                assertTrue(checkColumnNames(rs, new String[]{"TABLE_SCHEM","TABLE_CATALOG"}));
-            } else {
-                assertTrue(checkColumnNames(rs, new String[]{"TABLE_SCHEM"}));
-            }
+            assertTrue(checkColumnNames(rs, new String[]{"TABLE_SCHEM","TABLE_CATALOG"}));
             assertTrue(rs.next());
             //
             rs = dbmd.getTablePrivileges(null, null, "jTDS_META");
@@ -463,30 +458,6 @@ public class DatabaseMetaDataTest extends MetaDataTestCase {
         rsmd.isSigned(1);
         rsmd.isWritable(1);
 
-        rs.close();
-    }
-
-    /**
-     * Test for bug [1023984] Protocol error processing table meta data.
-     * <p>
-     * Test to demonstrate failure to process the TDS table name token
-     * correctly. Must be run with TDS=8.0.
-     * @throws Exception
-     */
-    public void testTableMetaData() throws Exception {
-        // This test is supposed to select from a different database, in order to
-        // force the server to return a fully qualified table name. Do not alter.
-        Statement stmt = con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-        ResultSet rs = stmt.executeQuery("SELECT * FROM master.dbo.sysdatabases");
-
-        assertNotNull(rs);
-        ResultSetMetaData rsmd = rs.getMetaData();
-
-        assertEquals("master", rsmd.getCatalogName(1));
-        assertEquals("dbo", rsmd.getSchemaName(1));
-        assertEquals("sysdatabases", rsmd.getTableName(1));
-
-        stmt.close();
         rs.close();
     }
 

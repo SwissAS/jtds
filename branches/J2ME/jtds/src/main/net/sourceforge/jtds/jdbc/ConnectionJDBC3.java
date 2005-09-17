@@ -29,25 +29,30 @@ import java.sql.*;
  * @author Brian Heineman
  * @author Mike Hutchinson
  *  created    March 30, 2004
- * @version $Id: ConnectionJDBC3.java,v 1.11 2004-12-16 08:46:08 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC3.java,v 1.11.4.1 2005-09-17 10:58:59 alin_sinpalean Exp $
  */
 public class ConnectionJDBC3 extends ConnectionJDBC2 {
     /** The list of savepoints. */
     private ArrayList savepoints = null;
-    /** Maps each savepoint to a list of tmep procedures created since the savepoint */
-    private Map savepointProcInTran = null;
     /** Counter for generating unique savepoint identifiers */
     private int savepointId = 0;
 
     /**
+     * Default constructor.
+     * <p/>
+     * Used for testing.
+     */
+    private ConnectionJDBC3() {
+    }
+
+    /**
      * Create a new database connection.
      *
-     * @param url The connection URL starting jdbc:jtds:.
      * @param props The additional connection properties.
      * @throws SQLException
      */
-    ConnectionJDBC3(String url, Properties props) throws SQLException {
-        super(url, props);
+    ConnectionJDBC3(Properties props) throws SQLException {
+        super(props);
     }
 
     /**
@@ -61,7 +66,7 @@ public class ConnectionJDBC3 extends ConnectionJDBC2 {
 
         try {
             statement = createStatement();
-            statement.execute("IF @@TRANCOUNT=0 BEGIN TRAN SAVE TRAN jtds" 
+            statement.execute("IF @@TRANCOUNT=0 BEGIN TRAN SAVE TRAN jtds"
                     + savepoint.getId());
         } finally {
             if (statement != null) {
@@ -87,10 +92,6 @@ public class ConnectionJDBC3 extends ConnectionJDBC2 {
             savepoints.clear();
         }
 
-        if (savepointProcInTran != null) {
-            savepointProcInTran.clear();
-        }
-
         savepointId = 0;
     }
 
@@ -113,17 +114,11 @@ public class ConnectionJDBC3 extends ConnectionJDBC2 {
                 Messages.get("error.connection.badsavep"), "25000");
         }
 
-        Object tmpSavepoint = savepoints.remove(index);
-
-        if (savepointProcInTran != null) {
-            // FIXME Shouldn't procedures removed here be moved instead into the "wrapping" savepoint?
-            savepointProcInTran.remove(tmpSavepoint);
-        }
+        savepoints.remove(index);
     }
 
     public synchronized void rollback(Savepoint savepoint) throws SQLException {
         checkOpen();
-        checkLocal("rollback");
 
         if (savepoints == null) {
             throw new SQLException(
@@ -154,29 +149,12 @@ public class ConnectionJDBC3 extends ConnectionJDBC2 {
         int size = savepoints.size();
 
         for (int i = size - 1; i >= index; i--) {
-            Object tmpSavepoint = savepoints.remove(i);
-
-            if (savepointProcInTran == null) {
-                continue;
-            }
-
-            List keys = (List) savepointProcInTran.get(tmpSavepoint);
-
-            if (keys == null) {
-                continue;
-            }
-
-            for (Iterator iterator = keys.iterator(); iterator.hasNext();) {
-                String key = (String) iterator.next();
-
-                removeCachedProcedure(key);
-            }
+            savepoints.remove(i);
         }
     }
 
     public Savepoint setSavepoint() throws SQLException {
         checkOpen();
-        checkLocal("setSavepoint");
 
         if (getAutoCommit()) {
             throw new SQLException(
@@ -192,7 +170,6 @@ public class ConnectionJDBC3 extends ConnectionJDBC2 {
 
     public Savepoint setSavepoint(String name) throws SQLException {
         checkOpen();
-        checkLocal("setSavepoint");
 
         if (getAutoCommit()) {
             throw new SQLException(
@@ -217,45 +194,5 @@ public class ConnectionJDBC3 extends ConnectionJDBC2 {
      */
     private synchronized int getNextSavepointId() {
         return ++savepointId;
-    }
-
-    /**
-     * Add a stored procedure to the cache.
-     *
-     * @param key The signature of the procedure to cache.
-     * @param proc The stored procedure descriptor.
-     */
-    void addCachedProcedure(String key, ProcEntry proc) {
-        super.addCachedProcedure(key, proc);
-
-        addCachedProcedure(key);
-    }
-
-    /**
-     * Add a stored procedure to the savepoint cache.
-     *
-     * @param key The signature of the procedure to cache.
-     */
-    synchronized void addCachedProcedure(String key) {
-        if (savepoints == null || savepoints.size() == 0) {
-            return;
-        }
-
-        if (savepointProcInTran == null) {
-            savepointProcInTran = new HashMap();
-        }
-
-        // Retrieve the current savepoint
-        Object savepoint = savepoints.get(savepoints.size() - 1);
-
-        List keys = (List) savepointProcInTran.get(savepoint);
-
-        if (keys == null) {
-            keys = new ArrayList();
-        }
-
-        keys.add(key);
-
-        savepointProcInTran.put(savepoint, keys);
     }
 }
