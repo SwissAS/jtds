@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<connector xmlns="http://java.sun.com/xml/ns/j2ee"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee
+           http://java.sun.com/xml/ns/j2ee/connector_1_5.xsd"
+           version="1.5">
+
+  <description>jTDS JCA JDBC Driver for Microsoft SQL Server and Sybase.</description>
+  <display-name>jTDS Database Connector</display-name>
+  <vendor-name>jTDS Project http://jtds.sourceforge.net</vendor-name>
+  <eis-type>Relational Database</eis-type>
+  <resourceadapter-version>1.2</resourceadapter-version>
+  <license>
+    <description>
+ 		jTDS JDBC Driver for Microsoft SQL Server and Sybase
+ 		Copyright (C) 2004 The jTDS Project
+
+		This library is free software; you can redistribute it and/or
+		modify it under the terms of the GNU Lesser General Public
+		License as published by the Free Software Foundation; either
+		version 2.1 of the License, or (at your option) any later version.
+
+		This library is distributed in the hope that it will be useful,
+		but WITHOUT ANY WARRANTY; without even the implied warranty of
+		MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+		Lesser General Public License for more details.
+
+		You should have received a copy of the GNU Lesser General Public
+		License along with this library; if not, write to the Free Software
+		Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+	</description>
+  	<license-required>true</license-required>
+  </license>
+  <resourceadapter>
+      <resourceadapter-class>net.sourceforge.jtds.jca.ResourceAdapterImpl</resourceadapter-class>
+      <outbound-resourceadapter>
+         <connection-definition>
+    		<managedconnectionfactory-class>net.sourceforge.jtds.jca.ManagedConnectionFactoryImpl</managedconnectionfactory-class>
+		    <config-property>
+      			<description>The server host name.</description>
+      			<config-property-name>ServerName</config-property-name>
+      			<config-property-type>java.lang.String</config-property-type>
+      			<config-property-value></config-property-value>
+    		</config-property>
+    		<config-property>
+      			<description>The server port number.</description>
+			    <config-property-name>PortNumber</config-property-name>
+      			<config-property-type>java.lang.String</config-property-type>
+      			<config-property-value></config-property-value>
+    		</config-property>
+    		<config-property>
+      			<description>The user name to be used to authenticate with the server.</description>
+      			<config-property-name>UserName</config-property-name>
+      			<config-property-type>java.lang.String</config-property-type>
+      			<config-property-value></config-property-value>
+    		</config-property>
+    		<config-property>
+      			<description>The password to be used to authenticate with the server.</description>
+      			<config-property-name>Password</config-property-name>
+      			<config-property-type>java.lang.String</config-property-type>
+      			<config-property-value></config-property-value>
+    		</config-property>
+    		<config-property>
+      			<description>The connection URL eg jdbc:jtds:sqlserver://hostname:port[;option].</description>
+      			<config-property-name>ConnectionURL</config-property-name>
+      			<config-property-type>java.lang.String</config-property-type>
+      			<config-property-value></config-property-value>
+    		</config-property>
+    		<connectionfactory-interface>javax.sql.DataSource</connectionfactory-interface>
+    		<connectionfactory-impl-class>net.sourceforge.jtds.jca.ConnectionFactory</connectionfactory-impl-class>
+    		<connection-interface>java.sql.Connection</connection-interface>
+    		<connection-impl-class>net.sourceforge.jtds.jca.ConnectionHandle</connection-impl-class>
+    	</connection-definition>
+    	<transaction-support>XATransaction</transaction-support>
+    	<authentication-mechanism>
+      		<authentication-mechanism-type>BasicPassword</authentication-mechanism-type>
+      		<credential-interface>javax.resource.spi.security.PasswordCredential</credential-interface>
+    	</authentication-mechanism>
+    	<reauthentication-support>false</reauthentication-support>
+  	</outbound-resourceadapter>
+  </resourceadapter>
+</connector>

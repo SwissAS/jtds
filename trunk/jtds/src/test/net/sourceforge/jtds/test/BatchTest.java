@@ -20,12 +20,10 @@ package net.sourceforge.jtds.test;
 import java.sql.*;
 import java.util.*;
 
-import net.sourceforge.jtds.jdbc.*;
-
 /**
  * Simple test suite to exercise batch execution.
  *
- * @version $Id: BatchTest.java,v 1.11 2007-07-12 21:21:27 bheineman Exp $
+ * @version $Id: BatchTest.java,v 1.12 2007-09-10 19:19:36 bheineman Exp $
  */
 public class BatchTest extends DatabaseTestCase {
     // Constants to use instead of the JDBC 3.0-only Statement constants
@@ -93,7 +91,7 @@ public class BatchTest extends DatabaseTestCase {
             x = e.getUpdateCounts();
         }
         if (con.getMetaData().getDatabaseProductName().toLowerCase().startsWith("microsoft")
-            && ((JtdsDatabaseMetaData) con.getMetaData()).getDatabaseMajorVersion() > 6 ) {
+            && con.getMetaData().getDatabaseMajorVersion() > 6) {
             assertEquals(5, x.length);
             assertEquals(1, x[0]);
             assertEquals(1, x[1]);
@@ -598,9 +596,8 @@ public class BatchTest extends DatabaseTestCase {
         // interspersed (if correct synchronization is not in place) and greatly increase the chance of prepares
         // being rolled back before getting executed.
         Properties props = new Properties();
-        props.setProperty(Messages.get(net.sourceforge.jtds.jdbc.Driver.BATCHSIZE), "1");
-        props.setProperty(Messages.get(net.sourceforge.jtds.jdbc.Driver.PREPARESQL),
-                          String.valueOf(TdsCore.TEMPORARY_STORED_PROCEDURES));
+        props.setProperty("batchSize", "1");
+        props.setProperty("prepareSql", "1");
         Connection con = getConnection(props);
         
         try {

@@ -18,10 +18,8 @@
 package net.sourceforge.jtds.test;
 
 import java.sql.*;
-import java.util.GregorianCalendar;
-import java.util.TimeZone;
-
-import net.sourceforge.jtds.jdbc.Support;
+import java.sql.Date;
+import java.util.*;
 
 /**
  * Tests timezone conversions when setting and getting data to and from the
@@ -97,13 +95,13 @@ public class TimeZoneTest extends TestBase {
             // the time is the same as the time component of the timestamp.
             // Note both the other drivers I tested exhibit the same behaviour.
             //
-            assertEquals(new Date(Support.timeFromZone(date, calNY)).toString(),
+            assertEquals(new Date(timeFromZone(date, calNY)).toString(),
                     rs.getDate(1).toString());
             assertEquals(originalCalNY, calNY);
-            assertEquals(new Time(Support.timeFromZone(time, calNY)).toString(),
+            assertEquals(new Time(timeFromZone(time, calNY)).toString(),
                     rs.getTime(2).toString());
             assertEquals(originalCalNY, calNY);
-            assertEquals(new Timestamp(Support.timeFromZone(ts, calNY)).toString(),
+            assertEquals(new Timestamp(timeFromZone(ts, calNY)).toString(),
                     rs.getTimestamp(3).toString());
             assertEquals(originalCalNY, calNY);
             assertTrue(rs.next());
@@ -121,6 +119,32 @@ public class TimeZoneTest extends TestBase {
             TimeZone.setDefault(zone);
         }
     }
+    
+    /**
+     * Convert a timestamp from a different Timezone.
+     * @param value the timestamp value.
+     * @param target the Calendar containing the TimeZone.
+     * @return The new timestamp value as a <code>long</code>.
+     */
+    public static long timeFromZone(java.util.Date value , Calendar target) {
+    	GregorianCalendar cal = new GregorianCalendar();
+        java.util.Date tmp = target.getTime();
+        try {
+            target.setTime(value);
+            cal.set(Calendar.HOUR_OF_DAY, target.get(Calendar.HOUR_OF_DAY));
+            cal.set(Calendar.MINUTE, target.get(Calendar.MINUTE));
+            cal.set(Calendar.SECOND, target.get(Calendar.SECOND));
+            cal.set(Calendar.MILLISECOND, target.get(Calendar.MILLISECOND));
+            cal.set(Calendar.YEAR, target.get(Calendar.YEAR));
+            cal.set(Calendar.MONTH, target.get(Calendar.MONTH));
+            cal.set(Calendar.DAY_OF_MONTH, target.get(Calendar.DAY_OF_MONTH));
+            return cal.getTime().getTime();
+        }
+        finally {
+            target.setTime(tmp);
+        }
+    }
+    
 
     public static void main(String[] args) {
         junit.textui.TestRunner.run(TimeZoneTest.class);

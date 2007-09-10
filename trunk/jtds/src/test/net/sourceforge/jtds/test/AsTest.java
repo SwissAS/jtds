@@ -10,8 +10,6 @@ import java.math.BigDecimal;
 
 import junit.framework.TestSuite;
 
-import net.sourceforge.jtds.util.Logger;
-
 /**
  *
  * @author  builder
@@ -24,7 +22,6 @@ public class AsTest extends DatabaseTestCase {
     }
 
     public static void main(String args[]) {
-        Logger.setActive(true);
         if (args.length > 0) {
             junit.framework.TestSuite s = new TestSuite();
             for (int i = 0; i < args.length; i++) {

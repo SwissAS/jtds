@@ -10,16 +10,13 @@ import java.sql.*;
 import java.math.BigDecimal;
 
 import junit.framework.TestSuite;
-import net.sourceforge.jtds.util.Logger;
-import net.sourceforge.jtds.jdbc.Driver;
-import net.sourceforge.jtds.jdbc.Messages;
 
 import java.text.SimpleDateFormat;
 import java.util.Vector;
 
 /**
  * @author  Alin Sinpalean
- * @version $Id: SAfeTest.java,v 1.62 2007-07-08 21:43:02 bheineman Exp $
+ * @version $Id: SAfeTest.java,v 1.63 2007-09-10 19:19:36 bheineman Exp $
  * @since   0.4
  */
 public class SAfeTest extends DatabaseTestCase {
@@ -28,8 +25,6 @@ public class SAfeTest extends DatabaseTestCase {
     }
 
     public static void main(String args[]) {
-        Logger.setActive(true);
-
         if (args.length > 0) {
             junit.framework.TestSuite s = new TestSuite();
 
@@ -64,8 +59,8 @@ public class SAfeTest extends DatabaseTestCase {
         };
 
         Statement stmt = con.createStatement();
-        boolean tds70orLater = props.getProperty(Messages.get(Driver.TDS)) == null
-            || props.getProperty(Messages.get(Driver.TDS)).charAt(0) >= '7';
+        boolean tds70orLater = props.getProperty("TDS") == null
+            || props.getProperty("TDS").charAt(0) >= '7';
         int typeCnt = tds70orLater ? types.length : 2;
 
         for (int i = 0; i < typeCnt; i++) {

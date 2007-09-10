@@ -23,7 +23,7 @@ import java.util.Properties;
 /**
  * Test <code>DatabaseMetaData</code>.
  *
- * @version $Id: DatabaseMetaDataTest.java,v 1.17 2005-11-23 16:36:20 alin_sinpalean Exp $
+ * @version $Id: DatabaseMetaDataTest.java,v 1.18 2007-09-10 19:19:36 bheineman Exp $
  */
 public class DatabaseMetaDataTest extends MetaDataTestCase {
 
@@ -349,11 +349,7 @@ public class DatabaseMetaDataTest extends MetaDataTestCase {
             assertEquals("jtds_spmeta", rs.getString(3));
             //
             rs = dbmd.getSchemas();
-            if (net.sourceforge.jtds.jdbc.Driver.JDBC3) {
-                assertTrue(checkColumnNames(rs, new String[]{"TABLE_SCHEM","TABLE_CATALOG"}));
-            } else {
-                assertTrue(checkColumnNames(rs, new String[]{"TABLE_SCHEM"}));
-            }
+            assertTrue(checkColumnNames(rs, new String[]{"TABLE_SCHEM","TABLE_CATALOG"}));
             assertTrue(rs.next());
             //
             rs = dbmd.getTablePrivileges(null, null, "jTDS_META");

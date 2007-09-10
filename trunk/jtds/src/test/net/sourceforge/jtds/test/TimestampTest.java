@@ -6,9 +6,6 @@ import java.util.Calendar;
 import java.util.TimeZone;
 import java.util.GregorianCalendar;
 
-import net.sourceforge.jtds.jdbc.Driver;
-import net.sourceforge.jtds.util.Logger;
-
 import junit.framework.TestSuite;
 
 /**
@@ -20,9 +17,6 @@ public class TimestampTest extends DatabaseTestCase {
     }
 
     public static void main(String args[]) {
-        boolean loggerActive = args.length > 0;
-        Logger.setActive(loggerActive);
-
         if (args.length > 0) {
             junit.framework.TestSuite s = new TestSuite();
             for (int i = 0; i < args.length; i++) {
@@ -2438,11 +2432,7 @@ public class TimestampTest extends DatabaseTestCase {
     public long getTimeInMs(ResultSet rs)
             throws SQLException {
         Timestamp value = rs.getTimestamp(1);
-        long ms = value.getTime();
-        if (!Driver.JDBC3) {
-            // Not Running under 1.4 so need to add milliseconds
-            ms += ((java.sql.Timestamp)value).getNanos() / 1000000;
-        }
-        return ms;
+        
+        return value.getTime();
     }
 }

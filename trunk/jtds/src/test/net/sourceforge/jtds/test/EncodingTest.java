@@ -20,8 +20,6 @@ package net.sourceforge.jtds.test;
 import java.sql.*;
 import java.util.Arrays;
 
-import net.sourceforge.jtds.jdbc.Messages;
-
 /**
  * @version 1.0
  */
@@ -84,7 +82,7 @@ public class EncodingTest extends TestBase {
      * NB Test assumes server using iso_1 character set.
      */
     public void testSybaseISO_1() throws Exception {
-        if (!"2".equals(props.getProperty(Messages.get(net.sourceforge.jtds.jdbc.Driver.SERVERTYPE)))) {
+        if (!"sybase".equals(props.getProperty("serverType"))) {
             // Only test for Sybase
             return;
         }

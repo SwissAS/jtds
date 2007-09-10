@@ -17,15 +17,13 @@
 //
 package net.sourceforge.jtds.test;
 
-import java.sql.SQLException;
-import java.sql.PreparedStatement;
-import java.sql.Savepoint;
+import java.sql.*;
 
 /**
  * JDBC 3.0-only tests for Connection.
  *
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC3Test.java,v 1.1 2005-06-03 12:08:55 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC3Test.java,v 1.2 2007-09-10 19:19:36 bheineman Exp $
  */
 public class ConnectionJDBC3Test extends DatabaseTestCase {
 
@@ -57,5 +55,54 @@ public class ConnectionJDBC3Test extends DatabaseTestCase {
         // Release resources
         stmt.close();
         con.close();
+    }
+
+    /**
+     * Test for bug [1296482] setAutoCommit() behaviour.
+     * <p/>
+     * The behaviour of setAutoCommit() on ConnectionJDBC2 is inconsistent with
+     * the Sun JDBC 3.0 Specification. JDBC 3.0 Specification, section 10.1.1:
+     * <blockquote>"If the value of auto-commit is changed in the middle of a
+     * transaction, the current transaction is committed."</blockquote>
+     */
+    public void testAutoCommit() throws Exception {
+        Connection con = getConnection();
+
+        try {
+            Statement stmt = con.createStatement();
+            // Create temp table
+            assertEquals(0, stmt.executeUpdate(
+                    "create table #testAutoCommit (i int)"));
+            // Manual commit mode
+            con.setAutoCommit(false);
+            // Insert one row
+            assertEquals(1, stmt.executeUpdate(
+                    "insert into #testAutoCommit (i) values (0)"));
+            // Set commit mode to manual again; should have no effect
+            con.setAutoCommit(false);
+            // Rollback the transaction; should roll back the insert
+            con.rollback();
+            // Insert one more row
+            assertEquals(1, stmt.executeUpdate(
+                    "insert into #testAutoCommit (i) values (1)"));
+            // Set commit mode to automatic; should commit everything
+            con.setAutoCommit(true);
+            // Go back to manual commit mode
+            con.setAutoCommit(false);
+            // Rollback transaction; should do nothing
+            con.rollback();
+            // And back to auto commit mode again
+            con.setAutoCommit(true);
+            // Now see if the second row is there
+            ResultSet rs = stmt.executeQuery("select i from #testAutoCommit");
+            assertTrue(rs.next());
+            assertEquals(1, rs.getInt(1));
+            assertFalse(rs.next());
+            // We're done, close everything
+            rs.close();
+            stmt.close();
+        } finally {
+            con.close();
+        }
     }
 }

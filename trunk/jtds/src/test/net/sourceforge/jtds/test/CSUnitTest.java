@@ -10,14 +10,12 @@ import java.math.BigDecimal;
 import junit.framework.TestSuite;
 import java.io.*;
 
-import net.sourceforge.jtds.util.Logger;
-
 /**
  *
  * @author  builder
  * @version 1.0
  */
-public class CSUnitTest extends DatabaseTestCase {
+public class CSUnitTest extends TestBase {
     public CSUnitTest(String name) {
         super(name);
 
@@ -32,8 +30,6 @@ public class CSUnitTest extends DatabaseTestCase {
     static PrintStream output = null;
 
     public static void main(String args[]) {
-        Logger.setActive(true);
-
         if (args.length > 0) {
             output = System.out;
             junit.framework.TestSuite s = new TestSuite();
@@ -50,7 +46,6 @@ public class CSUnitTest extends DatabaseTestCase {
 
 
     public void testMaxRows0003() throws Exception {
-        dropTable("#t0003");
         Statement stmt = con.createStatement();
 
         stmt.executeUpdate("create table #t0003           "
@@ -191,7 +186,6 @@ public class CSUnitTest extends DatabaseTestCase {
                            "fedcba9876543210" +
                            "fedcba9876543210" +
                            "";
-        dropTable("#t0018");
         String sql =
         "create table #t0018 (                                  " +
         " mybinary                   binary(5) not null,       " +
@@ -289,9 +283,6 @@ public class CSUnitTest extends DatabaseTestCase {
         }
 
         stmt = con.createStatement();
-
-        dropTable("#t0019");
-
 
         stmt.executeUpdate("create table #t0019 (                     " +
                            "  i               integer primary key,   " +
@@ -425,7 +416,7 @@ public class CSUnitTest extends DatabaseTestCase {
         Statement   stmt = con.createStatement();
         ResultSet   rs;
         stmt.execute("set dateformat ymd");
-        dropTable("#t0027");
+
         String sql =
         "create table #t0027 (                                  " +
         " mybinary                   binary(5) not null,       " +
@@ -690,9 +681,6 @@ public class CSUnitTest extends DatabaseTestCase {
             } while (((updateCount!=-1) && !isResultSet) || isResultSet);
         } catch (SQLException e) {
         }
-
-
-        dropTable("#t0029_t1");
 
         isResultSet =
         stmt.execute(
@@ -1122,204 +1110,6 @@ public class CSUnitTest extends DatabaseTestCase {
         assertTrue(passed);
     }
 
-    public void testxx0052() throws Exception {
-        boolean passed = true;
-
-        // ugly, I know
-        byte[] image = {
-            (byte)0x47, (byte)0x49, (byte)0x46, (byte)0x38,
-            (byte)0x39, (byte)0x61, (byte)0x0A, (byte)0x00,
-            (byte)0x0A, (byte)0x00, (byte)0x80, (byte)0xFF,
-            (byte)0x00, (byte)0xD7, (byte)0x3D, (byte)0x1B,
-            (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x2C,
-            (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x00,
-            (byte)0x0A, (byte)0x00, (byte)0x0A, (byte)0x00,
-            (byte)0x00, (byte)0x02, (byte)0x08, (byte)0x84,
-            (byte)0x8F, (byte)0xA9, (byte)0xCB, (byte)0xED,
-            (byte)0x0F, (byte)0x63, (byte)0x2B, (byte)0x00,
-            (byte)0x3B,
-        };
-
-        int         i;
-        int         count;
-        Statement   stmt     = con.createStatement();
-
-        dropTable("#t0052");
-
-        try {
-            String sql =
-            "create table #t0052 (                                  " +
-            " myvarchar                varchar(2000) not null,     " +
-            " myvarbinary              varbinary(2000) not null)   ";
-
-            stmt.executeUpdate(sql);
-
-            sql =
-            "insert into #t0052               " +
-            "  (myvarchar,                   " +
-            "   myvarbinary)                 " +
-            " values                         " +
-            "  (\'This is a test with german umlauts הצü\', " +
-            "   0x4749463839610A000A0080FF00D73D1B0000002C000000000A000A00000208848FA9CBED0F632B003B" +
-            "  )";
-            stmt.executeUpdate(sql);
-
-            sql = "select * from #t0052";
-            ResultSet rs = stmt.executeQuery(sql);
-            if (!rs.next()) {
-                passed = false;
-            } else {
-                output.println("Testing getAsciiStream()");
-                InputStream in = rs.getAsciiStream("myvarchar");
-                String expect = "This is a test with german umlauts ???";
-                byte[] toRead = new byte[expect.length()];
-                count = in.read(toRead);
-                if (count == expect.length()) {
-                    for (i=0; i<expect.length(); i++) {
-                        if (expect.charAt(i) != toRead[i]) {
-                            passed = false;
-                            output.println("Expected "+expect.charAt(i)
-                                           + " but was "
-                                           + toRead[i]);
-                        }
-                    }
-                } else {
-                    passed = false;
-                    output.println("Premature end in "
-                                   + "getAsciiStream(\"myvarchar\") "
-                                   + count + " instead of "
-                                   + expect.length());
-                }
-                in.close();
-
-                in = rs.getAsciiStream(2);
-                toRead = new byte[41];
-                count = in.read(toRead);
-                if (count == 41) {
-                    for (i=0; i<41; i++) {
-                        if (toRead[i] != (toRead[i] & 0x7F)) {
-                            passed = false;
-                            output.println("Non ASCII characters in getAsciiStream");
-                            break;
-                        }
-                    }
-                } else {
-                    passed = false;
-                    output.println("Premature end in getAsciiStream(1) "
-                                   +count+" instead of 41");
-                }
-                in.close();
-
-                output.println("Testing getUnicodeStream()");
-                Reader reader = rs.getCharacterStream("myvarchar");
-                expect = "This is a test with german umlauts הצü";
-                char[] charsToRead = new char[expect.length()];
-                count = reader.read(charsToRead, 0, expect.length());
-                if (count == expect.length()) {
-                    String result = new String(charsToRead);
-                    if (!expect.equals(result)) {
-                        passed = false;
-                        output.println("Expected "+ expect
-                                       + " but was " + result);
-                    }
-                } else {
-                    passed = false;
-                    output.println("Premature end in "
-                                   + "getUnicodeStream(\"myvarchar\") "
-                                   + count + " instead of "
-                                   + expect.length());
-                }
-                reader.close();
-
-                /* Cannot think of a meaningfull test */
-                reader = rs.getCharacterStream(2);
-                reader.close();
-
-                output.println("Testing getBinaryStream()");
-
-                /* Cannot think of a meaningfull test */
-                in = rs.getBinaryStream("myvarchar");
-                in.close();
-
-                in = rs.getBinaryStream(2);
-                count = 0;
-                toRead = new byte[image.length];
-                do {
-                    int actuallyRead = in.read(toRead, count,
-                                               image.length-count);
-                    if (actuallyRead == -1) {
-                        passed = false;
-                        output.println("Premature end in "
-                                       +" getBinaryStream(2) "
-                                       + count +" instead of "
-                                       + image.length);
-                        break;
-                    }
-                    count += actuallyRead;
-                } while (count < image.length);
-
-                for (i=0; i<count; i++) {
-                    if (toRead[i] != image[i]) {
-                        passed = false;
-                        output.println("Expected "+toRead[i]
-                                       + "but was "+image[i]);
-                        break;
-                    }
-                }
-                in.close();
-
-                output.println("Testing getCharacterStream()");
-                try {
-                    reader = (Reader) UnitTestBase.invokeInstanceMethod(
-                            rs, "getCharacterStream", new Class[]{String.class}, new Object[]{"myvarchar"});
-                    expect = "This is a test with german umlauts הצü";
-                    charsToRead = new char[expect.length()];
-                    count = reader.read(charsToRead, 0, expect.length());
-                    if (count == expect.length()) {
-                        String result = new String(charsToRead);
-                        if (!expect.equals(result)) {
-                            passed = false;
-                            output.println("Expected "+ expect
-                                           + " but was " + result);
-                        }
-                    } else {
-                        passed = false;
-                        output.println("Premature end in "
-                                       + "getCharacterStream(\"myvarchar\") "
-                                       + count + " instead of "
-                                       + expect.length());
-                    }
-                    reader.close();
-
-                    /* Cannot think of a meaningfull test */
-                    reader = (Reader) UnitTestBase.invokeInstanceMethod(
-                            rs, "getCharacterStream", new Class[]{Integer.TYPE}, new Object[]{new Integer(2)});
-                    reader.close();
-                } catch (RuntimeException e) {
-                    // FIXME - This will not compile under 1.3...
-/*
-                    if (e.getCause() instanceof NoSuchMethodException) {
-                        output.println("JDBC 2 only");
-                    } else {
-*/
-                        throw e;
-//                    }
-                } catch (Throwable t) {
-                    passed = false;
-                    output.println("Exception: "+t.getMessage());
-                }
-            }
-            rs.close();
-
-        } catch (java.sql.SQLException e) {
-            passed = false;
-            output.println("Exception caught.  " + e.getMessage());
-            e.printStackTrace();
-        }
-        assertTrue(passed);
-        stmt.close();
-    }
-
     public void testxx0053() throws Exception {
         boolean passed = true;
 
@@ -1514,5 +1304,11 @@ public class CSUnitTest extends DatabaseTestCase {
             e.printStackTrace();
             fail();
         }
+    }
+    
+    protected void dropTable(String table) throws SQLException {
+    	Statement stmt = con.createStatement();
+    	
+    	stmt.execute("DROP TABLE " + table);
     }
 }
