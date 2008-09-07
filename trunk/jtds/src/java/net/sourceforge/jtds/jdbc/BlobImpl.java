@@ -29,7 +29,7 @@ import java.sql.SQLException;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: BlobImpl.java,v 1.1 2007-09-10 19:19:31 bheineman Exp $
+ * @version $Id: BlobImpl.java,v 1.2 2008-09-07 16:40:38 bheineman Exp $
  */
 public class BlobImpl extends BlobBuffer implements Blob, Serializable {
     static final long serialVersionUID = -9113350639400455769L;
@@ -122,5 +122,18 @@ public class BlobImpl extends BlobBuffer implements Blob, Serializable {
 
     public long length() throws SQLException {
         return getLength();
+    }
+
+    @Override
+    public void free() throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public InputStream getBinaryStream(long pos, long length)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
     }
 }

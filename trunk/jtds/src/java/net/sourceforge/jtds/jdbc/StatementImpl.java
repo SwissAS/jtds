@@ -41,7 +41,7 @@ import net.sourceforge.jtds.util.Logger;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: StatementImpl.java,v 1.1 2007-09-10 19:19:31 bheineman Exp $
+ * @version $Id: StatementImpl.java,v 1.2 2008-09-07 16:40:38 bheineman Exp $
  */
 public class StatementImpl implements java.sql.Statement {
     /*
@@ -696,7 +696,8 @@ public class StatementImpl implements java.sql.Statement {
      * Retrieve the closed status for this statement.
      * @return <code>boolean</code> true if statement closed.
      */
-    boolean isClosed()
+    @Override
+    public boolean isClosed()
     {
         return closed;
     }
@@ -1808,5 +1809,29 @@ public class StatementImpl implements java.sql.Statement {
         } finally {
             freeConnection(connectionLock);
         }
+    }
+
+    @Override
+    public boolean isPoolable() throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setPoolable(boolean poolable) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean isWrapperFor(Class<?> iface) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public <T> T unwrap(Class<T> iface) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
     }
 }

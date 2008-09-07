@@ -177,4 +177,16 @@ public class ConnectionFactory implements DataSource, Referenceable,
     public Reference getReference() throws NamingException {
         return this.jndiRef;
     }
+
+    @Override
+    public boolean isWrapperFor(Class<?> iface) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public <T> T unwrap(Class<T> iface) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
 }

@@ -20,12 +20,13 @@ package net.sourceforge.jtds.jdbc;
 import java.sql.*;
 import java.util.*;
 import javax.sql.*;
+
 import net.sourceforge.jtds.util.Logger;
 
 /**
  * jTDS implementation of the <code>PooledConnection</code> interface.
  *
- * @version $Id: PooledConnectionImpl.java,v 1.1 2007-09-10 19:19:31 bheineman Exp $
+ * @version $Id: PooledConnectionImpl.java,v 1.2 2008-09-07 16:40:38 bheineman Exp $
  */
 public class PooledConnectionImpl implements javax.sql.PooledConnection {
     /** The list of ConnectionEventListeners registered with this connection. */
@@ -195,5 +196,17 @@ public class PooledConnectionImpl implements javax.sql.PooledConnection {
         synchronized (listener) {
             listeners.remove(listener);
         }
+    }
+
+    @Override
+    public void addStatementEventListener(StatementEventListener listener) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void removeStatementEventListener(StatementEventListener listener) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
     }
 }

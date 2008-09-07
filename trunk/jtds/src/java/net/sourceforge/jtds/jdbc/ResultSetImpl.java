@@ -26,11 +26,14 @@ import java.sql.Array;
 import java.sql.Blob;
 import java.sql.Clob;
 import java.sql.Date;
+import java.sql.NClob;
 import java.sql.Ref;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.sql.RowId;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
+import java.sql.SQLXML;
 import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -57,7 +60,7 @@ import net.sourceforge.jtds.util.Logger;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: ResultSetImpl.java,v 1.1 2007-09-10 19:19:31 bheineman Exp $
+ * @version $Id: ResultSetImpl.java,v 1.2 2008-09-07 16:40:38 bheineman Exp $
  */
 public class ResultSetImpl implements ResultSet {
 
@@ -259,7 +262,8 @@ public class ResultSetImpl implements ResultSet {
      * Retrieve the closed status of this result set.
      * @return the closed flag as a <code>boolean</code>.
      */
-    boolean isClosed()
+    @Override
+    public boolean isClosed()
     {
         return closed;
     }
@@ -1278,7 +1282,7 @@ public class ResultSetImpl implements ResultSet {
         updateObject(findColumn(columnName), x, scale);
     }
 
-    public Object getObject(int columnIndex, Map map) throws SQLException {
+    public Object getObject(int columnIndex, Map<String, Class<?>> map) throws SQLException {
         notImplemented("ResultSet.getObject(int, Map)");
         return null;
     }
@@ -1397,7 +1401,7 @@ public class ResultSetImpl implements ResultSet {
             return timestamp;
     }
 
-    public Object getObject(String columnName, Map map) throws SQLException {
+    public Object getObject(String columnName, Map<String, Class<?>> map) throws SQLException {
         return getObject(findColumn(columnName), map);
     }
 
@@ -1412,5 +1416,329 @@ public class ResultSetImpl implements ResultSet {
     public Timestamp getTimestamp(String columnName, Calendar cal)
         throws SQLException {
         return getTimestamp(findColumn(columnName), cal);
+    }
+
+    @Override
+    public int getHoldability() throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Reader getNCharacterStream(int columnIndex) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Reader getNCharacterStream(String columnLabel) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public NClob getNClob(int columnIndex) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public NClob getNClob(String columnLabel) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String getNString(int columnIndex) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String getNString(String columnLabel) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public RowId getRowId(int columnIndex) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public RowId getRowId(String columnLabel) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public SQLXML getSQLXML(int columnIndex) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public SQLXML getSQLXML(String columnLabel) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void updateAsciiStream(int columnIndex, InputStream x)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void updateAsciiStream(String columnLabel, InputStream x)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void updateAsciiStream(int columnIndex, InputStream x, long length)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void updateAsciiStream(String columnLabel, InputStream x, long length)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void updateBinaryStream(int columnIndex, InputStream x)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void updateBinaryStream(String columnLabel, InputStream x)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void updateBinaryStream(int columnIndex, InputStream x, long length)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void updateBinaryStream(String columnLabel, InputStream x,
+            long length) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void updateBlob(int columnIndex, InputStream inputStream)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void updateBlob(String columnLabel, InputStream inputStream)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void updateBlob(int columnIndex, InputStream inputStream, long length)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void updateBlob(String columnLabel, InputStream inputStream,
+            long length) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void updateCharacterStream(int columnIndex, Reader x)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void updateCharacterStream(String columnLabel, Reader reader)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void updateCharacterStream(int columnIndex, Reader x, long length)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void updateCharacterStream(String columnLabel, Reader reader,
+            long length) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void updateClob(int columnIndex, Reader reader) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void updateClob(String columnLabel, Reader reader)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void updateClob(int columnIndex, Reader reader, long length)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void updateClob(String columnLabel, Reader reader, long length)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void updateNCharacterStream(int columnIndex, Reader x)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void updateNCharacterStream(String columnLabel, Reader reader)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void updateNCharacterStream(int columnIndex, Reader x, long length)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void updateNCharacterStream(String columnLabel, Reader reader,
+            long length) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void updateNClob(int columnIndex, NClob clob) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void updateNClob(String columnLabel, NClob clob) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void updateNClob(int columnIndex, Reader reader) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void updateNClob(String columnLabel, Reader reader)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void updateNClob(int columnIndex, Reader reader, long length)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void updateNClob(String columnLabel, Reader reader, long length)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void updateNString(int columnIndex, String string)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void updateNString(String columnLabel, String string)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void updateRowId(int columnIndex, RowId x) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void updateRowId(String columnLabel, RowId x) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void updateSQLXML(int columnIndex, SQLXML xmlObject)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void updateSQLXML(String columnLabel, SQLXML xmlObject)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean isWrapperFor(Class<?> iface) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public <T> T unwrap(Class<T> iface) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
     }
 }

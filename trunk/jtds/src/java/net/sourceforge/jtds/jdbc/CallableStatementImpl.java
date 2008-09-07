@@ -28,9 +28,11 @@ import java.sql.CallableStatement;
 import java.sql.Clob;
 import java.sql.DatabaseMetaData;
 import java.sql.Date;
+import java.sql.NClob;
 import java.sql.ParameterMetaData;
 import java.sql.Ref;
 import java.sql.ResultSet;
+import java.sql.RowId;
 import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -51,7 +53,7 @@ import java.util.Map;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: CallableStatementImpl.java,v 1.1 2007-09-10 19:19:32 bheineman Exp $
+ * @version $Id: CallableStatementImpl.java,v 1.2 2008-09-07 16:40:38 bheineman Exp $
  */
 public class CallableStatementImpl extends PreparedStatementImpl implements CallableStatement {
     /** Last parameter retrieved was null. */
@@ -647,7 +649,8 @@ public class CallableStatementImpl extends PreparedStatementImpl implements Call
         setObject(findParameter(parameterName, true), x, targetSqlType, scale);
     }
 
-    public Object getObject(int parameterIndex, Map map) throws SQLException {
+    @Override
+    public Object getObject(int parameterIndex, Map<String, Class<?>> map) throws SQLException {
         notImplemented("CallableStatement.getObject(int, Map)");
         return null;
     }
@@ -758,7 +761,8 @@ public class CallableStatementImpl extends PreparedStatementImpl implements Call
         return timestamp;
     }
 
-    public Object getObject(String parameterName, Map map) throws SQLException {
+    @Override
+    public Object getObject(String parameterName, Map<String, Class<?>> map) throws SQLException {
          return getObject(findParameter(parameterName, false), map);
     }
 
@@ -788,5 +792,213 @@ public class CallableStatementImpl extends PreparedStatementImpl implements Call
     public void setTimestamp(String parameterName, Timestamp x, Calendar cal)
         throws SQLException {
         setTimestamp(findParameter(parameterName, true), x, cal);
+    }
+
+    @Override
+    public Reader getCharacterStream(int parameterIndex) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Reader getCharacterStream(String parameterName) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Reader getNCharacterStream(int parameterIndex) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Reader getNCharacterStream(String parameterName) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public NClob getNClob(int parameterIndex) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public NClob getNClob(String parameterName) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String getNString(int parameterIndex) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String getNString(String parameterName) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public RowId getRowId(int parameterIndex) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public RowId getRowId(String parameterName) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public java.sql.SQLXML getSQLXML(int parameterIndex) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public java.sql.SQLXML getSQLXML(String parameterName) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setAsciiStream(String parameterName, InputStream x)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setAsciiStream(String parameterName, InputStream x, long length)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setBinaryStream(String parameterName, InputStream x)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setBinaryStream(String parameterName, InputStream x, long length)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setBlob(String parameterName, Blob x) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setBlob(String parameterName, InputStream inputStream)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setBlob(String parameterName, InputStream inputStream,
+            long length) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setCharacterStream(String parameterName, Reader reader)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setCharacterStream(String parameterName, Reader reader,
+            long length) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setClob(String parameterName, Clob x) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setClob(String parameterName, Reader reader)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setClob(String parameterName, Reader reader, long length)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setNCharacterStream(String parameterName, Reader value)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setNCharacterStream(String parameterName, Reader value,
+            long length) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setNClob(String parameterName, NClob value) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setNClob(String parameterName, Reader reader)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setNClob(String parameterName, Reader reader, long length)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setNString(String parameterName, String value)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setRowId(String parameterName, RowId x) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setSQLXML(String parameterName, java.sql.SQLXML xmlObject)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
     }
 }

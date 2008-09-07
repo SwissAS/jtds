@@ -44,7 +44,7 @@ import java.util.List;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  *  created  17 March 2001
- * @version $Id: DatabaseMetaDataImpl.java,v 1.1 2007-09-10 19:19:31 bheineman Exp $
+ * @version $Id: DatabaseMetaDataImpl.java,v 1.2 2008-09-07 16:40:38 bheineman Exp $
  */
 public class DatabaseMetaDataImpl implements java.sql.DatabaseMetaData {
     
@@ -3592,7 +3592,7 @@ public class DatabaseMetaDataImpl implements java.sql.DatabaseMetaData {
      * tests.
      *
      * @author David Eaves
-     * @version $Id: DatabaseMetaDataImpl.java,v 1.1 2007-09-10 19:19:31 bheineman Exp $
+     * @version $Id: DatabaseMetaDataImpl.java,v 1.2 2008-09-07 16:40:38 bheineman Exp $
      */
     static class TypeInfo implements Comparable {
         static final int NUM_COLS = 18;
@@ -3760,5 +3760,63 @@ public class DatabaseMetaDataImpl implements java.sql.DatabaseMetaData {
                     return (dataType == normalizedType && !autoIncrement) ? 0 : 5;
             }
         }
+    }
+
+    @Override
+    public boolean autoCommitFailureClosesAllResultSets() throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public ResultSet getClientInfoProperties() throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public ResultSet getFunctionColumns(String catalog, String schemaPattern,
+            String functionNamePattern, String columnNamePattern)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public ResultSet getFunctions(String catalog, String schemaPattern,
+            String functionNamePattern) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public RowIdLifetime getRowIdLifetime() throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public ResultSet getSchemas(String catalog, String schemaPattern)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean supportsStoredFunctionsUsingCallSyntax() throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean isWrapperFor(Class<?> iface) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public <T> T unwrap(Class<T> iface) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
     }
 }

@@ -31,7 +31,7 @@ import java.sql.SQLException;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: ResultSetMetaDataImpl.java,v 1.1 2007-09-10 19:19:32 bheineman Exp $
+ * @version $Id: ResultSetMetaDataImpl.java,v 1.2 2008-09-07 16:40:38 bheineman Exp $
  */
 public class ResultSetMetaDataImpl implements ResultSetMetaData {
     private final ColInfo[] columns;
@@ -217,5 +217,17 @@ public class ResultSetMetaDataImpl implements ResultSetMetaData {
         ColInfo col = getColumn(column);
 
         return (col.tableName == null) ? "" : col.tableName;
+    }
+
+    @Override
+    public boolean isWrapperFor(Class<?> iface) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public <T> T unwrap(Class<T> iface) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
     }
 }
