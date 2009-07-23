@@ -60,7 +60,7 @@ import net.sourceforge.jtds.util.Logger;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: CachedResultSet.java,v 1.1 2007-09-10 19:19:32 bheineman Exp $
+ * @version $Id: CachedResultSet.java,v 1.2 2009-07-23 19:35:35 ickzon Exp $
  * @todo Should add a "close statement" flag to the constructors
  */
 public class CachedResultSet extends ResultSetImpl {
@@ -125,7 +125,7 @@ public class CachedResultSet extends ResultSetImpl {
         this.procName = procName;
         this.procedureParams = procedureParams;
         this.statement =  statement;
-        isSybase = TdsCore.SYBASE == connection.getServerType();
+        isSybase = TdsCore.SYBASE == connection.getServerType() || TdsCore.ANYWHERE == connection.getServerType();
         tempResultSet = false;
         //
         // Now create the specified type of cursor

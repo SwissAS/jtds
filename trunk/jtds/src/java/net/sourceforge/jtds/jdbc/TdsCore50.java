@@ -33,7 +33,7 @@ import net.sourceforge.jtds.util.Logger;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author FreeTDS project
- * @version $Id: TdsCore50.java,v 1.2 2009-07-23 12:25:54 ickzon Exp $
+ * @version $Id: TdsCore50.java,v 1.3 2009-07-23 19:35:35 ickzon Exp $
  */
 class TdsCore50 extends TdsCore {
 
@@ -41,21 +41,21 @@ class TdsCore50 extends TdsCore {
     // Sybase capability flags
     //
     /** Sybase char and binary > 255.*/
-    private static final int SYB_LONGDATA    = 1;
+    protected static final int SYB_LONGDATA    = 1;
     /** Sybase date and time data types.*/
-    private static final int SYB_DATETIME    = 2;
+    protected static final int SYB_DATETIME    = 2;
     /** Sybase nullable bit type.*/
-    private static final int SYB_BITNULL     = 4;
+    protected static final int SYB_BITNULL     = 4;
     /** Sybase extended column meta data.*/
-    private static final int SYB_EXTCOLINFO  = 8;
+    protected static final int SYB_EXTCOLINFO  = 8;
     /** Sybase univarchar etc. */
-    private static final int SYB_UNICODE     = 16;
+    protected static final int SYB_UNICODE     = 16;
     /** Sybase 15+ unitext. */
-    private static final int SYB_UNITEXT     = 32;
+    protected static final int SYB_UNITEXT     = 32;
     /** Sybase 15+ bigint. */
-    private static final int SYB_BIGINT      = 64;
+    protected static final int SYB_BIGINT      = 64;
     /** Sybase capability mask.*/
-    private int sybaseInfo;
+    protected int sybaseInfo;
     
     //
     // Sybase / SQL Server 6.5 Login database security error message codes
@@ -1026,7 +1026,7 @@ class TdsCore50 extends TdsCore {
      * @param  cx the StatementImpl instance that owns this request.
      * @throws IOException
      */
-    private void tdsLoginAckToken(final StatementImpl cx) throws IOException {
+    protected void tdsLoginAckToken(final StatementImpl cx) throws IOException {
         String product;
         int major, minor, build = 0;
         in.readShort(); // Packet length

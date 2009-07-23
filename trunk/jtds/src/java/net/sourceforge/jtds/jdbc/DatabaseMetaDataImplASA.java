@@ -40,13 +40,14 @@ import java.util.List;
  * functions should be altered to return 0 but for now the original jTDS
  * values are returned.
  *
+ * @author   Holger Rehn
  * @author   Craig Spannring
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  *  created  17 March 2001
- * @version $Id: DatabaseMetaDataImpl.java,v 1.3 2009-07-23 19:35:35 ickzon Exp $
+ * @version $Id: DatabaseMetaDataImplASA.java,v 1.1 2009-07-23 19:35:35 ickzon Exp $
  */
-public class DatabaseMetaDataImpl implements java.sql.DatabaseMetaData {
+public class DatabaseMetaDataImplASA implements java.sql.DatabaseMetaData {
     
     private static final int sqlStateXOpen = 1;
 
@@ -77,7 +78,7 @@ public class DatabaseMetaDataImpl implements java.sql.DatabaseMetaData {
      */
     Boolean caseSensitive;
 
-    DatabaseMetaDataImpl(ConnectionImpl connection, 
+    DatabaseMetaDataImplASA(ConnectionImpl connection, 
                                 String databaseProductName,
                                 String databaseProductVersion,
                                 int    databaseMajorVersion,
@@ -92,13 +93,6 @@ public class DatabaseMetaDataImpl implements java.sql.DatabaseMetaData {
         this.databaseMajorVersion   = databaseMajorVersion;
         this.databaseMinorVersion   = databaseMinorVersion;
         this.url        = url;
-        if (tdsVersion >= TdsCore.TDS70) {
-            sysnameLength = 128;
-        } else
-        if (tdsVersion == TdsCore.TDS50 && databaseMajorVersion >= 15) {
-            // ASE 15+ allows upto 255 chars for most system names
-            sysnameLength = 255;
-        }
     }
 
     //----------------------------------------------------------------------
@@ -111,6 +105,7 @@ public class DatabaseMetaDataImpl implements java.sql.DatabaseMetaData {
      * @return <code>true</code> if so
      * @throws SQLException if a database-access error occurs.
      */
+    @Override
     public boolean allProceduresAreCallable() throws SQLException {
         // Sybase - if accessible_sproc = Y in server info (normal case) return true
         return true; // per "Programming ODBC for SQLServer" Appendix A
@@ -123,6 +118,7 @@ public class DatabaseMetaDataImpl implements java.sql.DatabaseMetaData {
      * @return <code>true</code> if so
      * @throws SQLException if a database-access error occurs.
      */
+    @Override
     public boolean allTablesAreSelectable() throws SQLException {
         // Sybase sp_tables may return tables that you are not able to access.
         return connection.getServerType() == TdsCore.SQLSERVER;
@@ -135,6 +131,7 @@ public class DatabaseMetaDataImpl implements java.sql.DatabaseMetaData {
      * @return <code>true</code> if so
      * @throws SQLException if a database-access error occurs.
      */
+    @Override
     public boolean dataDefinitionCausesTransactionCommit() throws SQLException {
         return false;
     }
@@ -145,6 +142,7 @@ public class DatabaseMetaDataImpl implements java.sql.DatabaseMetaData {
      * @return <code>true</code> if so
      * @throws SQLException if a database-access error occurs.
      */
+    @Override
     public boolean dataDefinitionIgnoredInTransactions() throws SQLException {
         return false;
     }
@@ -155,6 +153,7 @@ public class DatabaseMetaDataImpl implements java.sql.DatabaseMetaData {
      * @return <code>true</code> if so
      * @throws SQLException if a database-access error occurs.
      */
+    @Override
     public boolean doesMaxRowSizeIncludeBlobs() throws SQLException {
         return false;
     }
@@ -199,6 +198,7 @@ public class DatabaseMetaDataImpl implements java.sql.DatabaseMetaData {
      * @return ResultSet - each row is a column description
      * @throws SQLException if a database-access error occurs.
      */
+    @Override
     public java.sql.ResultSet getBestRowIdentifier(String catalog,
                                                    String schema,
                                                    String table,
@@ -262,8 +262,19 @@ public class DatabaseMetaDataImpl implements java.sql.DatabaseMetaData {
      *      that is a catalog name
      * @throws SQLException if a database-access error occurs.
      */
+    @Override
     public java.sql.ResultSet getCatalogs() throws SQLException {
-        String query = "exec sp_tables '', '', '%', NULL";
+        if (databaseMajorVersion < 9) {
+            throw new UnsupportedOperationException();
+        // FIXME: ASA < 9.0 doesn't support SELECT FROM PROCEDURE
+        /*
+         * In version 8 and earlier, you can open a cursor on a procedure call
+         * and FETCH from that. You can also put the resulting rows in a
+         * temporary table and SELECT from that, for more control over which
+         * rows you want.
+         */
+        }
+        String query = "select alias from sa_db_info()";
         Statement s = connection.createStatement();
         ResultSetImpl rs = (ResultSetImpl)s.executeQuery(query);
 
@@ -282,6 +293,7 @@ public class DatabaseMetaDataImpl implements java.sql.DatabaseMetaData {
      * @return the separator string
      * @throws SQLException if a database-access error occurs.
      */
+    @Override
     public String getCatalogSeparator() throws SQLException {
         return ".";
     }
@@ -292,6 +304,7 @@ public class DatabaseMetaDataImpl implements java.sql.DatabaseMetaData {
      * @return the vendor term
      * @throws SQLException if a database-access error occurs.
      */
+    @Override
     public String getCatalogTerm() throws SQLException {
         return "database";
     }
@@ -327,26 +340,24 @@ public class DatabaseMetaDataImpl implements java.sql.DatabaseMetaData {
      *
      * @see #getSearchStringEscape
      */
+    @Override
     public java.sql.ResultSet getColumnPrivileges(String catalog,
                                                   String schema,
                                                   String table,
                                                   String columnNamePattern)
     throws SQLException {
-        String query = "sp_column_privileges ?, ?, ?, ?";
+        String query = "sp_jdbc_getcolumnprivileges(?,?,?,?)";
 
         CallableStatement s = connection.prepareCall(syscall(catalog, query));
 
-        s.setString(1, table);
-        s.setString(2, schema);
-        s.setString(3, catalog);
+        s.setString(1, schema);
+        s.setString(2, catalog);
+        s.setString(3, table);
         s.setString(4, processEscapes(columnNamePattern));
 
         ResultSetImpl rs = (ResultSetImpl)s.executeQuery();
 
-        rs.setColLabel(1, "TABLE_CAT");
-        rs.setColLabel(2, "TABLE_SCHEM");
-
-        upperCaseColumnNames(rs);
+        upperCaseColumnNames(rs); // questionable! why should i manipulate such data
 
         return rs;
     }
@@ -404,6 +415,7 @@ public class DatabaseMetaDataImpl implements java.sql.DatabaseMetaData {
      *
      * @see #getSearchStringEscape
      */
+    @Override
     public java.sql.ResultSet getColumns(String catalog,
                                          String schemaPattern,
                                          String tableNamePattern,
@@ -432,7 +444,8 @@ public class DatabaseMetaDataImpl implements java.sql.DatabaseMetaData {
                              Types.INTEGER,         Types.VARCHAR,
                              Types.VARCHAR,         Types.VARCHAR,
                              Types.VARCHAR,         Types.SMALLINT};
-        String query = "sp_columns ?, ?, ?, ?, ?";
+   
+        String query = "sp_columns ?, ?, ?, ?";
 
         CallableStatement s = connection.prepareCall(syscall(catalog, query));
 
@@ -440,7 +453,6 @@ public class DatabaseMetaDataImpl implements java.sql.DatabaseMetaData {
         s.setString(2, processEscapes(schemaPattern));
         s.setString(3, catalog);
         s.setString(4, processEscapes(columnNamePattern));
-        s.setInt(5, 3); // ODBC version 3
 
         ResultSetImpl rs = (ResultSetImpl)s.executeQuery();
 
@@ -452,53 +464,35 @@ public class DatabaseMetaDataImpl implements java.sql.DatabaseMetaData {
         // The result data is copied to a cached result set and modified on the fly.
         //
         while (rs.next()) {
-            if (serverType == TdsCore.SYBASE) {
-                // Sybase servers (older versions only return 14 columns)
-                for (int i = 1; i <= 4; i++) {
-                    rsTmp.updateObject(i, rs.getObject(i));
-                }
-                rsTmp.updateInt(5, normalizeDataType(rs.getInt(5), connection.getUseLOBs()));
-                String typeName = rs.getString(6);
-                rsTmp.updateString(6, typeName);
-                for (int i = 8; i <= 12; i++) {
-                    rsTmp.updateObject(i, rs.getObject(i));
-                }
-                if (colCnt >= 20) {
-                    // SYBASE 11.92, 12.5
-                    for (int i = 13; i <= 18; i++) {
-                        rsTmp.updateObject(i, rs.getObject(i + 2));
-                    }
-                } else {
-                    // SYBASE 11.03
-                    rsTmp.updateObject(16, rs.getObject(8));
-                    rsTmp.updateObject(17, rs.getObject(14));
-                }
-                if ("image".equals(typeName) || "text".equals(typeName)) {
-                    rsTmp.updateInt(7, Integer.MAX_VALUE);
-                    rsTmp.updateInt(16, Integer.MAX_VALUE);
-                } else
-                if ("univarchar".equals(typeName) || "unichar".equals(typeName)) {
-                    rsTmp.updateInt(7, rs.getInt(7) / 2);
-                    rsTmp.updateObject(16, rs.getObject(7));
-                } else {
-                    rsTmp.updateInt(7, rs.getInt(7));
+            // Sybase servers (older versions only return 14 columns)
+            for (int i = 1; i <= 4; i++) {
+                rsTmp.updateObject(i, rs.getObject(i));
+            }
+            rsTmp.updateInt(5, normalizeDataType(rs.getInt(5), connection.getUseLOBs()));
+            String typeName = rs.getString(6);
+            rsTmp.updateString(6, typeName);
+            for (int i = 8; i <= 12; i++) {
+                rsTmp.updateObject(i, rs.getObject(i));
+            }
+            if (colCnt >= 20) {
+                // SYBASE 11.92, 12.5
+                for (int i = 13; i <= 18; i++) {
+                    rsTmp.updateObject(i, rs.getObject(i + 2));
                 }
             } else {
-                // MS SQL Server - Mainly OK but we need to fix some data types.
-                for (int i = 1; i <= colCnt; i++) {
-                    if (i == 5) {
-                        int type = normalizeDataType(rs.getInt(i), connection.getUseLOBs());
-                        rsTmp.updateInt(i, type);
-                    } else
-                    if (i == 19) {
-                        // This is the SS_DATA_TYPE column and contains the TDS
-                        // data type constant. We can use this to distinguish
-                        // varchar(max) from text on SQL2005.
-                        rsTmp.updateString(6, TdsCore70.getMSTypeName(rs.getString(6), rs.getInt(19)));
-                    } else {
-                        rsTmp.updateObject(i, rs.getObject(i));
-                    }
-                }
+                // SYBASE 11.03
+                rsTmp.updateObject(16, rs.getObject(8));
+                rsTmp.updateObject(17, rs.getObject(14));
+            }
+            if ("image".equals(typeName) || "text".equals(typeName)) {
+                rsTmp.updateInt(7, Integer.MAX_VALUE);
+                rsTmp.updateInt(16, Integer.MAX_VALUE);
+            } else
+            if ("univarchar".equals(typeName) || "unichar".equals(typeName)) {
+                rsTmp.updateInt(7, rs.getInt(7) / 2);
+                rsTmp.updateObject(16, rs.getObject(7));
+            } else {
+                rsTmp.updateInt(7, rs.getInt(7));
             }
             rsTmp.insertRow();
         }
@@ -508,6 +502,7 @@ public class DatabaseMetaDataImpl implements java.sql.DatabaseMetaData {
 
         return rsTmp;
     }
+
     /**
      * Get a description of the foreign key columns in the foreign key table
      * that reference the primary key columns of the primary key table
@@ -655,6 +650,7 @@ public class DatabaseMetaDataImpl implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public String getDatabaseProductName() throws SQLException {
+        // ASA: select property('ProductName')
         return databaseProductName;
     }
 
@@ -665,6 +661,7 @@ public class DatabaseMetaDataImpl implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public String getDatabaseProductVersion() throws SQLException {
+        // ASA: "select @@version"
         return databaseProductVersion;
     }
 
@@ -1457,32 +1454,13 @@ public class DatabaseMetaDataImpl implements java.sql.DatabaseMetaData {
                     rsTmp.updateObject(i + offset, rs.getObject(i));
                 }
             }
-            if (serverType == TdsCore.SYBASE && rsmd.getColumnCount() >= 22) {
-                //
-                // For Sybase 12.5+ we can obtain column in/out status from
-                // the mode column.
-                //
-                String mode = rs.getString(22);
-                if (mode != null) {
-                    if (mode.equalsIgnoreCase("in")) {
-                        rsTmp.updateInt(5, DatabaseMetaData.procedureColumnIn);
-                    } else
-                    if (mode.equalsIgnoreCase("out")) {
-                        rsTmp.updateInt(5, DatabaseMetaData.procedureColumnInOut);
-                    }
-                }
-             }
-             if (serverType == TdsCore.SYBASE
-                 || tdsVersion == TdsCore.TDS42
-                 || tdsVersion == TdsCore.TDS70) {
-                //
-                // Standardise the name of the return_value column as
-                // @RETURN_VALUE for Sybase and SQL < 2000
-                //
-                String colName = rs.getString(4);
-                if (colName != null && colName.equals("RETURN_VALUE")) {
-                    rsTmp.updateString(4, "@RETURN_VALUE");
-                }
+            //
+            // Standardise the name of the return_value column as
+            // @RETURN_VALUE for Sybase and SQL < 2000
+            //
+            String colName = rs.getString(4);
+            if (colName != null && colName.equals("RETURN_VALUE")) {
+                rsTmp.updateString(4, "@RETURN_VALUE");
             }
             rsTmp.insertRow();
         }
@@ -1741,20 +1719,17 @@ public class DatabaseMetaDataImpl implements java.sql.DatabaseMetaData {
                                                  String schemaPattern,
                                                  String tableNamePattern)
     throws SQLException {
-        String query = "sp_table_privileges ?, ?, ?";
+        String query = "sp_jdbc_gettableprivileges(?,?,?)";
 
         CallableStatement s = connection.prepareCall(syscall(catalog, query));
 
-        s.setString(1, processEscapes(tableNamePattern));
-        s.setString(2, processEscapes(schemaPattern));
-        s.setString(3, catalog);
+        s.setString(1, processEscapes(tableNamePattern)); // FIXME: case sensitive -> das bedeutet für mich, ich darf auf keinen fall die ganzen metadaten mit upperCaseColumnNames() vermurksen!! 
+        s.setString(3, catalog); // REVIEW: scheint nix zu bewirken
+        s.setString(2, processEscapes(schemaPattern)); // FIXME: case sensitive
 
         ResultSetImpl rs = (ResultSetImpl)s.executeQuery();
 
-        rs.setColLabel(1, "TABLE_CAT");
-        rs.setColLabel(2, "TABLE_SCHEM");
-
-        upperCaseColumnNames(rs);
+        upperCaseColumnNames(rs); // questionable! why should i manipulate such data
 
         return rs;
     }
@@ -1801,6 +1776,7 @@ public class DatabaseMetaDataImpl implements java.sql.DatabaseMetaData {
      *
      * @see #getSearchStringEscape
      */
+    @Override
     public java.sql.ResultSet getTables(String catalog,
                                         String schemaPattern,
                                         String tableNamePattern,
@@ -1819,13 +1795,14 @@ public class DatabaseMetaDataImpl implements java.sql.DatabaseMetaData {
         String query = "sp_tables ?, ?, ?, ?";
 
         CallableStatement cstmt = connection.prepareCall(syscall(catalog, query));
-
-        cstmt.setString(1, processEscapes(tableNamePattern));
-        cstmt.setString(2, processEscapes(schemaPattern));
-        cstmt.setString(3, catalog);
+        String table = processEscapes(tableNamePattern);
+        String schema = processEscapes(schemaPattern);
+        cstmt.setString(1, table==null?"%":table);
+        cstmt.setString(2, schema==null?"%":schema);
+        cstmt.setString(3, catalog==null?"%":catalog);
 
         if (types == null) {
-            cstmt.setString(4, null);
+            cstmt.setString(4, "%");
         } else {
             StringBuffer buf = new StringBuffer(64);
 
@@ -1952,7 +1929,7 @@ public class DatabaseMetaDataImpl implements java.sql.DatabaseMetaData {
         ResultSetImpl rs;
 
         try {
-            rs = (ResultSetImpl) s.executeQuery("exec sp_datatype_info @ODBCVer=3");
+            rs = (ResultSetImpl) s.executeQuery("exec sp_jdbc_datatype_info");
         } catch (SQLException ex) {
             s.close();
             throw ex;
@@ -2049,11 +2026,7 @@ public class DatabaseMetaDataImpl implements java.sql.DatabaseMetaData {
             s = connection.createStatement();
 
             // MJH Sybase does not support system_user
-            if (connection.getServerType() == TdsCore.SYBASE) {
-                rs = s.executeQuery("select suser_name()");
-            } else {
-                rs = s.executeQuery("select system_user");
-            }
+            rs = s.executeQuery("select suser_name()");
 
             if (!rs.next()) {
                 throw new SQLException(Messages.get("error.dbmeta.nouser"), "HY000");
@@ -2114,35 +2087,17 @@ public class DatabaseMetaDataImpl implements java.sql.DatabaseMetaData {
                              Types.INTEGER, Types.INTEGER,
                              Types.SMALLINT,Types.SMALLINT};
 
-        String query = "sp_special_columns ?, ?, ?, ?, ?, ?, ?";
+        String query = "dbo.sp_jdbc_getversioncolumns(?,?,?)";
 
         CallableStatement s = connection.prepareCall(syscall(catalog, query));
 
-        s.setString(1, table);
-        s.setString(2, schema);
-        s.setString(3, catalog);
-        s.setString(4, "V");
-        s.setString(5, "C");
-        s.setString(6, "O");
-        s.setInt(7, 3); // ODBC version 3
+        s.setString(1, catalog==null||catalog.isEmpty()?"%":catalog);
+        s.setString(2, schema==null||schema.isEmpty()?"%":schema);
+        s.setString(3, table==null||table.isEmpty()?"%":table);
 
         ResultSetImpl rs = (ResultSetImpl) s.executeQuery();
-        ResultSetImpl rsTmp = new ResultSetImpl((StatementImpl)s, colNames, colTypes);
-        rsTmp.moveToInsertRow();
-        int colCnt = rs.getMetaData().getColumnCount();
-        //
-        // Copy results to local result set.
-        //
-        while (rs.next()) {
-            for (int i = 1; i <= colCnt; i++) {
-                rsTmp.updateObject(i, rs.getObject(i));
-            }
-            rsTmp.insertRow();
-        }
-        rsTmp.moveToCurrentRow();
-        rsTmp.setResultSetConcurrency(ResultSet.CONCUR_READ_ONLY);
-        rs.close();
-        return rsTmp;
+
+        return rs;
     }
 
     /**
@@ -2578,10 +2533,7 @@ public class DatabaseMetaDataImpl implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean supportsFullOuterJoins() throws SQLException {
-        if (connection.getServerType() == TdsCore.SYBASE) {
-            // Supported since version 12
-            return getDatabaseMajorVersion() >= 12;
-        }
+        // full outer joins are supported by ASA
         return true;
     }
 
@@ -2739,7 +2691,7 @@ public class DatabaseMetaDataImpl implements java.sql.DatabaseMetaData {
      */
     public boolean supportsOpenCursorsAcrossRollback() throws SQLException {
         // JConnect says true
-        return connection.getServerType() == TdsCore.SYBASE;
+        return true;
     }
 
     /**
@@ -3257,11 +3209,10 @@ public class DatabaseMetaDataImpl implements java.sql.DatabaseMetaData {
     private void setCaseSensitiveFlag() throws SQLException {
         if (caseSensitive == null) {
             Statement s = connection.createStatement();
-            ResultSet rs = s.executeQuery("sp_server_info 16");
-
+            ResultSet rs = s.executeQuery("SELECT DB_PROPERTY ( 'CaseSensitive' )");
             rs.next();
 
-            caseSensitive = "MIXED".equalsIgnoreCase(rs.getString(3)) ?
+            caseSensitive = "OFF".equalsIgnoreCase(rs.getString(1)) ?
                             Boolean.FALSE : Boolean.TRUE;
             s.close();
         }
@@ -3592,7 +3543,7 @@ public class DatabaseMetaDataImpl implements java.sql.DatabaseMetaData {
      * tests.
      *
      * @author David Eaves
-     * @version $Id: DatabaseMetaDataImpl.java,v 1.3 2009-07-23 19:35:35 ickzon Exp $
+     * @version $Id: DatabaseMetaDataImplASA.java,v 1.1 2009-07-23 19:35:35 ickzon Exp $
      */
     static class TypeInfo implements Comparable {
         static final int NUM_COLS = 18;
@@ -3765,13 +3716,13 @@ public class DatabaseMetaDataImpl implements java.sql.DatabaseMetaData {
     @Override
     public boolean autoCommitFailureClosesAllResultSets() throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        return false;
     }
 
     @Override
     public ResultSet getClientInfoProperties() throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        return null;
     }
 
     @Override
@@ -3779,44 +3730,44 @@ public class DatabaseMetaDataImpl implements java.sql.DatabaseMetaData {
             String functionNamePattern, String columnNamePattern)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        return null;
     }
 
     @Override
     public ResultSet getFunctions(String catalog, String schemaPattern,
             String functionNamePattern) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        return null;
     }
 
     @Override
     public RowIdLifetime getRowIdLifetime() throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        return null;
     }
 
     @Override
     public ResultSet getSchemas(String catalog, String schemaPattern)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        return null;
     }
 
     @Override
     public boolean supportsStoredFunctionsUsingCallSyntax() throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        return false;
     }
 
     @Override
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        return false;
     }
 
     @Override
     public <T> T unwrap(Class<T> iface) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        return null;
     }
 }

@@ -41,7 +41,7 @@ import net.sourceforge.jtds.util.Logger;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: StatementImpl.java,v 1.3 2009-07-23 12:25:54 ickzon Exp $
+ * @version $Id: StatementImpl.java,v 1.4 2009-07-23 19:35:35 ickzon Exp $
  */
 public class StatementImpl implements java.sql.Statement {
     /*
@@ -112,7 +112,7 @@ public class StatementImpl implements java.sql.Statement {
     /** The head of the diagnostic messages chain. */
     private final SQLDiagnostic messages;
     /** The TDS Results. */
-    private ArrayList<Object> results;
+    protected ArrayList<Object> results; // FIXME: change visibility back to private as soon as the ASA impl is adapted accordingly
     /** Next result pointer. */
     private int nextResult;
     /** The array of column meta data objects for the current result set. */
@@ -259,6 +259,7 @@ public class StatementImpl implements java.sql.Statement {
             // Allow retry for Sybase
             return;
         }
+        // FIXME: what about ASA?
         //
         // Check cursor specific errors and ranges for SQL Server
         //

@@ -33,6 +33,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.RowId;
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Calendar;
@@ -62,7 +63,7 @@ import java.util.concurrent.Semaphore;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: PreparedStatementImpl.java,v 1.3 2009-07-23 12:25:54 ickzon Exp $
+ * @version $Id: PreparedStatementImpl.java,v 1.4 2009-07-23 19:35:35 ickzon Exp $
  */
 public class PreparedStatementImpl extends StatementImpl implements PreparedStatement {
 
@@ -115,7 +116,7 @@ public class PreparedStatementImpl extends StatementImpl implements PreparedStat
 
         sqlWord = parsedSql[2];
 
-        if (returnKeys && sqlWord.equals("insert")) {
+        if (returnKeys && sqlWord.equalsIgnoreCase("insert")) {
             if (connection.getServerType() == TdsCore.SQLSERVER
                     && connection.getMetaData().getDatabaseMajorVersion() >= 8) {
                 this.sql = parsedSql[0] + " SELECT SCOPE_IDENTITY() AS " + GEN_KEY_COL;
@@ -763,6 +764,8 @@ public class PreparedStatementImpl extends StatementImpl implements PreparedStat
 
     public ResultSetMetaData getMetaData() throws SQLException {
         checkOpen();
+        if (connection.getServerType() == TdsCore.ANYWHERE)
+            throw new SQLFeatureNotSupportedException();
 
         if (colMetaData == null && currentResult == null) {
             //
@@ -773,6 +776,13 @@ public class PreparedStatementImpl extends StatementImpl implements PreparedStat
             try {
                 connectionLock = lockConnection();
                 if (connection.getServerType() == TdsCore.SYBASE) {
+                    // Sybase can provide meta data as a by product of preparing the call.
+                    connection.prepareSQL(this, sql, new ParamInfo[0], false, false);
+
+                    if (colMetaData == null) {
+                        return null; // Sorry still no go
+                    }
+                } else if (connection.getServerType() == TdsCore.ANYWHERE) {
                     // Sybase can provide meta data as a by product of preparing the call.
                     connection.prepareSQL(this, sql, new ParamInfo[0], false, false);
 

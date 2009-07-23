@@ -793,13 +793,18 @@ public final class TdsStream {
                 return null;
 
             case 8:
+                /*
+                 * FIXME ASA:
+                 * 8-bytes TIMESTAMP (year, month, day, hour minute, second, and fraction of second accurate to 6 decimal places)
+                 * 0001-01-01 to 9999-12-31 (precision of the time portion of TIMESTAMP is dropped prior to 1600-02-28 23:59:59 and after 7911-01-01 00:00:00)
+                 */
                 // A datetime is made of of two 32 bit integers
                 // The first one is the number of days since 1900
                 // The second integer is the number of seconds*300
                 // Negative days indicate dates earlier than 1900.
                 // The full range is 1753-01-01 to 9999-12-31.
                 daysSince1900 = readInt();
-                time = readInt();
+                time          = readInt();
                 return new DateTime(daysSince1900, time);
             case 4:
                 // A smalldatetime is two 16 bit integers.

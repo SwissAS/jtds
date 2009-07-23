@@ -36,7 +36,7 @@ import net.sourceforge.jtds.util.Logger;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author FreeTDS project
- * @version $Id: TdsCore42.java,v 1.2 2009-07-23 12:25:54 ickzon Exp $
+ * @version $Id: TdsCore42.java,v 1.3 2009-07-23 19:35:35 ickzon Exp $
  */
 class TdsCore42 extends TdsCore {
     //
@@ -91,7 +91,8 @@ class TdsCore42 extends TdsCore {
      * @param socket The TDS socket instance.
      * @param serverType The appropriate server type constant.
      */
-    TdsCore42(final ConnectionImpl connection, final TdsSocket socket,
+    TdsCore42(final ConnectionImpl connection,
+              final TdsSocket socket,
               final int serverType) {
         super(connection, socket, serverType, TDS42);
     }
@@ -172,7 +173,7 @@ class TdsCore42 extends TdsCore {
         throws SQLException {
         Logger.printMethod(this, "login", null);
         try {
-            sendLoginPkt(serverName, user, password,
+            sendLoginPkt(serverName, database, user, password,
                          charset, appName, progName, 
                          (wsid.length() == 0)? getHostName(): wsid,
                          language, packetSize);
@@ -370,6 +371,7 @@ class TdsCore42 extends TdsCore {
       * TDS 4.2 Login Packet.
       *
       * @param serverName server host name
+      * @param database   required database
       * @param user       user name
       * @param password   user password
       * @param charset    required server character set
@@ -381,6 +383,7 @@ class TdsCore42 extends TdsCore {
       * @throws IOException if an I/O error occurs
       */
      private void sendLoginPkt(final String serverName,
+                               final String database,
                                final String user,
                                final String password,
                                final String charset,
@@ -411,7 +414,12 @@ class TdsCore42 extends TdsCore {
          out.write(empty, 0, 7);
 
          putLoginString(appName, 30);  // appname
-         putLoginString(serverName, 30); // server name
+
+         if (this.serverType == TdsCore.ANYWHERE) {
+             putLoginString(database, 30); // database name
+         } else {
+             putLoginString(serverName, 30); // server name
+         }
 
          out.write((byte)0); // remote passwords
          ByteBuffer bb = connection.getCharset().encode(password);
@@ -803,6 +811,7 @@ class TdsCore42 extends TdsCore {
         in.readShort(); // Packet length
 
         int ack = in.read(); // Ack TDS 5 = 5 for OK 6 for fail, 1/0 for the others
+
         //
         // Discard TDS Version information (must be 4.2)
         //

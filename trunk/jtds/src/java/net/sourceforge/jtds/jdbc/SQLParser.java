@@ -47,7 +47,7 @@ import java.util.LinkedList;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: SQLParser.java,v 1.1 2007-09-10 19:19:31 bheineman Exp $
+ * @version $Id: SQLParser.java,v 1.2 2009-07-23 19:35:35 ickzon Exp $
  */
 class SQLParser {
     /**
@@ -97,7 +97,7 @@ class SQLParser {
      *
      * @author Brett Wooldridge
      * @author Alin Sinpalean
-     * @version $Id: SQLParser.java,v 1.1 2007-09-10 19:19:31 bheineman Exp $
+     * @version $Id: SQLParser.java,v 1.2 2009-07-23 19:35:35 ickzon Exp $
      */
     static class SQLCacheKey {
         private final String sql;
@@ -145,7 +145,7 @@ class SQLParser {
      * as LRU queue.
      *
      * @author Brett Wooldridge
-     * @version $Id: SQLParser.java,v 1.1 2007-09-10 19:19:31 bheineman Exp $
+     * @version $Id: SQLParser.java,v 1.2 2009-07-23 19:35:35 ickzon Exp $
      */
     static class SimpleLRUCache extends HashMap<SQLParser.SQLCacheKey, Object> {
         static final long serialVersionUID = -3197929967416505022L;
@@ -829,6 +829,7 @@ class SQLParser {
     /** Map of jdbc to server data types for convert */
     private static HashMap<String,String> cvMap = new HashMap<String,String>();
 
+    // FIXME: ASA most likely needs is own function map
     static {
         // Microsoft only functions
         msFnMap.put("length", "len($)");
@@ -851,7 +852,7 @@ class SQLParser {
         fnMap.put("curtime",  "convert(datetime, convert(varchar, getdate(), 108))");
         fnMap.put("dayname",  "datename(weekday,$)");
         fnMap.put("dayofmonth", "datepart(day,$)");
-        fnMap.put("dayofweek", "((datepart(weekday,$)+@@DATEFIRST-1)%7+1)");
+        fnMap.put("dayofweek", "((datepart(weekday,$)+@@DATEFIRST-1)%7+1)"); // @@DATEFIRST unknown to ASA, function caldayofweek should be correct for any server type
         fnMap.put("dayofyear",  "datepart(dayofyear,$)");
         fnMap.put("hour",       "datepart(hour,$)");
         fnMap.put("minute",     "datepart(minute,$)");
@@ -1280,7 +1281,10 @@ class SQLParser {
                             connection.getMetaData().getDatabaseMinorVersion() >= 50) {
                         limit = 2000; // Actually 2048 but allow some head room
                     }
-                } else {
+                } else if (connection.getServerType() == TdsCore.ANYWHERE) {
+                    limit = 65536; // minimum possible value, (page size/4)^2
+                }
+                else {
                     if (connection.getMetaData().getDatabaseMajorVersion() == 7) {
                         limit = 1000; // Actually 1024
                     } else

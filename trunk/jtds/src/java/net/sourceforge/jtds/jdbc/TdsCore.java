@@ -52,7 +52,7 @@ import net.sourceforge.jtds.util.Logger;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author FreeTDS project
- * @version $Id: TdsCore.java,v 1.2 2009-07-23 12:25:54 ickzon Exp $
+ * @version $Id: TdsCore.java,v 1.3 2009-07-23 19:35:35 ickzon Exp $
  */
 abstract class TdsCore  {
 
@@ -437,7 +437,7 @@ abstract class TdsCore  {
     /** The status field from a DONE packet. */
     protected byte doneStatus;
     /** The count field from a DONE packet. */
-    protected int doneCount;
+    protected Integer doneCount;
     /** True if the server response is fully read. */
     protected boolean endOfResponse = true;
     /** The array of table names associated with this result. */
@@ -465,7 +465,7 @@ abstract class TdsCore  {
     /** Connection's current maximum field size limit. */
     protected int textSize;
     /** Stored procedure unique ID number. */
-    protected int spSequenceNo = 1;
+    protected static int spSequenceNo = 1; // FIXME: static to get driver-wide unique IDs for ASA, should be changed back if possible (doesn't help if multiple clients are connected, anyway)
 
 // -------------------- public methods from here -----------------------
     

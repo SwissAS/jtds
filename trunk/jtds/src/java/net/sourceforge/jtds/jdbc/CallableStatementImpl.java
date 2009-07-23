@@ -53,7 +53,7 @@ import java.util.Map;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: CallableStatementImpl.java,v 1.2 2008-09-07 16:40:38 bheineman Exp $
+ * @version $Id: CallableStatementImpl.java,v 1.3 2009-07-23 19:35:35 ickzon Exp $
  */
 public class CallableStatementImpl extends PreparedStatementImpl implements CallableStatement {
     /** Last parameter retrieved was null. */
@@ -355,8 +355,11 @@ public class CallableStatementImpl extends PreparedStatementImpl implements Call
                                     rs.getInt(5) == DatabaseMetaData.procedureColumnOut);
             pcopy[i].jdbcType  = rs.getInt(6);
             pcopy[i].sqlType   = rs.getString(7);
-            pcopy[i].length    = rs.getInt(9);
+// FIXME: check for every server type which one is correct
+//            pcopy[i].precision = rs.getInt(7);
+//            pcopy[i].sqlType   = rs.getString(8);
             pcopy[i].precision = rs.getInt(8);
+            pcopy[i].length    = rs.getInt(9);
             pcopy[i].scale     = rs.getInt(10);
             pcopy[i].isSet     = true;
             pcopy[i].value     = (rs.getInt(12) == DatabaseMetaData.procedureNullable)? "": null;

@@ -29,7 +29,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: SQLDiagnostic.java,v 1.2 2009-07-23 12:25:54 ickzon Exp $
+ * @version $Id: SQLDiagnostic.java,v 1.3 2009-07-23 19:35:35 ickzon Exp $
  */
 public class SQLDiagnostic {
     /**
@@ -476,6 +476,7 @@ public class SQLDiagnostic {
     private static String getStateCode(final int number,
                                        final int serverType,
                                        final String defState) {
+        // FIXME: ASA most likely needs it's own mapping
         final HashMap stateTable = (serverType == TdsCore.SYBASE ||
                                     serverType == TdsCore.ANYWHERE) ? sybStates : mssqlStates;
         final String state = (String) stateTable.get(new Integer(number));

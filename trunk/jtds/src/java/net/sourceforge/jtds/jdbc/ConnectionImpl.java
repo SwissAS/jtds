@@ -17,6 +17,8 @@
 //
 package net.sourceforge.jtds.jdbc;
 
+import static net.sourceforge.jtds.jdbc.TdsCore.ANYWHERE;
+
 import java.util.WeakHashMap;
 import java.sql.Array;
 import java.sql.Blob;
@@ -80,7 +82,7 @@ import net.sourceforge.jtds.util.MSSqlServerInfo;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionImpl.java,v 1.3 2009-07-23 12:25:54 ickzon Exp $
+ * @version $Id: ConnectionImpl.java,v 1.4 2009-07-23 19:35:35 ickzon Exp $
  */
 public class ConnectionImpl implements java.sql.Connection {
     /** Constant for SNAPSHOT isolation on MS SQL Server 2005.*/
@@ -211,7 +213,7 @@ public class ConnectionImpl implements java.sql.Connection {
     /** Dummy type map for get/set type map. */
     private Map<String,Class<?>> typeMap = new HashMap<String,Class<?>>();
     /** Cached instance of JtdsDatabaseMetaData. */
-    private DatabaseMetaDataImpl databaseMetaData;
+    private DatabaseMetaData databaseMetaData;
     /** The connection StatementImpl object. */
     StatementImpl baseStmt;
     /** The list of savepoints. */
@@ -309,8 +311,8 @@ public class ConnectionImpl implements java.sql.Connection {
         this.password = password;
         this.ds       = ds;
         this.url      = "";
-        // preset server type based on connection string, this will be set
-        // to the correct value during login
+        // guess server type based on connection string - in case of ASA
+        // this might not be correct but will then be changed during login
         if (ds.getServerType().equalsIgnoreCase("sybase")) {
             serverType = TdsCore.SYBASE;
         } else if (ds.getServerType().equalsIgnoreCase("anywhere")) {
@@ -457,14 +459,14 @@ public class ConnectionImpl implements java.sql.Connection {
                 //
                 // Create TDS protocol object
                 //
-                if (serverType == TdsCore.ANYWHERE) {
-                    baseTds = new TdsCoreASA(this, socket, serverType);
+                if (serverType == ANYWHERE) {
+                    baseTds = new TdsCoreASA(this, socket, getServerType());
                 } else
                 if (tdsVersion == TdsCore.TDS42) {
-                    baseTds = new TdsCore42(this, socket, serverType);
+                    baseTds = new TdsCore42(this, socket, getServerType());
                 } else 
                 if (tdsVersion == TdsCore.TDS50) {
-                    baseTds = new TdsCore50(this, socket, serverType);
+                    baseTds = new TdsCore50(this, socket, getServerType());
                 } else {
                     baseTds = new TdsCore70(this, socket, tdsVersion);
                 }
@@ -529,7 +531,7 @@ public class ConnectionImpl implements java.sql.Connection {
                     if (type != getServerType()) {
                         socket.close();
                         retry = true;
-                        Logger.println("Wrong server type set in connection string, retry login.");
+                        Logger.println("Assumed wrong server type, retry.");
                         continue;
                     } else {
                         throw e;
@@ -554,7 +556,7 @@ public class ConnectionImpl implements java.sql.Connection {
                 if (tdsVersion < TdsCore.TDS70 && ds.getDatabaseName().length() > 0) {
                     // Need to select the default database
                     if (serverType == TdsCore.ANYWHERE) {
-                        // ASA already opens specified database during login
+                        // ASA already opens database during login
                         currentDatabase = ds.getDatabaseName();
                     }
                     setCatalog(ds.getDatabaseName());
@@ -1600,7 +1602,7 @@ public class ConnectionImpl implements java.sql.Connection {
                 case TdsCore.SQLSERVER:
                     // fall through
 
-                case TdsCore.SYBASE:
+                    case TdsCore.SYBASE:
                     baseStmt.submitSQL("IF @@TRANCOUNT > 0 ROLLBACK TRAN");
                     break;
 
@@ -1836,12 +1838,21 @@ public class ConnectionImpl implements java.sql.Connection {
     public DatabaseMetaData getMetaData() throws SQLException {
         checkOpen();
         if (databaseMetaData == null) {
-            databaseMetaData = new DatabaseMetaDataImpl(this,
-                                                             databaseProductName,
-                                                             databaseProductVersion,
-                                                             databaseMajorVersion,
-                                                             databaseMinorVersion,
-                                                             url);
+            if (serverType == ANYWHERE) {
+                databaseMetaData = new DatabaseMetaDataImplASA(this,
+                                                                databaseProductName,
+                                                                databaseProductVersion,
+                                                                databaseMajorVersion,
+                                                                databaseMinorVersion,
+                                                                url);
+            } else {
+                databaseMetaData = new DatabaseMetaDataImpl(this,
+                                                            databaseProductName,
+                                                            databaseProductVersion,
+                                                            databaseMajorVersion,
+                                                            databaseMinorVersion,
+                                                            url);
+            }
         }
         return databaseMetaData;
     }
@@ -2941,7 +2952,7 @@ public class ConnectionImpl implements java.sql.Connection {
     /**
      * jTDS implementation of the <code>Xid</code> interface.
      *
-     * @version $Id: ConnectionImpl.java,v 1.3 2009-07-23 12:25:54 ickzon Exp $
+     * @version $Id: ConnectionImpl.java,v 1.4 2009-07-23 19:35:35 ickzon Exp $
      */
     private static class XidImpl implements Xid {
         /** The size of an XID in bytes. */
