@@ -62,7 +62,7 @@ import java.util.concurrent.Semaphore;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: PreparedStatementImpl.java,v 1.2 2008-09-07 16:40:38 bheineman Exp $
+ * @version $Id: PreparedStatementImpl.java,v 1.3 2009-07-23 12:25:54 ickzon Exp $
  */
 public class PreparedStatementImpl extends StatementImpl implements PreparedStatement {
 
@@ -728,7 +728,8 @@ public class PreparedStatementImpl extends StatementImpl implements PreparedStat
         //
         // NB. This is usable only with the JDBC3 version of the interface.
         //
-        if (connection.getServerType() == TdsCore.SYBASE) {
+        if (connection.getServerType() == TdsCore.SYBASE ||
+            connection.getServerType() == TdsCore.ANYWHERE) {
             // Sybase does return the parameter types for prepared sql.
             connection.prepareSQL(this, sql, new ParamInfo[0], false, false);
         }

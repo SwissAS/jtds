@@ -242,7 +242,8 @@ public class CommonDataSource implements Referenceable, Serializable, ObjectFact
         String type = token.toString().toLowerCase();
 
         if (!type.equalsIgnoreCase("sqlserver") &&
-            !type.equalsIgnoreCase("sybase")) 
+            !type.equalsIgnoreCase("sybase") &&
+            !type.equalsIgnoreCase("anywhere")) 
         {
             return false;
         }
@@ -715,7 +716,9 @@ public class CommonDataSource implements Referenceable, Serializable, ObjectFact
     public String getServerType()
     {
         String t = getProperty("serverType");
-        if (t == null || (!t.equalsIgnoreCase("sqlserver") && !t.equalsIgnoreCase("sybase"))) {
+        if (t == null || (!t.equalsIgnoreCase("sqlserver") &&
+                          !t.equalsIgnoreCase("sybase") && 
+                          !t.equalsIgnoreCase("anywhere"))) {
             return "sqlserver";
         }
         return t.toLowerCase();
@@ -788,7 +791,8 @@ public class CommonDataSource implements Referenceable, Serializable, ObjectFact
         if (!v.equals("4.2") && !v.equals("5.0") && 
                !v.equals("7.0") && !v.equals("8.0"))
         {
-            if (getServerType().equals("sybase")) {
+            if (getServerType().equals("sybase") ||
+                getServerType().equals("anywhere")) {
                 return "5.0";
             }
             return "8.0";

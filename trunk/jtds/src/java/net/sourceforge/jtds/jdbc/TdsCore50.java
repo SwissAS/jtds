@@ -33,7 +33,7 @@ import net.sourceforge.jtds.util.Logger;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author FreeTDS project
- * @version $Id: TdsCore50.java,v 1.1 2007-09-10 19:19:31 bheineman Exp $
+ * @version $Id: TdsCore50.java,v 1.2 2009-07-23 12:25:54 ickzon Exp $
  */
 class TdsCore50 extends TdsCore {
 
@@ -133,9 +133,12 @@ class TdsCore50 extends TdsCore {
      *
      * @param connection The connection which owns this object.
      * @param socket The TDS socket instance.
+     * @param serverType The appropriate server type constant.
      */
-    TdsCore50(final ConnectionImpl connection, final TdsSocket socket) {
-        super(connection, socket, SYBASE, TDS50);
+    TdsCore50(final ConnectionImpl connection,
+              final TdsSocket socket,
+              final int serverType) {
+        super(connection, socket, serverType, TDS50);
     }
 
     /**
@@ -1040,12 +1043,21 @@ class TdsCore50 extends TdsCore {
 
         product = in.readString(in.read(), connection.getCharset());
 
-        major = in.read();
-        if (major < 10) {
-            major += 10; // Correct for Sybase 11.03
+        if (product.toLowerCase().contains("anywhere")) {
+            // ASA  9 and below : 'Adaptive Server Anywhere',
+            // ASA 10 and higher: 'SQL Anywhere'
+            this.serverType = ANYWHERE;
+            major = in.read();
+            minor = in.read();
+            in.skip(1);
+        } else {
+            major = in.read();
+            if (major < 10) {
+                major += 10; // Correct for Sybase 11.03
+            }
+            minor = in.read() * 10;
+            minor += in.read();
         }
-        minor = in.read() * 10;
-        minor += in.read();
         in.skip(1);
 
         if (product.length() > 1 && -1 != product.indexOf('\0')) {

@@ -52,7 +52,7 @@ import net.sourceforge.jtds.util.Logger;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author FreeTDS project
- * @version $Id: TdsCore.java,v 1.1 2007-09-10 19:19:31 bheineman Exp $
+ * @version $Id: TdsCore.java,v 1.2 2009-07-23 12:25:54 ickzon Exp $
  */
 abstract class TdsCore  {
 
@@ -190,6 +190,8 @@ abstract class TdsCore  {
     static final int SQLSERVER = 1;
     /** Sybase ASE connection property constant. */
     static final int SYBASE = 2;    
+    /** Sybase ASA connection property constant. */
+    static final int ANYWHERE = 3;    
 
     //
     // End token status bytes
@@ -472,7 +474,7 @@ abstract class TdsCore  {
      *
      * @param connection The connection which owns this object.
      * @param socket The TDS socket instance.
-     * @param serverType the sever type (sqlserver,sybase).
+     * @param serverType the sever type (sqlserver,sybase,anywhere).
      * @param tdsVersion the required TDS version level.
      */
     TdsCore(final ConnectionImpl connection, 

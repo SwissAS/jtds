@@ -36,7 +36,7 @@ import net.sourceforge.jtds.util.Logger;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author FreeTDS project
- * @version $Id: TdsCore42.java,v 1.1 2007-09-10 19:19:32 bheineman Exp $
+ * @version $Id: TdsCore42.java,v 1.2 2009-07-23 12:25:54 ickzon Exp $
  */
 class TdsCore42 extends TdsCore {
     //
@@ -89,9 +89,11 @@ class TdsCore42 extends TdsCore {
      *
      * @param connection The connection which owns this object.
      * @param socket The TDS socket instance.
+     * @param serverType The appropriate server type constant.
      */
-    TdsCore42(final ConnectionImpl connection, final TdsSocket socket) {
-        super(connection, socket, SQLSERVER, TDS42);
+    TdsCore42(final ConnectionImpl connection, final TdsSocket socket,
+              final int serverType) {
+        super(connection, socket, serverType, TDS42);
     }
     
     /**
@@ -202,7 +204,7 @@ class TdsCore42 extends TdsCore {
      * @param resultSetType        value of the resultSetType parameter when
      *                             the Statement was created
      * @param resultSetConcurrency value of the resultSetConcurrency parameter
-     *                             whenthe Statement was created
+     *                             when the Statement was created
      * @param returnKeys           set to true if statement will return
      *                             generated keys.                            
      * @return name of the procedure or prepared statement handle.
@@ -800,7 +802,7 @@ class TdsCore42 extends TdsCore {
         int major, minor, build = 0;
         in.readShort(); // Packet length
 
-        in.read(); // Ack TDS 5 = 5 for OK 6 for fail, 1/0 for the others
+        int ack = in.read(); // Ack TDS 5 = 5 for OK 6 for fail, 1/0 for the others
         //
         // Discard TDS Version information (must be 4.2)
         //
@@ -815,6 +817,13 @@ class TdsCore42 extends TdsCore {
             in.skip(1);
             major = in.read();
             minor = in.read();
+        } else if (product.toLowerCase().contains("anywhere")) {
+            // ASA  9 and below : 'Adaptive Server Anywhere',
+            // ASA 10 and higher: 'SQL Anywhere'
+            this.serverType = ANYWHERE;
+            major = in.read();
+            minor = in.read();
+            in.skip(1);
         } else {
             this.serverType = SYBASE;
             major = in.read();
@@ -832,43 +841,49 @@ class TdsCore42 extends TdsCore {
 
         connection.setDBServerInfo(product, major, minor, build, this.serverType);
 
-        // MJH 2005-11-02
-        // If we get this far we are logged in OK so convert
-        // any database security exceptions into warnings. 
-        // Any exceptions are likely to be caused by problems in 
-        // accessing the default database for this login id for 
-        // SQL 6.5 and Sybase ASE. 
-        // SQL 7.0+ will fail to login if there is
-        // no access to the default or specified database.
-        // I am not convinced that this is a good idea but it
-        // appears that other drivers e.g. jConnect do this and
-        // return the exceptions on the connection warning chain.
-        // See bug/RFE [1346086] Problem with DATABASE name change on Sybase
-        //
-        // Avoid returning useless warnings about language
-        // character set etc.
-        cx.getMessages().clearWarnings();
-        //
-        // Get list of exceptions
-        SQLException ex = cx.getMessages().getExceptions();
-        // Clear old exception list
-        cx.getMessages().clearExceptions();
-        //
-        // Convert default database security exceptions to warnings
-        //
-        while (ex != null) {
-            if (ex.getErrorCode() == ERR_INVALID_USER 
-                || ex.getErrorCode() == ERR_INVALID_USER_2
-                || ex.getErrorCode() == ERR_NO_DEFAULT_DB) {
-                cx.getMessages().addWarning(new SQLWarning(ex.getMessage(), 
-                                              ex.getSQLState(), 
-                                               ex.getErrorCode()));
-            } else {
-                cx.getMessages().addException(new SQLException(ex.getMessage(), 
+        if (ack != 5) {
+            // Login rejected by server create SQLException
+            cx.getMessages().addDiagnostic(4002, 14, "Login failed");
+            this.token = TDS_ERROR_TOKEN;
+        } else {
+            // MJH 2005-11-02
+            // If we get this far we are logged in OK so convert
+            // any database security exceptions into warnings. 
+            // Any exceptions are likely to be caused by problems in 
+            // accessing the default database for this login id for 
+            // SQL 6.5 and Sybase ASE. 
+            // SQL 7.0+ will fail to login if there is
+            // no access to the default or specified database.
+            // I am not convinced that this is a good idea but it
+            // appears that other drivers e.g. jConnect do this and
+            // return the exceptions on the connection warning chain.
+            // See bug/RFE [1346086] Problem with DATABASE name change on Sybase
+            //
+            // Avoid returning useless warnings about language
+            // character set etc.
+            cx.getMessages().clearWarnings();
+            //
+            // Get list of exceptions
+            SQLException ex = cx.getMessages().getExceptions();
+            // Clear old exception list
+            cx.getMessages().clearExceptions();
+            //
+            // Convert default database security exceptions to warnings
+            //
+            while (ex != null) {
+                if (ex.getErrorCode() == ERR_INVALID_USER 
+                    || ex.getErrorCode() == ERR_INVALID_USER_2
+                    || ex.getErrorCode() == ERR_NO_DEFAULT_DB) {
+                    cx.getMessages().addWarning(new SQLWarning(ex.getMessage(), 
                                                   ex.getSQLState(), 
                                                    ex.getErrorCode()));
+                } else {
+                    cx.getMessages().addException(new SQLException(ex.getMessage(), 
+                                                      ex.getSQLState(), 
+                                                       ex.getErrorCode()));
+                }
+                ex = ex.getNextException();
             }
-            ex = ex.getNextException();
         }
     }
 

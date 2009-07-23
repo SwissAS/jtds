@@ -80,7 +80,7 @@ import net.sourceforge.jtds.util.MSSqlServerInfo;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionImpl.java,v 1.2 2008-09-07 16:40:38 bheineman Exp $
+ * @version $Id: ConnectionImpl.java,v 1.3 2009-07-23 12:25:54 ickzon Exp $
  */
 public class ConnectionImpl implements java.sql.Connection {
     /** Constant for SNAPSHOT isolation on MS SQL Server 2005.*/
@@ -91,6 +91,12 @@ public class ConnectionImpl implements java.sql.Connection {
     private static final String SYBASE_SERVER_CHARSET_QUERY
             = "select name from master.dbo.syscharsets where id ="
             + " (select value from master.dbo.sysconfigures where config=131)";
+
+    /**
+     * SQL query to determine the server charset on Sybase ASA.
+     */
+    private static final String ANYWHERE_SERVER_CHARSET_QUERY
+            = "SELECT DB_PROPERTY ( 'CharSet' )";
 
     /**
      * SQL query to determine the server charset on MS SQL Server 6.5.
@@ -303,8 +309,12 @@ public class ConnectionImpl implements java.sql.Connection {
         this.password = password;
         this.ds       = ds;
         this.url      = "";
+        // preset server type based on connection string, this will be set
+        // to the correct value during login
         if (ds.getServerType().equalsIgnoreCase("sybase")) {
             serverType = TdsCore.SYBASE;
+        } else if (ds.getServerType().equalsIgnoreCase("anywhere")) {
+            serverType = TdsCore.ANYWHERE;
         }
         charsetName = ds.getCharset();
         prepareSql  = ds.getPrepareSql();
@@ -447,11 +457,14 @@ public class ConnectionImpl implements java.sql.Connection {
                 //
                 // Create TDS protocol object
                 //
+                if (serverType == TdsCore.ANYWHERE) {
+                    baseTds = new TdsCoreASA(this, socket, serverType);
+                } else
                 if (tdsVersion == TdsCore.TDS42) {
-                    baseTds = new TdsCore42(this, socket);
+                    baseTds = new TdsCore42(this, socket, serverType);
                 } else 
                 if (tdsVersion == TdsCore.TDS50) {
-                    baseTds = new TdsCore50(this, socket);
+                    baseTds = new TdsCore50(this, socket, serverType);
                 } else {
                     baseTds = new TdsCore70(this, socket, tdsVersion);
                 }
@@ -491,23 +504,38 @@ public class ConnectionImpl implements java.sql.Connection {
                     }
                 }
 
-                //
-                // Now try to login
-                //
-               baseTds.login(baseStmt,
-                              ds.getServerName(),
-                              ds.getDatabaseName(),
-                              user,
-                              password,
-                              ds.getDomain(),
-                              ds.getCharset(),
-                              ds.getAppName(),
-                              ds.getProgName(),
-                              ds.getWsid(),
-                              ds.getLanguage(),
-                              ds.getMacAddress(),
-                              ds.getPacketSize());
+                int type = getServerType();
 
+                try {
+                    //
+                    // Now try to login
+                    //
+                    baseTds.login(baseStmt,
+                                  ds.getServerName(),
+                                  ds.getDatabaseName(),
+                                  user,
+                                  password,
+                                  ds.getDomain(),
+                                  ds.getCharset(),
+                                  ds.getAppName(),
+                                  ds.getProgName(),
+                                  ds.getWsid(),
+                                  ds.getLanguage(),
+                                  ds.getMacAddress(),
+                                  ds.getPacketSize());
+
+                } catch (SQLException e) {
+                    // server type may have been changed during login
+                    if (type != getServerType()) {
+                        socket.close();
+                        retry = true;
+                        Logger.println("Wrong server type set in connection string, retry login.");
+                        continue;
+                    } else {
+                        throw e;
+                    }
+                }
+                
                 if (tt != null) {
                     // Cancel loginTimer
                     tt.cancel();
@@ -525,6 +553,10 @@ public class ConnectionImpl implements java.sql.Connection {
                 tdsVersion =baseTds.getTdsVersion();
                 if (tdsVersion < TdsCore.TDS70 && ds.getDatabaseName().length() > 0) {
                     // Need to select the default database
+                    if (serverType == TdsCore.ANYWHERE) {
+                        // ASA already opens specified database during login
+                        currentDatabase = ds.getDatabaseName();
+                    }
                     setCatalog(ds.getDatabaseName());
                 }
                 // Will retry if using TDS8 and attempting to connect to SQL Server 7 or 6.5
@@ -574,7 +606,8 @@ public class ConnectionImpl implements java.sql.Connection {
         // Initial database settings.
         // Sets: auto commit mode  = true
         //       transaction isolation = read committed.
-        if (ds.getServerType().equals("sybase")) {
+        if (ds.getServerType().equals("sybase") ||
+            ds.getServerType().equals("anywhere")) {
             baseStmt.submitSQL(SYBASE_INITIAL_SQL);
         } else {
             // Also discover the maximum decimal precision:  28 (default)
@@ -600,7 +633,7 @@ public class ConnectionImpl implements java.sql.Connection {
     }
     
     /**
-     * Retrive the DataSource hosting the connection properties.
+     * Retrieve the DataSource hosting the connection properties.
      * @return the <code>DataSource</code> instance.
      */
     CommonDataSource getDataSource()
@@ -905,6 +938,10 @@ public class ConnectionImpl implements java.sql.Connection {
                             "Please use TDS protocol version 7.0 or higher"));
                 }
                 break;
+            case TdsCore.ANYWHERE:
+                // known to work for ASA 9 to 11
+                queryStr = ANYWHERE_SERVER_CHARSET_QUERY;
+                break;
             case TdsCore.SYBASE:
                 // There's no need to check for versions here
                 queryStr = SYBASE_SERVER_CHARSET_QUERY;
@@ -1007,7 +1044,7 @@ public class ConnectionImpl implements java.sql.Connection {
      * @param databaseMajorVersion The major version eg 11
      * @param databaseMinorVersion The minor version eg 92
      * @param buildNumber The server build number.
-     * @param serverType the server type (SYBASE or SQLSERVER).
+     * @param serverType the server type (SYBASE, ANYWHERE or SQLSERVER).
      */
     void setDBServerInfo(final String databaseProductName,
                          final int databaseMajorVersion,
@@ -1368,8 +1405,13 @@ public class ConnectionImpl implements java.sql.Connection {
         Semaphore connectionLock = null;
         try {
             connectionLock = baseStmt.lockConnection();
-            baseStmt.submitSQL("IF @@TRANCOUNT=0 BEGIN TRAN SAVE TRAN jtds"
-                                        + savepoint.getId());
+            if (serverType == TdsCore.ANYWHERE) {
+                baseStmt.submitSQL("BEGIN TRAN SAVE TRANSACTION jtds"
+                        + savepoint.getId());
+            } else {
+                baseStmt.submitSQL("IF @@TRANCOUNT=0 BEGIN TRAN SAVE TRAN jtds"
+                        + savepoint.getId());
+            }
         } finally {
             baseStmt.freeConnection(connectionLock);
         }
@@ -1491,17 +1533,29 @@ public class ConnectionImpl implements java.sql.Connection {
         try {
             connectionLock = baseStmt.lockConnection();
 
-            baseStmt.submitSQL("IF @@TRANCOUNT > 0 COMMIT TRAN");
-            
-            if (getPrepareSql() == TdsCore.TEMPORARY_STORED_PROCEDURES
-                && getServerType() == TdsCore.SQLSERVER) {
-                // Remove list of temp procedure created in this transaction
-                // as they are now committed.
-                synchronized (procInTran) {
-                    procInTran.clear();
-                }
+            switch (getServerType()) {
+                case TdsCore.SQLSERVER:
+                    baseStmt.submitSQL("IF @@TRANCOUNT > 0 COMMIT TRAN");
+                    if (getPrepareSql() == TdsCore.TEMPORARY_STORED_PROCEDURES) {
+                        // Remove list of temp procedure created in this transaction
+                        // as they are now committed.
+                        synchronized (procInTran) {
+                            procInTran.clear();
+                        }
+                    }
+                    break;
+
+                case TdsCore.SYBASE:
+                    baseStmt.submitSQL("IF @@TRANCOUNT > 0 COMMIT TRAN");
+                    break;
+
+                case TdsCore.ANYWHERE:
+                    // cannot rely on variable @@TRANCOUNT, ASA doesn't increment
+                    // @@TRANCOUNT when a transaction is started implicitly
+                    baseStmt.submitSQL("COMMIT TRAN");
+                    break;
             }
-            
+
             clearSavepoints();
         } finally {
             baseStmt.freeConnection(connectionLock);
@@ -1542,7 +1596,20 @@ public class ConnectionImpl implements java.sql.Connection {
             
             clearSavepoints();
 
-            baseStmt.submitSQL("IF @@TRANCOUNT > 0 ROLLBACK TRAN");
+            switch (getServerType()) {
+                case TdsCore.SQLSERVER:
+                    // fall through
+
+                case TdsCore.SYBASE:
+                    baseStmt.submitSQL("IF @@TRANCOUNT > 0 ROLLBACK TRAN");
+                    break;
+
+                case TdsCore.ANYWHERE:
+                    // cannot rely on variable @@TRANCOUNT, ASA doesn't increment
+                    // @@TRANCOUNT when a transaction is started implicitly
+                    baseStmt.submitSQL("ROLLBACK TRAN");
+                    break;
+            }
         } finally {
             baseStmt.freeConnection(connectionLock);
         }
@@ -1599,7 +1666,8 @@ public class ConnectionImpl implements java.sql.Connection {
         }
 
         String sql = "SET TRANSACTION ISOLATION LEVEL ";
-        boolean sybase = getServerType() == TdsCore.SYBASE;
+        boolean sybase = getServerType() == TdsCore.SYBASE ||
+                         getServerType() == TdsCore.ANYWHERE;
 
         switch (level) {
             case java.sql.Connection.TRANSACTION_READ_UNCOMMITTED:
@@ -1672,21 +1740,41 @@ public class ConnectionImpl implements java.sql.Connection {
         if (!this.autoCommit) {
             // If we're in manual commit mode the spec requires that we commit
             // the transaction when setAutoCommit() is called
-            sql.append("IF @@TRANCOUNT > 0 COMMIT TRAN\r\n");
+            switch (getServerType()) {
+                case TdsCore.SQLSERVER:
+                    // fall through
+
+                case TdsCore.SYBASE:
+                    baseStmt.submitSQL("IF @@TRANCOUNT > 0 COMMIT TRAN\r\n");
+                    break;
+
+                case TdsCore.ANYWHERE:
+                    // cannot rely on variable @@TRANCOUNT, ASA doesn't increment
+                    // @@TRANCOUNT when a transaction is started implicitly
+                    baseStmt.submitSQL("COMMIT TRAN\r\n");
+                    break;
+            }            
         }
 
-        if (getServerType() == TdsCore.SYBASE) {
-            if (autoCommit) {
-                sql.append("SET CHAINED OFF");
-            } else {
-                sql.append("SET CHAINED ON");
-            }
-        } else {
-            if (autoCommit) {
-                sql.append("SET IMPLICIT_TRANSACTIONS OFF");
-            } else {
-                sql.append("SET IMPLICIT_TRANSACTIONS ON");
-            }
+        switch (getServerType()) {
+            case TdsCore.SQLSERVER:
+                if (autoCommit) {
+                    sql.append("SET IMPLICIT_TRANSACTIONS OFF");
+                } else {
+                    sql.append("SET IMPLICIT_TRANSACTIONS ON");
+                }
+                break;
+
+            case TdsCore.SYBASE:
+                // fall through
+
+            case TdsCore.ANYWHERE:
+                if (autoCommit) {
+                    sql.append("SET CHAINED OFF");
+                } else {
+                    sql.append("SET CHAINED ON");
+                }
+                break;
         }
         Semaphore connectionLock = null;
         try {
@@ -2853,7 +2941,7 @@ public class ConnectionImpl implements java.sql.Connection {
     /**
      * jTDS implementation of the <code>Xid</code> interface.
      *
-     * @version $Id: ConnectionImpl.java,v 1.2 2008-09-07 16:40:38 bheineman Exp $
+     * @version $Id: ConnectionImpl.java,v 1.3 2009-07-23 12:25:54 ickzon Exp $
      */
     private static class XidImpl implements Xid {
         /** The size of an XID in bytes. */

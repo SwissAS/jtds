@@ -29,7 +29,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: SQLDiagnostic.java,v 1.1 2007-09-10 19:19:31 bheineman Exp $
+ * @version $Id: SQLDiagnostic.java,v 1.2 2009-07-23 12:25:54 ickzon Exp $
  */
 public class SQLDiagnostic {
     /**
@@ -365,16 +365,30 @@ public class SQLDiagnostic {
             SQLException e = new SQLException(message,
                                               getStateCode(number, serverType, "S1000"),
                                               number);
+            boolean truncation = false;
+
             //
             // See if the driver should return a DataTrunction exception
             //
-            if ((serverType == TdsCore.SQLSERVER &&
-                    (number == 8152 ||
-                     number == 8115 ||
-                     number == 220)) ||
-                (serverType == TdsCore.SYBASE &&
-                    (number == 247 ||
-                     number == 9502))) {
+            switch (serverType) {
+                case TdsCore.SQLSERVER:
+                    truncation = number == 220 ||
+                                 number == 8115 ||
+                                 number == 8152;
+                    break;
+    
+                case TdsCore.SYBASE:
+                    truncation = number == 247 ||
+                                 number == 9502;
+                    break;
+                    
+                case TdsCore.ANYWHERE:
+                    truncation = number == 220 ||
+                                 number == 9502;
+                    break;
+            }
+
+            if (truncation) {
                 SQLException tmp = e;
                 e = new DataTruncation(-1, false, false, -1, -1);
                 // Chain the original exception as this has useful info.
@@ -462,7 +476,8 @@ public class SQLDiagnostic {
     private static String getStateCode(final int number,
                                        final int serverType,
                                        final String defState) {
-        final HashMap stateTable = (serverType == TdsCore.SYBASE) ? sybStates : mssqlStates;
+        final HashMap stateTable = (serverType == TdsCore.SYBASE ||
+                                    serverType == TdsCore.ANYWHERE) ? sybStates : mssqlStates;
         final String state = (String) stateTable.get(new Integer(number));
 
         if (state != null) {

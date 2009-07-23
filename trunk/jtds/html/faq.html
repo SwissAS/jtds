@@ -2,7 +2,7 @@
 <head>
 <title>jTDS JDBC Driver</title>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-<meta http-equiv="Keywords" content="jTDS, open source, free JDBC driver, free driver, free, JDBC, JDBC 2.0, JDBC 3.0, driver, type 4, pure Java, SQL Server, Sybase, SQL Server 6.5, SQL Server 7.0, SQL Server 2000, SQL Server 2005, SourceForge">
+<meta http-equiv="Keywords" content="jTDS, open source, free JDBC driver, free driver, free, JDBC, JDBC 2.0, JDBC 3.0, driver, type 4, pure Java, SQL Server, Sybase, SQL Server 6.5, SQL Server 7.0, SQL Server 2000, SQL Server 2005, Adaptive Server Anywhere, SQL Anywhere, SourceForge">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
 
@@ -154,10 +154,10 @@
         by jTDS?</p>
       <p>The URL format for jTDS is:</p>
       <pre>    jdbc:jtds:&lt;server_type&gt;://&lt;server&gt;[:&lt;port&gt;][/&lt;database&gt;][;&lt;property&gt;=&lt;value&gt;[;...]]</pre>
-      <p>where <code>&lt;server_type&gt;</code> is one of either <code>'sqlserver'</code>
-        or <code>'sybase'</code> (their meaning is quite obvious), <code>&lt;port&gt;</code>
+      <p>where <code>&lt;server_type&gt;</code> is one of either <code>'sqlserver'</code>,
+        <code>'sybase'</code> or <code>'anywhere'</code> (their meaning is quite obvious), <code>&lt;port&gt;</code>
         is the port the database server is listening to (default is 1433 for SQL
-        Server and 7100 for Sybase) and <code>&lt;database&gt;</code> is the database
+        Server, 7100 for Sybase ASE and 2638 for Sybase ASA) and <code>&lt;database&gt;</code> is the database
         name -- JDBC term: catalog -- (if not specified, the user's default database
         is used). The set of properties supported by jTDS is:</p>
       <dl>
@@ -376,7 +376,9 @@
           clients. jTDS can use TDS 4.2, 5.0, 7.0 and 8.0. Version 4.2 is used by
           SQL Server 6.5 and Sybase 10.  Version 5.0 is used with Sybase 11 onwards.
           Version 7.0 is used by SQL Server 7.0; this protocol also works with SQL
-          Server 2000. Version 8.0 is used by SQL Server 2000 and SQL Server 2005.<br>
+          Server 2000. Version 8.0 is used by SQL Server 2000 and SQL Server 2005.
+          Sybase Adaptive Server Anywhere/SQL Anywhere servers use their own TDS 5.0
+          dialect.<br>
           Newer database server versions usually understand older protocol versions.
           This means that SQL Server 7.0 can be used with TDS 4.2, but the limitations
           of the protocol apply regardless of the server version (e.g. when using TDS
@@ -384,12 +386,13 @@
           you must set this property to <code>&quot;4.2&quot;</code> when connecting
           to SQL Server 6.5 or Sybase.  You should not set this value to
           <code>&quot;7.0&quot; or &quot;8.0&quot;</code>) when connecting to any
-          version of Sybase as these are SQL Server specific protocols.  Further, you
+          version of Sybase as these are SQL Server specific protocols. Further, you
           should not set this value to <code>&quot;5.0&quot;</code>) when connecting
-          to any version of SQL Server as this is a Sybase specific protocol.<br/>
+          to any version of SQL Server as this is a Sybase specific protocol. This
+          porperty will be ignored if connecting a Sybase Anywhere Server. <br/>
           Currently jTDS automatically falls back from 8.0 to 7.0 (if used with
-          SQL Server 7.0) and from 5.0 to 4.2 (with Sybase 10) so specifying
-          the value for this parameter is only necessary for SQL Server 6.5.</dd>
+          SQL Server 7.0) and from 5.0 to 4.2 (with Sybase 10) so specifying the value for this parameter is
+          only necessary for SQL Server 6.5.</dd>
         <dt><code>useCursors</code> (default - <code>false</code>)</dt>
         <dd>Instructs jTDS to use server side cursors instead of direct selects
           (AKA firehose cursors) for forward-only read-only result sets (with
@@ -537,9 +540,9 @@
         <code>jtds.jar</code> to your web application's class path (e.g. by
         editing the application's web.xml file or by copying the jar into the
         application's/server's <code>/lib</code> directory).</p>
-      <p><b>Note:</b> The name of the jTDS jar file may be <code>jtds-1.2.jar</code>
+      <p><b>Note:</b> The name of the jTDS jar file may be <code>jtds-2.0.jar</code>
         or something similar. If that's the case, replace <code>jtds.jar</code>
-        in the above example with <code>jtds-1.2.jar</code> or whatever your specific
+        in the above example with <code>jtds-2.0.jar</code> or whatever your specific
         file name is.</p>
       <p><a href="#">^ top ^</a></p>
       <p class="question"><a name="noSuitableDriver"></a>Why do I get a <code>java.sql.SQLException:

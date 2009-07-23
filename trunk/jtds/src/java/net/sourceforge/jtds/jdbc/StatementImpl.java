@@ -41,7 +41,7 @@ import net.sourceforge.jtds.util.Logger;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: StatementImpl.java,v 1.2 2008-09-07 16:40:38 bheineman Exp $
+ * @version $Id: StatementImpl.java,v 1.3 2009-07-23 12:25:54 ickzon Exp $
  */
 public class StatementImpl implements java.sql.Statement {
     /*
@@ -195,6 +195,8 @@ public class StatementImpl implements java.sql.Statement {
         int serverType = TdsCore.SQLSERVER;
         if (connection.getDataSource().getServerType().equals("sybase")) {
             serverType = TdsCore.SYBASE;
+        } else if (connection.getDataSource().getServerType().equals("anywhere")) {
+            serverType = TdsCore.ANYWHERE;
         }
         messages   = new SQLDiagnostic(serverType);
         results    = new ArrayList<Object>();
@@ -1383,8 +1385,9 @@ public class StatementImpl implements java.sql.Statement {
             connectionLock = lockConnection();
             setExecuteBatch(true);
             setLastUpdateCount(connection.getDataSource().getLastUpdateCount());
-            if (connection.getServerType() == TdsCore.SYBASE
-                && connection.getTdsVersion() == TdsCore.TDS50) {
+            if (connection.getServerType() == TdsCore.SYBASE ||
+                connection.getServerType() == TdsCore.ANYWHERE &&
+                connection.getTdsVersion() == TdsCore.TDS50) {
                 sqlEx = executeSybaseBatch(size, executeSize, counts);
             } else {
                 sqlEx = executeMSBatch(size, executeSize, counts);
