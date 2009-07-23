@@ -1,6 +1,10 @@
 Changes from jTDS 1.2.2
 =======================
 
+07/23/2009 - Holger Rehn
+ o Applied patch [2084524] and improved code, adding (experimental) ASA support
+   to the driver.
+
 06/07/2008 - Brian Heineman
  o Applied patch [2093131] JDBC 4 method stubs.
 
