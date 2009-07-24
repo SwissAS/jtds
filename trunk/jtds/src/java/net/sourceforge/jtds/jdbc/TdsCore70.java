@@ -17,17 +17,33 @@
 //
 package net.sourceforge.jtds.jdbc;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.sql.*;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.sql.Blob;
+import java.sql.Clob;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.SQLWarning;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Random;
 import java.util.concurrent.Semaphore;
 
-import net.sourceforge.jtds.util.*;
+import net.sourceforge.jtds.util.Logger;
+import net.sourceforge.jtds.util.NtlmAuth;
+import net.sourceforge.jtds.util.SSPIJNIClient;
+
+import org.ietf.jgss.GSSContext;
+import org.ietf.jgss.GSSException;
+import org.ietf.jgss.GSSManager;
+import org.ietf.jgss.GSSName;
+import org.ietf.jgss.Oid;
 
 /**
  * This class implements the Microsoft TDS 7.0+ protocol.
@@ -36,7 +52,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author FreeTDS project
- * @version $Id: TdsCore70.java,v 1.1 2007-09-10 19:19:31 bheineman Exp $
+ * @version $Id: TdsCore70.java,v 1.2 2009-07-24 14:15:29 ickzon Exp $
  */
 class TdsCore70 extends TdsCore {
     //
@@ -129,8 +145,12 @@ class TdsCore70 extends TdsCore {
     //
     // Instance variables
     //
-    /** Flag that indicates if logon() should try to use Windows Single Sign On using SSPI. */
+    /** Flag that indicates if logon() should try to use Windows
+     * Single Sign On using SSPI or Kerberos SSO via Java native GSSAPI.
+     */
     private boolean ntlmAuthSSO;
+    private GSSContext _gssContext = null;
+
     /** The nonce from an NTLM challenge packet. */
     byte[] nonce;
     /** NTLM authentication message. */
@@ -280,7 +300,12 @@ class TdsCore70 extends TdsCore {
 
             while (!endOfResponse) {
                 if (this.token == TDS_AUTH_TOKEN) {
-                    sendNtlmChallengeResponse(user, password, domain);
+		    // If _gssContext exists, we are doing GSS instead
+		    // of NTLM
+		    if (_gssContext != null)
+			sendGssToken();
+		    else
+			sendNtlmChallengeResponse(user, password, domain);
                 }
 
                 nextToken(cx);
@@ -724,6 +749,38 @@ class TdsCore70 extends TdsCore {
     }
 
     /**
+     * Initializes the GSS context and creates the initial token.
+     *
+     * @throws GSSException
+     * @throws UnknownHostException
+     */
+    private byte[] createGssToken() throws GSSException, UnknownHostException {
+        GSSManager manager = GSSManager.getInstance();
+
+        // Oids for Kerberos5
+        Oid mech = new Oid("1.2.840.113554.1.2.2");
+        Oid nameType = new Oid("1.2.840.113554.1.2.2.1");
+
+        // Canonicalize hostname to create SPN like MIT Kerberos does
+        String host = InetAddress.getByName(socket.getHost()).getCanonicalHostName();
+        int port = socket.getPort();
+
+        GSSName serverName = manager.createName("MSSQLSvc/" + host + ":" + port, nameType);
+
+        Logger.println("GSS: Using SPN " + serverName);
+
+        _gssContext = manager.createContext(serverName, mech, null, GSSContext.DEFAULT_LIFETIME);
+        _gssContext.requestMutualAuth(true);
+
+        byte[] token = new byte[0]; // Ignored on first call
+        token = _gssContext.initSecContext(token, 0, token.length);
+
+        Logger.println("GSS: Created GSS token (length: " + token.length + ")");
+
+        return token;
+    }
+    
+    /**
      * Send a TDS 7 login packet.
      * <p>
      * This method incorporates the Windows single sign on code contributed by
@@ -774,22 +831,17 @@ class TdsCore70 extends TdsCore {
         short curPos = (short)((tdsVersion > TDS81)? 94: 86);
 
         if (user == null || user.length() == 0) {
-            // See if executing on a Windows platform and if so try and
-            // use the single sign on native library.
-            if (isWindowsOS()) {
-                ntlmAuthSSO = true;
-                ntlmAuth = true;
-            } else {
-                throw new SQLException(Messages.get("error.connection.sso"),
-                        "08001");
-            }
+            ntlmAuthSSO = true;
+	         ntlmAuth = true;
         } else if (domain != null && domain.length() > 0) {
             // Assume we want to use Windows authentication with
             // supplied user and password.
             ntlmAuth = true;
         }
 
-        if (ntlmAuthSSO) {
+        if (ntlmAuthSSO && isWindowsOS()) {
+            // See if executing on a Windows platform and if so try and
+            // use the single sign on native library.
             try {
                 // Create the NTLM request block using the native library
                 sspiJNIClient = SSPIJNIClient.getInstance();
@@ -798,6 +850,15 @@ class TdsCore70 extends TdsCore {
                 throw new IOException("SSO Failed: " + e.getMessage());
             }
             Logger.printTrace("Using native SSO library for Windows Authentication.");
+        } else if (ntlmAuthSSO) {
+            // Try Unix-based Kerberos SSO
+	         try {
+                ntlmMessage = createGssToken();
+	         }
+            catch (GSSException gsse) {
+               throw new IOException("GSS Failed: " + gsse.getMessage());
+            }
+	         Logger.printTrace("Using Kerberos GSS authentication.");
         }
 
         //mdb:begin-change
@@ -997,6 +1058,34 @@ class TdsCore70 extends TdsCore {
     }
 
     /**
+     * Send the next GSS authentication token.
+     *
+     * @throws IOException
+     */
+    private void sendGssToken() throws IOException {
+	try {
+	    byte gssMessage[] = _gssContext.initSecContext(ntlmMessage,
+							   0,
+							   ntlmMessage.length);
+	    
+	    if (_gssContext.isEstablished()) {
+		Logger.println("GSS: Security context established.");
+	    }
+	    
+	    if (gssMessage != null) {
+		Logger.println("GSS: Sending token (length: " +
+			       ntlmMessage.length + ")");
+		out.setPacketType(NTLMAUTH_PKT);
+		out.write(gssMessage);
+		out.flush();
+	    }
+	}
+	catch (GSSException e) {
+	    throw new IOException("GSS failure: " + e.getMessage());
+	}
+    }
+    
+    /**
      * Send the response to the NTLM authentication challenge.
      * @param user The user name.
      * @param password The user password.
@@ -1166,7 +1255,11 @@ class TdsCore70 extends TdsCore {
                     tdsEnvChangeToken();
                     break;
                 case TDS_AUTH_TOKEN:
-                    tdsNtlmAuthToken();
+                    if (_gssContext != null) {
+                       tdsGssToken();  
+                    } else {
+                       tdsNtlmAuthToken();
+                    }
                     break;
                 case TDS_DONE_TOKEN:
                 case TDS_DONEPROC_TOKEN:
@@ -1831,6 +1924,22 @@ class TdsCore70 extends TdsCore {
         }
     }
 
+    /**
+     * Receive a GSS token.
+     *
+     * @throws IOException
+     */
+    private void tdsGssToken() throws IOException
+    {
+	int pktLen = in.readShort();
+
+	this.ntlmMessage = new byte[pktLen];
+	in.read(this.ntlmMessage);
+
+	Logger.println("GSS: Received token (length: " +
+		       this.ntlmMessage.length + ")");
+    }
+    
     /**
      * Process a NTLM Authentication challenge.
      *
