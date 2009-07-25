@@ -248,6 +248,7 @@ abstract class TdsSocket {
 
         if (packetType != TdsCore.LOGIN_PKT
                 && packetType != TdsCore.QUERY_PKT
+                && packetType != TdsCore.SYBQUERY_PKT // required to connect IBM/Netcool Omnibus, see patch [1844846]
                 && packetType != TdsCore.REPLY_PKT) {
             throw new IOException("Unknown TDS packet type" + (packetType & 0xFF));
         }

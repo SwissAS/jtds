@@ -1,6 +1,12 @@
 Changes from jTDS 1.2.2
 =======================
 
+07/25/2009 - Holger Rehn
+ o Applied patch [1844846] jTDS cannot connect IBM/Netcool Omnibus.
+
+07/24/2009 - Holger Rehn
+ o Applied patch [1958292] native GSS/Kerberos support for jTDS using Java 6.
+
 07/24/2009 - Holger Rehn
  o Corrected bug [2818256] a savepoint is invalid after rollback.
 
