@@ -521,7 +521,7 @@ public class SavepointTest extends TestBase {
         rs = stmt.executeQuery("SELECT SUM(data) FROM #savepoint9");
 
         assertTrue(rs.next());
-        assertTrue(rs.getInt(1) == 1);
+        assertTrue("bug [2021839]",rs.getInt(1) == 1);
         assertTrue(!rs.next());
         stmt.close();
         rs.close();

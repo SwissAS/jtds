@@ -82,7 +82,7 @@ import net.sourceforge.jtds.util.MSSqlServerInfo;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionImpl.java,v 1.5 2009-07-24 13:26:29 ickzon Exp $
+ * @version $Id: ConnectionImpl.java,v 1.6 2009-07-26 17:21:55 ickzon Exp $
  */
 public class ConnectionImpl implements java.sql.Connection {
     /** Constant for SNAPSHOT isolation on MS SQL Server 2005.*/
@@ -1411,8 +1411,10 @@ public class ConnectionImpl implements java.sql.Connection {
                 baseStmt.submitSQL("BEGIN TRAN SAVE TRANSACTION jtds"
                         + savepoint.getId());
             } else {
-                baseStmt.submitSQL("IF @@TRANCOUNT=0 BEGIN TRAN SAVE TRAN jtds"
-                        + savepoint.getId());
+                baseStmt.submitSQL("IF @@TRANCOUNT=0 BEGIN "
+                        + "SET IMPLICIT_TRANSACTIONS OFF; BEGIN TRAN; " // Fix for bug []Patch: in SET IMPLICIT_TRANSACTIONS ON
+                        + "SET IMPLICIT_TRANSACTIONS ON; END "          // mode BEGIN TRAN actually starts two transactions!
+                        + "SAVE TRAN jtds" + savepoint.getId());
             }
         } finally {
             baseStmt.freeConnection(connectionLock);
@@ -2955,7 +2957,7 @@ public class ConnectionImpl implements java.sql.Connection {
     /**
      * jTDS implementation of the <code>Xid</code> interface.
      *
-     * @version $Id: ConnectionImpl.java,v 1.5 2009-07-24 13:26:29 ickzon Exp $
+     * @version $Id: ConnectionImpl.java,v 1.6 2009-07-26 17:21:55 ickzon Exp $
      */
     private static class XidImpl implements Xid {
         /** The size of an XID in bytes. */
