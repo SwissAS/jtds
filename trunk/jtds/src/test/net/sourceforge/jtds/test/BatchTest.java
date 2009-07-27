@@ -23,7 +23,7 @@ import java.util.*;
 /**
  * Simple test suite to exercise batch execution.
  *
- * @version $Id: BatchTest.java,v 1.12 2007-09-10 19:19:36 bheineman Exp $
+ * @version $Id: BatchTest.java,v 1.13 2009-07-27 16:47:10 ickzon Exp $
  */
 public class BatchTest extends DatabaseTestCase {
     // Constants to use instead of the JDBC 3.0-only Statement constants
@@ -621,7 +621,106 @@ public class BatchTest extends DatabaseTestCase {
         }
     }
 
+    /**
+     * this is a test for the data truncation problem described in bug [2731952]
+     */
+    public void testDataTruncation() throws SQLException {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #DATATRUNC (id int, data text)");
+        stmt.close();
+
+        // create 2 different strings
+        StringBuilder sb1 = new StringBuilder(10000);
+        StringBuilder sb2 = new StringBuilder(100);
+
+        for (int i=1; i<=1000; i++) {
+            sb1.append(" +++ ").append("    ".substring(String.valueOf(i).length())).append(i).append("\n");
+        }
+
+        for (int i=1; i<=10; i++) {
+            sb2.append(" --- ").append("    ".substring(String.valueOf(i).length())).append(i).append("\n");
+        }
+
+        String string1 = sb1.toString();
+        String string2 = sb2.toString();
+
+        PreparedStatement pstmt = con.prepareStatement("insert into #DATATRUNC (id, data) values (?, ?)");
+
+        // insert both values into DB in batch mode
+        pstmt.setInt(1, 1);
+        pstmt.setString(2, string1);
+        pstmt.addBatch();
+
+        pstmt.setInt(1, 2);
+        pstmt.setString(2, string2);
+        pstmt.addBatch();
+
+        assertTrue(Arrays.equals(new int[] {1, 1},pstmt.executeBatch()));
+
+        // insert first string again, no batch
+        pstmt.setInt(1, 3);
+        pstmt.setString(2, string1);
+
+        assertEquals(1,pstmt.executeUpdate());
+        pstmt.close();
+
+        // ensure all 3 entries are still intact
+        stmt = con.createStatement();
+        ResultSet rs = stmt.executeQuery("select data from #DATATRUNC order by id asc");
+
+        // 1st value, should be string1
+        assertTrue(rs.next());
+        String value = rs.getString(1);
+        assertEquals(string1.length(), value.length());
+        assertEquals(string1, value);
+
+        // 2nd value, should be string2
+        assertTrue(rs.next());
+        value = rs.getString(1);
+        assertEquals(string2.length(), value.length());
+        assertEquals(string2, value);
+
+        // 3rd value, should be string1
+        assertTrue(rs.next());
+        value = rs.getString(1);
+        assertEquals(string1.length(), value.length());
+        assertEquals(string1, value);
+
+        rs.close();
+        stmt.close();
+    }
+
+    /**
+     * this is a test for bug [1811383]
+     */
+    public void testXY() throws SQLException {
+        Statement statement = con.createStatement();
+        statement.addBatch("IF sessionproperty('ARITHABORT') = 0 SET ARITHABORT ON");
+        assertEquals(1, statement.executeBatch().length);
+        statement.close();
+    }
+
+    /**
+     * this is a test for bug [2827931]
+     */
+    public void testBatchUpdateCounts() throws SQLException {
+        Statement statement = con.createStatement();
+        statement.execute("CREATE TABLE #BATCHUC (id int)");
+        statement.addBatch("insert into #BATCHUC values (1)");
+        statement.addBatch("insert into #BATCHUC values (2);insert into #BATCHUC values (3)");
+        statement.addBatch("insert into #BATCHUC values (4);insert into #BATCHUC values (5);insert into #BATCHUC values (6)");
+        // below: create identifiable update counts to show if/how far they have been shifted due to the bug
+        statement.addBatch("insert into #BATCHUC select * from #BATCHUC");
+        statement.addBatch("insert into #BATCHUC select * from #BATCHUC where id=999");
+        statement.addBatch("insert into #BATCHUC select * from #BATCHUC where id=999");
+        statement.addBatch("insert into #BATCHUC select * from #BATCHUC where id=999");
+        statement.addBatch("insert into #BATCHUC select * from #BATCHUC where id=999");
+        assertEquals(Arrays.toString(new int[]{1,2,3,6,0,0,0,0,0,0}),Arrays.toString(statement.executeBatch()));
+        statement.close();
+    }
+
     public static void main(String[] args) {
         junit.textui.TestRunner.run(BatchTest.class);
     }
+
 }
