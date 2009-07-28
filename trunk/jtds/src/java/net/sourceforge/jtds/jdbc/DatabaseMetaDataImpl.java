@@ -44,7 +44,7 @@ import java.util.List;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  *  created  17 March 2001
- * @version $Id: DatabaseMetaDataImpl.java,v 1.3 2009-07-23 19:35:35 ickzon Exp $
+ * @version $Id: DatabaseMetaDataImpl.java,v 1.4 2009-07-28 18:22:44 ickzon Exp $
  */
 public class DatabaseMetaDataImpl implements java.sql.DatabaseMetaData {
     
@@ -1605,24 +1605,32 @@ public class DatabaseMetaDataImpl implements java.sql.DatabaseMetaData {
      *   <LI> <B>TABLE_CATALOG</B> String => catalog name (may be <code>null</code>, JDBC 3.0)
      * </OL>
      *
-     * @return a <code>ResultSet</code> object in which each row is a schema decription
+     * @return a <code>ResultSet</code> object in which each row is a schema description
      * @throws SQLException if a database access error occurs
      */
     public java.sql.ResultSet getSchemas() throws SQLException {
         java.sql.Statement statement = connection.createStatement();
 
-        String sql = "SELECT name AS TABLE_SCHEM, NULL as TABLE_CATALOG FROM dbo.sysusers";
+        String sql;
 
-        //
-        // MJH - isLogin column only in MSSQL >= 7.0
-        //
-        if (tdsVersion >= TdsCore.TDS70) {
-            sql += " WHERE islogin=1";
-        } else {
-            sql += " WHERE uid>0";
+        if(tdsVersion < TdsCore.TDS90) {
+        
+          sql = "SELECT name AS TABLE_SCHEM, NULL as TABLE_CATALOG FROM dbo.sysusers";
+    
+          //
+          // MJH - isLogin column only in MSSQL >= 7.0
+          //
+          if (tdsVersion >= TdsCore.TDS70) {
+              sql += " WHERE islogin=1";
+          } else {
+              sql += " WHERE uid>0";
+          }
+    
+          sql += " ORDER BY TABLE_SCHEM";
         }
-
-        sql += " ORDER BY TABLE_SCHEM";
+        else
+          
+          sql ="SELECT name AS TABLE_SCHEM, NULL as TABLE_CATALOG FROM sys.schemas ORDER BY TABLE_SCHEM";
 
         return statement.executeQuery(sql);
     }
@@ -1634,7 +1642,7 @@ public class DatabaseMetaDataImpl implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public String getSchemaTerm() throws SQLException {
-        return "owner";
+        return tdsVersion < TdsCore.TDS90 ? "owner" : "schema";
     }
 
     /**
@@ -3592,7 +3600,7 @@ public class DatabaseMetaDataImpl implements java.sql.DatabaseMetaData {
      * tests.
      *
      * @author David Eaves
-     * @version $Id: DatabaseMetaDataImpl.java,v 1.3 2009-07-23 19:35:35 ickzon Exp $
+     * @version $Id: DatabaseMetaDataImpl.java,v 1.4 2009-07-28 18:22:44 ickzon Exp $
      */
     static class TypeInfo implements Comparable {
         static final int NUM_COLS = 18;
