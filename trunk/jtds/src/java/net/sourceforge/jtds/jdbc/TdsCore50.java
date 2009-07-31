@@ -33,7 +33,7 @@ import net.sourceforge.jtds.util.Logger;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author FreeTDS project
- * @version $Id: TdsCore50.java,v 1.3 2009-07-23 19:35:35 ickzon Exp $
+ * @version $Id: TdsCore50.java,v 1.4 2009-07-31 12:54:10 ickzon Exp $
  */
 class TdsCore50 extends TdsCore {
 
@@ -2115,7 +2115,7 @@ class TdsCore50 extends TdsCore {
             case SYBDATE:
                 len = (ci.tdsType == SYBDATEN)? in.read(): 4;
                 if (len == 4) {
-                    return new DateTime(in.readInt(), -1);
+                    return new DateTime(in.readInt(), DateTime.TIME_NOT_USED);
                 }
                 // Invalid length or 0 for null
                 in.skip(len);
@@ -2125,7 +2125,7 @@ class TdsCore50 extends TdsCore {
             case SYBTIME:
                 len = (ci.tdsType == SYBTIMEN)? in.read(): 4;
                 if (len == 4) {
-                    return new DateTime(-1, in.readInt());
+                    return new DateTime(DateTime.DATE_NOT_USED, in.readInt());
                 }
                 // Invalid length or 0 for null
                 in.skip(len);
