@@ -55,7 +55,7 @@ import net.sourceforge.jtds.util.Logger;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: BlobBuffer.java,v 1.1 2007-09-10 19:19:31 bheineman Exp $
+ * @version $Id: BlobBuffer.java,v 1.2 2009-08-03 12:30:58 ickzon Exp $
  */
 public class BlobBuffer implements Serializable {
     
@@ -195,7 +195,7 @@ public class BlobBuffer implements Serializable {
     private void createBlobFile() {
         try {
             blobFile = File.createTempFile("jtds", ".tmp");
-            blobFile.deleteOnExit();
+            // blobFile.deleteOnExit(); memory leak, see http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6664633
             raFile = new RandomAccessFile(blobFile, "rw");
             if (length > 0) {
                 raFile.write(buffer, 0, length);
