@@ -36,7 +36,7 @@ public class CharsetUtil {
         csAlias.put("ASCII_7", "US-ASCII");
         csAlias.put("ASCII_8", "US-ASCII");
         csAlias.put("ROMAN8" , "ISO-8859-1");
-        csAlias.put("MAC", "ISO-8859-1");
+        csAlias.put("MAC", "MacRoman");
         csAlias.put("GREEK8", "ISO-8859-7");
         csAlias.put("MACGRK2", "ISO-8859-7");
         csAlias.put("MAC_CYR", "ISO-8859-5");
