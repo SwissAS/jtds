@@ -24,7 +24,7 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 
 /**
- * @version 1.0
+ * @version $Id: LargeLOBTest.java,v 1.8 2009-08-04 10:33:44 ickzon Exp $
  */
 public class LargeLOBTest extends TestBase {
     private static final int LOB_LENGTH = 100000000;

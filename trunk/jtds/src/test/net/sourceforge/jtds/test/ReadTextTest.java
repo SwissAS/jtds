@@ -23,7 +23,7 @@ import java.io.*;
 /**
  * Test case to illustrate use of READTEXT for text and image columns.
  *
- * @version 1.0
+ * @version $Id: ReadTextTest.java,v 1.6 2009-08-04 10:33:44 ickzon Exp $
  */
 public class ReadTextTest extends TestBase {
     public ReadTextTest(String name) {

@@ -26,6 +26,7 @@ import java.util.*;
  * database.
  *
  * @author Mike Hutchinson
+ * @version $Id: TimeZoneTest.java,v 1.3 2009-08-04 10:33:44 ickzon Exp $
  */
 public class TimeZoneTest extends TestBase {
 

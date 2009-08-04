@@ -20,7 +20,7 @@ package net.sourceforge.jtds.test;
 import java.sql.*;
 
 /**
- * @version 1.0
+ * @version $Id: SavepointTest.java,v 1.10 2009-08-04 10:33:44 ickzon Exp $
  */
 public class SavepointTest extends TestBase {
     public SavepointTest(String name) {

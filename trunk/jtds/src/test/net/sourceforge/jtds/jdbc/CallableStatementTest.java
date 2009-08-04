@@ -371,7 +371,7 @@ public class CallableStatementTest extends TestBase {
      */
     public void testNamedParameters() throws Exception {
         if (isASA) {
-            // ASA does not seem to handle named paramaters correctly
+            // ASA does not seem to handle named parameters correctly
             return;
         }
         try {

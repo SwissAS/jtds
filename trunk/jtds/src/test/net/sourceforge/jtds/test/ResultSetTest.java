@@ -25,7 +25,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * @version 1.0
+ * @version $Id: ResultSetTest.java,v 1.51 2009-08-04 10:33:44 ickzon Exp $
  */
 public class ResultSetTest extends DatabaseTestCase {
     public ResultSetTest(String name) {

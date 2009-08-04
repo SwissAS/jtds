@@ -22,7 +22,7 @@ import java.sql.*;
 /**
  * Test case to illustrate JDBC 3 GetGeneratedKeys() function.
  *
- * @version    1.0
+ * @version $Id: GenKeyTest.java,v 1.8 2009-08-04 10:33:44 ickzon Exp $
  */
 public class GenKeyTest extends TestBase {
 

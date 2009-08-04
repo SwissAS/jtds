@@ -82,7 +82,7 @@ import net.sourceforge.jtds.util.MSSqlServerInfo;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionImpl.java,v 1.6 2009-07-26 17:21:55 ickzon Exp $
+ * @version $Id: ConnectionImpl.java,v 1.7 2009-08-04 10:33:44 ickzon Exp $
  */
 public class ConnectionImpl implements java.sql.Connection {
     /** Constant for SNAPSHOT isolation on MS SQL Server 2005.*/
@@ -501,7 +501,7 @@ public class ConnectionImpl implements java.sql.Connection {
                             continue;
                         }
                         
-                        // Some unforseen IOException
+                        // Some unforeseen IOException
                         throw e;
                     }
                 }
@@ -2957,7 +2957,7 @@ public class ConnectionImpl implements java.sql.Connection {
     /**
      * jTDS implementation of the <code>Xid</code> interface.
      *
-     * @version $Id: ConnectionImpl.java,v 1.6 2009-07-26 17:21:55 ickzon Exp $
+     * @version $Id: ConnectionImpl.java,v 1.7 2009-08-04 10:33:44 ickzon Exp $
      */
     private static class XidImpl implements Xid {
         /** The size of an XID in bytes. */

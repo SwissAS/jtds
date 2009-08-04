@@ -28,7 +28,7 @@ import java.math.BigDecimal;
 /**
  * Test case to illustrate errors reported by SUN JBDC compatibility test suite.
  *
- * @version 1.0
+ * @version $Id: SunTest.java,v 1.8 2009-08-04 10:33:44 ickzon Exp $
  */
 public class SunTest extends DatabaseTestCase {
     public static Test suite() {
