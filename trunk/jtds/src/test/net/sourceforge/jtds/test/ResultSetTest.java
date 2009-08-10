@@ -25,7 +25,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * @version $Id: ResultSetTest.java,v 1.53 2009-08-09 10:27:47 ickzon Exp $
+ * @version $Id: ResultSetTest.java,v 1.54 2009-08-10 17:38:10 ickzon Exp $
  */
 public class ResultSetTest extends DatabaseTestCase {
     public ResultSetTest(String name) {
@@ -1801,42 +1801,45 @@ public class ResultSetTest extends DatabaseTestCase {
     /**
      * Test for bug [1855125], numeric overflow not reported by jTDS.
      */
-    public void testNumericTruncation() throws SQLException {
+    public void testNumericOverflow() throws SQLException {
         Statement st = con.createStatement();
-        st.execute("create table #test(data numeric(20,0))");
-        assertEquals(1, st.executeUpdate("insert into #test values (10000000000000000000)"));
+        st.execute("create table #test(data numeric(30,10))");
+        assertEquals(1, st.executeUpdate("insert into #test values (10000000000000000000.0000)"));
 
         ResultSet rs = st.executeQuery("select * from #test");
         
         assertTrue(rs.next());
 
         try {
-            short s = rs.getByte(1);
-            assertTrue("expected numeric overflow error, got " + s, false);
+            byte b = rs.getByte(1);
+            assertTrue("expected numeric overflow error, got " + b, false);
         } catch (SQLException e) {
-            // TODO: check exception type
+            assertEquals(e.getSQLState(), "22003");
         }
 
         try {
             short s = rs.getShort(1);
             assertTrue("expected numeric overflow error, got " + s, false);
         } catch (SQLException e) {
-            // TODO: check exception type
+            assertEquals(e.getSQLState(), "22003");
         }
 
         try {
             int i = rs.getInt(1);
             assertTrue("expected numeric overflow error, got " + i, false);
         } catch (SQLException e) {
-            // TODO: check exception type
+            assertEquals(e.getSQLState(), "22003");
         }
 
         try {
             long l = rs.getLong(1);
             assertTrue("expected numeric overflow error, got " + l, false);
         } catch (SQLException e) {
-            // TODO: check exception type
+            assertEquals(e.getSQLState(), "22003");
         }
+        
+        rs.close();
+        st.close();
     }
 
     public static void main(String[] args) {

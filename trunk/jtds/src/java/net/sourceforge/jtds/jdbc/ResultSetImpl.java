@@ -60,7 +60,7 @@ import net.sourceforge.jtds.util.Logger;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: ResultSetImpl.java,v 1.2 2008-09-07 16:40:38 bheineman Exp $
+ * @version $Id: ResultSetImpl.java,v 1.3 2009-08-10 17:38:10 ickzon Exp $
  */
 public class ResultSetImpl implements ResultSet {
 
@@ -719,12 +719,8 @@ public class ResultSetImpl implements ResultSet {
         return ((Integer) Support.convert(con, getColumn(columnIndex), java.sql.Types.TINYINT, null)).byteValue();
     }
 
-    public double getDouble(int columnIndex) throws SQLException {
-        return ((Double) Support.convert(con, getColumn(columnIndex), java.sql.Types.DOUBLE, null)).doubleValue();
-    }
-
-    public float getFloat(int columnIndex) throws SQLException {
-        return ((Float) Support.convert(con, getColumn(columnIndex), java.sql.Types.REAL, null)).floatValue();
+    public short getShort(int columnIndex) throws SQLException {
+        return ((Integer) Support.convert(con, getColumn(columnIndex), java.sql.Types.SMALLINT, null)).shortValue();
     }
 
     public int getInt(int columnIndex) throws SQLException {
@@ -735,8 +731,12 @@ public class ResultSetImpl implements ResultSet {
         return ((Long) Support.convert(con, getColumn(columnIndex), java.sql.Types.BIGINT, null)).longValue();
     }
 
-    public short getShort(int columnIndex) throws SQLException {
-        return ((Integer) Support.convert(con, getColumn(columnIndex), java.sql.Types.SMALLINT, null)).shortValue();
+    public float getFloat(int columnIndex) throws SQLException {
+        return ((Float) Support.convert(con, getColumn(columnIndex), java.sql.Types.REAL, null)).floatValue();
+    }
+
+    public double getDouble(int columnIndex) throws SQLException {
+        return ((Double) Support.convert(con, getColumn(columnIndex), java.sql.Types.DOUBLE, null)).doubleValue();
     }
 
     public void setFetchDirection(int direction) throws SQLException {
