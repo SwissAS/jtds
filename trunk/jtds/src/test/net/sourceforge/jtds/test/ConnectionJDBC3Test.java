@@ -23,7 +23,7 @@ import java.sql.*;
  * JDBC 3.0-only tests for Connection.
  *
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC3Test.java,v 1.2 2007-09-10 19:19:36 bheineman Exp $
+ * @version $Id: ConnectionJDBC3Test.java,v 1.3 2009-08-10 15:48:39 ickzon Exp $
  */
 public class ConnectionJDBC3Test extends DatabaseTestCase {
 
@@ -105,4 +105,23 @@ public class ConnectionJDBC3Test extends DatabaseTestCase {
             con.close();
         }
     }
+    
+    /**
+     * Test for bug [1755448], login failure leaves unclosed sockets.
+     */
+    public void testUnclosedSocket() {
+        final int count = 100000;
+
+        String url = props.getProperty("url") + ";loginTimeout=600";
+
+        for (int i = 0; i < count; i ++) {
+            try {
+                DriverManager.getConnection(url, "sa", "invalid_password");
+                assertTrue(false);
+            } catch (SQLException e) {
+                assertEquals(18456, e.getErrorCode());
+            }
+        }
+    }
+
 }
