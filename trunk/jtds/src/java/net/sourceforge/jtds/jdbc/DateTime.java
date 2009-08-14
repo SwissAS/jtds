@@ -30,7 +30,7 @@ import java.util.GregorianCalendar;
  * Java classes.
  *
  * @author Mike Hutchinson
- * @version $Id: DateTime.java,v 1.1 2007-09-10 19:19:31 bheineman Exp $
+ * @version $Id: DateTime.java,v 1.2 2009-08-14 09:12:25 ickzon Exp $
  */
 class DateTime implements Serializable {
     static final long serialVersionUID = -8519110454423916576L;
@@ -326,6 +326,7 @@ class DateTime implements Serializable {
             millis = 0;
             if (date != DATE_NOT_USED) {
                 GregorianCalendar cal = (GregorianCalendar)calendar.get();
+                cal.set(Calendar.ERA, GregorianCalendar.AD);
                 cal.set(Calendar.YEAR, year);
                 cal.set(Calendar.MONTH, month - 1);
                 cal.set(Calendar.DAY_OF_MONTH, day);
@@ -349,6 +350,7 @@ class DateTime implements Serializable {
                 unpackDateTime();
             }
             GregorianCalendar cal = (GregorianCalendar)calendar.get();
+            cal.set(Calendar.ERA, GregorianCalendar.AD);
             cal.set(Calendar.YEAR, year);
             cal.set(Calendar.MONTH, month - 1);
             cal.set(Calendar.DAY_OF_MONTH, day);
@@ -372,6 +374,7 @@ class DateTime implements Serializable {
                 unpackDateTime();
             }
             GregorianCalendar cal = (GregorianCalendar)calendar.get();
+            cal.set(Calendar.ERA, GregorianCalendar.AD);
             cal.set(Calendar.YEAR, year);
             cal.set(Calendar.MONTH, month - 1);
             cal.set(Calendar.DAY_OF_MONTH, day);
@@ -395,6 +398,7 @@ class DateTime implements Serializable {
                 unpackDateTime();
             }
             GregorianCalendar cal = (GregorianCalendar)calendar.get();
+            cal.set(Calendar.ERA, GregorianCalendar.AD);
             cal.set(Calendar.YEAR, 1970);
             cal.set(Calendar.MONTH, 0);
             cal.set(Calendar.DAY_OF_MONTH, 1);

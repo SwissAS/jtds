@@ -1,6 +1,10 @@
 Changes from jTDS 1.2.2
 =======================
 
+08/14/2009 - Holger Rehn
+ o Corrected bug [2181003], attempt to set a BC date invalidates
+   driver state. 
+
 10/08/2009 - Holger Rehn
  o Corrected bug [1855125], jTDS silently ignores integer overflows in
    ResultSet's getter methods.
