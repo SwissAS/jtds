@@ -29,7 +29,7 @@ import junit.framework.TestSuite;
 /**
  * test getting timestamps from the database.
  *
- * @version $Id: TimestampTest.java,v 1.36 2009-08-04 10:33:44 ickzon Exp $
+ * @version $Id: TimestampTest.java,v 1.37 2009-08-14 09:04:40 ickzon Exp $
  */
 public class TimestampTest extends DatabaseTestCase {
     public TimestampTest(String name) {
@@ -2494,6 +2494,55 @@ public class TimestampTest extends DatabaseTestCase {
             ps2.close();
             stmt.close();
         }
+    }
+
+    /**
+     * Test for bug [2181003], an attempt to set a BC date invalidates
+     * driver state.
+     */
+    public void testEra() throws SQLException {
+        Statement st = con.createStatement();
+        st.execute("create table #testEra(data datetime)");
+        st.close();
+
+        String date = "2000-11-11";
+        Date original = Date.valueOf(date);
+        PreparedStatement in = con.prepareStatement("insert into #testEra values(?)");
+        PreparedStatement out = con.prepareStatement("select * from #testEra");
+        ResultSet rs = null;
+
+        // insert valid value
+        in.setDate(1, Date.valueOf(date));
+        in.execute();
+
+        // check timestamp
+        rs = out.executeQuery();
+        assertTrue(rs.next());
+        assertEquals(original,rs.getDate(1));
+        rs.close();
+
+        // attempt to set invalid BC date (January 1st, 300 BC)
+        try {
+            GregorianCalendar gc = new GregorianCalendar();
+            gc.set(GregorianCalendar.ERA, GregorianCalendar.BC);
+            gc.set(GregorianCalendar.YEAR, 300);
+            gc.set(GregorianCalendar.MONTH,GregorianCalendar.JANUARY);
+            gc.set(GregorianCalendar.DAY_OF_MONTH, 1);
+            in.setDate(1, new Date(gc.getTime().getTime()));
+
+            assertTrue("invalid date should cause an exception",false);
+        } catch( SQLException e ) {
+            // expected error
+        }
+
+        // re-check timestamp
+        rs = out.executeQuery();
+        assertTrue(rs.next());
+        assertEquals(original,rs.getDate(1));
+        rs.close();
+
+        in.close();
+        out.close();
     }
 
 }
