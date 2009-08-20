@@ -29,7 +29,7 @@ import junit.framework.TestSuite;
 /**
  * test getting timestamps from the database.
  *
- * @version $Id: TimestampTest.java,v 1.37 2009-08-14 09:04:40 ickzon Exp $
+ * @version $Id: TimestampTest.java,v 1.38 2009-08-20 19:44:07 ickzon Exp $
  */
 public class TimestampTest extends DatabaseTestCase {
     public TimestampTest(String name) {
@@ -2497,8 +2497,8 @@ public class TimestampTest extends DatabaseTestCase {
     }
 
     /**
-     * Test for bug [2181003], an attempt to set a BC date invalidates
-     * driver state.
+     * Test for bugs [2181003]/[2349058], an attempt to set a BC date
+     * invalidates driver state/DateTime allows invalid dates through.
      */
     public void testEra() throws SQLException {
         Statement st = con.createStatement();
