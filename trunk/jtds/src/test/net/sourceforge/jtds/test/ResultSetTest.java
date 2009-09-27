@@ -25,7 +25,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * @version $Id: ResultSetTest.java,v 1.54 2009-08-10 17:38:10 ickzon Exp $
+ * @version $Id: ResultSetTest.java,v 1.55 2009-09-27 13:12:07 ickzon Exp $
  */
 public class ResultSetTest extends DatabaseTestCase {
     public ResultSetTest(String name) {
@@ -1838,6 +1838,50 @@ public class ResultSetTest extends DatabaseTestCase {
             assertEquals(e.getSQLState(), "22003");
         }
         
+        rs.close();
+        st.close();
+    }
+
+
+    /**
+     * Test for bug [2860742], getByte() causes overflow error for negative
+     * values.
+     */
+    public void testNegativeOverflow() throws SQLException
+    {
+        Statement st = con.createStatement();
+        st.execute("create table #test(data int)");
+        assertEquals(1, st.executeUpdate("insert into #test values (-1)"));
+        assertEquals(1, st.executeUpdate("insert into #test values (-128)"));
+        assertEquals(1, st.executeUpdate("insert into #test values (-129)"));
+
+        ResultSet rs = st.executeQuery("select * from #test order by data desc");
+
+        assertTrue(rs.next());
+
+        try {
+            byte b = rs.getByte(1);
+        } catch (SQLException e) {
+            assertTrue("unexpected numeric overflow", false);
+        }
+
+        assertTrue(rs.next());
+
+        try {
+            byte b = rs.getByte(1);
+        } catch (SQLException e) {
+            assertTrue("unexpected numeric overflow", false);
+        }
+
+        assertTrue(rs.next());
+
+        try {
+            byte b = rs.getByte(1);
+            assertTrue("expected numeric overflow error, got " + b, false);
+        } catch (SQLException e) {
+            assertEquals(e.getSQLState(), "22003");
+        }
+
         rs.close();
         st.close();
     }
