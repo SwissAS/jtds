@@ -45,7 +45,7 @@ import java.util.List;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  *  created  17 March 2001
- * @version $Id: DatabaseMetaDataImplASA.java,v 1.1 2009-07-23 19:35:35 ickzon Exp $
+ * @version $Id: DatabaseMetaDataImplASA.java,v 1.2 2009-09-27 12:59:02 ickzon Exp $
  */
 public class DatabaseMetaDataImplASA implements java.sql.DatabaseMetaData {
     
@@ -265,7 +265,7 @@ public class DatabaseMetaDataImplASA implements java.sql.DatabaseMetaData {
     @Override
     public java.sql.ResultSet getCatalogs() throws SQLException {
         if (databaseMajorVersion < 9) {
-            throw new UnsupportedOperationException();
+            throw new AbstractMethodError();
         // FIXME: ASA < 9.0 doesn't support SELECT FROM PROCEDURE
         /*
          * In version 8 and earlier, you can open a cursor on a procedure call
@@ -3543,7 +3543,7 @@ public class DatabaseMetaDataImplASA implements java.sql.DatabaseMetaData {
      * tests.
      *
      * @author David Eaves
-     * @version $Id: DatabaseMetaDataImplASA.java,v 1.1 2009-07-23 19:35:35 ickzon Exp $
+     * @version $Id: DatabaseMetaDataImplASA.java,v 1.2 2009-09-27 12:59:02 ickzon Exp $
      */
     static class TypeInfo implements Comparable {
         static final int NUM_COLS = 18;

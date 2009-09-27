@@ -53,7 +53,7 @@ import java.util.Map;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: CallableStatementImpl.java,v 1.3 2009-07-23 19:35:35 ickzon Exp $
+ * @version $Id: CallableStatementImpl.java,v 1.4 2009-09-27 12:59:02 ickzon Exp $
  */
 public class CallableStatementImpl extends PreparedStatementImpl implements CallableStatement {
     /** Last parameter retrieved was null. */
@@ -800,208 +800,208 @@ public class CallableStatementImpl extends PreparedStatementImpl implements Call
     @Override
     public Reader getCharacterStream(int parameterIndex) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public Reader getCharacterStream(String parameterName) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public Reader getNCharacterStream(int parameterIndex) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public Reader getNCharacterStream(String parameterName) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public NClob getNClob(int parameterIndex) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public NClob getNClob(String parameterName) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public String getNString(int parameterIndex) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public String getNString(String parameterName) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public RowId getRowId(int parameterIndex) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public RowId getRowId(String parameterName) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public java.sql.SQLXML getSQLXML(int parameterIndex) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public java.sql.SQLXML getSQLXML(String parameterName) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public void setAsciiStream(String parameterName, InputStream x)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public void setAsciiStream(String parameterName, InputStream x, long length)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public void setBinaryStream(String parameterName, InputStream x)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public void setBinaryStream(String parameterName, InputStream x, long length)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public void setBlob(String parameterName, Blob x) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public void setBlob(String parameterName, InputStream inputStream)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public void setBlob(String parameterName, InputStream inputStream,
             long length) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public void setCharacterStream(String parameterName, Reader reader)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public void setCharacterStream(String parameterName, Reader reader,
             long length) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public void setClob(String parameterName, Clob x) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public void setClob(String parameterName, Reader reader)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public void setClob(String parameterName, Reader reader, long length)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public void setNCharacterStream(String parameterName, Reader value)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public void setNCharacterStream(String parameterName, Reader value,
             long length) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public void setNClob(String parameterName, NClob value) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public void setNClob(String parameterName, Reader reader)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public void setNClob(String parameterName, Reader reader, long length)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public void setNString(String parameterName, String value)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public void setRowId(String parameterName, RowId x) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public void setSQLXML(String parameterName, java.sql.SQLXML xmlObject)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 }

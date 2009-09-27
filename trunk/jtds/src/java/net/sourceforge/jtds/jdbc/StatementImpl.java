@@ -41,7 +41,7 @@ import net.sourceforge.jtds.util.Logger;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: StatementImpl.java,v 1.4 2009-07-23 19:35:35 ickzon Exp $
+ * @version $Id: StatementImpl.java,v 1.5 2009-09-27 12:59:02 ickzon Exp $
  */
 public class StatementImpl implements java.sql.Statement {
     /*
@@ -1818,24 +1818,24 @@ public class StatementImpl implements java.sql.Statement {
     @Override
     public boolean isPoolable() throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public void setPoolable(boolean poolable) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public <T> T unwrap(Class<T> iface) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 }

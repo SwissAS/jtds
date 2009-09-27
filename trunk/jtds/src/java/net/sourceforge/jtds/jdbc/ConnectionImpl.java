@@ -82,7 +82,7 @@ import net.sourceforge.jtds.util.MSSqlServerInfo;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionImpl.java,v 1.7 2009-08-04 10:33:44 ickzon Exp $
+ * @version $Id: ConnectionImpl.java,v 1.8 2009-09-27 12:59:02 ickzon Exp $
  */
 public class ConnectionImpl implements java.sql.Connection {
     /** Constant for SNAPSHOT isolation on MS SQL Server 2005.*/
@@ -2957,7 +2957,7 @@ public class ConnectionImpl implements java.sql.Connection {
     /**
      * jTDS implementation of the <code>Xid</code> interface.
      *
-     * @version $Id: ConnectionImpl.java,v 1.7 2009-08-04 10:33:44 ickzon Exp $
+     * @version $Id: ConnectionImpl.java,v 1.8 2009-09-27 12:59:02 ickzon Exp $
      */
     private static class XidImpl implements Xid {
         /** The size of an XID in bytes. */
@@ -3107,81 +3107,81 @@ public class ConnectionImpl implements java.sql.Connection {
     public Array createArrayOf(String typeName, Object[] elements)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public Blob createBlob() throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public Clob createClob() throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public NClob createNClob() throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public SQLXML createSQLXML() throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public Struct createStruct(String typeName, Object[] attributes)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public Properties getClientInfo() throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public String getClientInfo(String name) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public boolean isValid(int timeout) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public void setClientInfo(Properties properties)
             throws SQLClientInfoException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public void setClientInfo(String name, String value)
             throws SQLClientInfoException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public <T> T unwrap(Class<T> iface) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 }

@@ -44,7 +44,7 @@ import java.util.List;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  *  created  17 March 2001
- * @version $Id: DatabaseMetaDataImpl.java,v 1.4 2009-07-28 18:22:44 ickzon Exp $
+ * @version $Id: DatabaseMetaDataImpl.java,v 1.5 2009-09-27 12:59:02 ickzon Exp $
  */
 public class DatabaseMetaDataImpl implements java.sql.DatabaseMetaData {
     
@@ -3600,7 +3600,7 @@ public class DatabaseMetaDataImpl implements java.sql.DatabaseMetaData {
      * tests.
      *
      * @author David Eaves
-     * @version $Id: DatabaseMetaDataImpl.java,v 1.4 2009-07-28 18:22:44 ickzon Exp $
+     * @version $Id: DatabaseMetaDataImpl.java,v 1.5 2009-09-27 12:59:02 ickzon Exp $
      */
     static class TypeInfo implements Comparable {
         static final int NUM_COLS = 18;
@@ -3773,13 +3773,13 @@ public class DatabaseMetaDataImpl implements java.sql.DatabaseMetaData {
     @Override
     public boolean autoCommitFailureClosesAllResultSets() throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public ResultSet getClientInfoProperties() throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
@@ -3787,44 +3787,44 @@ public class DatabaseMetaDataImpl implements java.sql.DatabaseMetaData {
             String functionNamePattern, String columnNamePattern)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public ResultSet getFunctions(String catalog, String schemaPattern,
             String functionNamePattern) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public RowIdLifetime getRowIdLifetime() throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public ResultSet getSchemas(String catalog, String schemaPattern)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public boolean supportsStoredFunctionsUsingCallSyntax() throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public <T> T unwrap(Class<T> iface) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 }

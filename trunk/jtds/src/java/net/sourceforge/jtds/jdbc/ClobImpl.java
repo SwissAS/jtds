@@ -44,7 +44,7 @@ import java.sql.SQLException;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: ClobImpl.java,v 1.2 2008-09-07 16:40:38 bheineman Exp $
+ * @version $Id: ClobImpl.java,v 1.3 2009-09-27 12:59:02 ickzon Exp $
  */
 
 public class ClobImpl extends BlobBuffer implements Clob, Serializable {
@@ -269,11 +269,11 @@ public class ClobImpl extends BlobBuffer implements Clob, Serializable {
 
     @Override
     public void free() throws SQLException {
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     @Override
     public Reader getCharacterStream(long pos, long length) throws SQLException {
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 }
