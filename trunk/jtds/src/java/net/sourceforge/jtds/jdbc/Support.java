@@ -40,7 +40,7 @@ import java.nio.ByteBuffer;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.2 2009-08-10 17:38:10 ickzon Exp $
+ * @version $Id: Support.java,v 1.3 2009-09-28 12:43:53 ickzon Exp $
  */
 class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -212,13 +212,7 @@ class Support {
        try {
            switch (jdbcType) {
                case java.sql.Types.TINYINT:
-                   if (x instanceof Integer) {
-                       if ((((Number)x).intValue() & 0xFFFFFF00) != 0) {
-                           throw new SQLException(Messages.get("error.convert.numericoverflow", x, getJdbcTypeName(jdbcType)), "22003");
-                       } else {
-                           return new Integer(((Number)x).byteValue());
-                       }
-                   } else if (x instanceof Boolean) {
+                   if (x instanceof Boolean) {
                        return ((Boolean) x).booleanValue() ? INTEGER_ONE : INTEGER_ZERO;
                    } else if (x instanceof Byte) {
                        return new Integer(((Byte)x).byteValue() & 0xFF);
@@ -577,7 +571,7 @@ class Support {
                             Writer out = clob.setCharacterStream(1);
                             // TODO Use a buffer to improve performance
                             int b;
-                            // These reads/writes are buffered by the undelying blob buffers
+                            // These reads/writes are buffered by the underlying blob buffers
                             while ((b = is.read()) >= 0) {
                                 out.write(hex[b >> 4]);
                                 out.write(hex[b & 0x0F]);
