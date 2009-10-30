@@ -34,7 +34,7 @@ import net.sourceforge.jtds.util.Logger;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author FreeTDS project
- * @version $Id: TdsCoreASA.java,v 1.3 2009-07-31 12:54:10 ickzon Exp $
+ * @version $Id: TdsCoreASA.java,v 1.4 2009-10-30 10:17:34 ickzon Exp $
  */
 class TdsCoreASA extends TdsCore50 {
 
@@ -2164,7 +2164,7 @@ new Exception().printStackTrace();
             case SYBCHAR:
             case SYBVARCHAR:
                 // REVIEW: z.B. beim Test CallableStatementTest.testReturnParams() liefert ASA hier kein status-byte
-                if (param) {
+                if (param || connection.getDatabaseMajorVersion() < 8) {
                     len = in.read();
     
                     if (len > 0) {

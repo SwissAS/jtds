@@ -45,7 +45,7 @@ import java.util.List;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  *  created  17 March 2001
- * @version $Id: DatabaseMetaDataImplASA.java,v 1.2 2009-09-27 12:59:02 ickzon Exp $
+ * @version $Id: DatabaseMetaDataImplASA.java,v 1.3 2009-10-30 10:17:34 ickzon Exp $
  */
 public class DatabaseMetaDataImplASA implements java.sql.DatabaseMetaData {
     
@@ -264,8 +264,9 @@ public class DatabaseMetaDataImplASA implements java.sql.DatabaseMetaData {
      */
     @Override
     public java.sql.ResultSet getCatalogs() throws SQLException {
+        String query = "select alias from sa_db_info()";
+
         if (databaseMajorVersion < 9) {
-            throw new AbstractMethodError();
         // FIXME: ASA < 9.0 doesn't support SELECT FROM PROCEDURE
         /*
          * In version 8 and earlier, you can open a cursor on a procedure call
@@ -273,8 +274,9 @@ public class DatabaseMetaDataImplASA implements java.sql.DatabaseMetaData {
          * temporary table and SELECT from that, for more control over which
          * rows you want.
          */
+            query = "select db_name() as TABLE_CAT";
         }
-        String query = "select alias from sa_db_info()";
+
         Statement s = connection.createStatement();
         ResultSetImpl rs = (ResultSetImpl)s.executeQuery(query);
 
@@ -1854,13 +1856,21 @@ public class DatabaseMetaDataImplASA implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public java.sql.ResultSet getTableTypes() throws SQLException {
-        String sql = "select 'SYSTEM TABLE' TABLE_TYPE "
-                     + "union select 'TABLE' TABLE_TYPE "
-                     + "union select 'VIEW' TABLE_TYPE "
-                     + "order by TABLE_TYPE";
-        java.sql.Statement stmt = connection.createStatement();
+        // exec sp_mda 1,0,0 --> mdinfo 'TABLETYPES' für ASA7 select 'BASE' as TABLE_TYPE union all select 'GBL TEMP' union all select 'VIEW'
 
-        return stmt.executeQuery(sql);
+        Statement s = connection.createStatement();
+
+        // REVIEW: limit to TABLE and VIEW, there are other types handled differently between ASA versions 
+        ResultSetImpl rsTmp = new ResultSetImpl((StatementImpl)s, new String[]{"TABLE_TYPE"}, new int[]{Types.VARCHAR});
+        rsTmp.moveToInsertRow();
+        rsTmp.updateString(1, "TABLE");
+        rsTmp.insertRow();
+        rsTmp.updateString(1, "VIEW");
+        rsTmp.insertRow();
+        rsTmp.moveToCurrentRow();
+        rsTmp.setResultSetConcurrency(ResultSet.CONCUR_READ_ONLY);
+
+        return rsTmp;
     }
 
     /**
@@ -3543,7 +3553,7 @@ public class DatabaseMetaDataImplASA implements java.sql.DatabaseMetaData {
      * tests.
      *
      * @author David Eaves
-     * @version $Id: DatabaseMetaDataImplASA.java,v 1.2 2009-09-27 12:59:02 ickzon Exp $
+     * @version $Id: DatabaseMetaDataImplASA.java,v 1.3 2009-10-30 10:17:34 ickzon Exp $
      */
     static class TypeInfo implements Comparable {
         static final int NUM_COLS = 18;

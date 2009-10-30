@@ -1,6 +1,10 @@
 Changes from jTDS 1.2.2
 =======================
 
+10/30/2009 - Holger Rehn
+ o Corrected bug [2021846], encoding specifications missing in ant tasks 
+ o Corrected bug [2886423], meta data support for Sybase SQL Anywhere is wrong
+
 09/28/2009 - Holger Rehn
  o Corrected bug [2860742], getByte() causes overflow error for negative
    values.
