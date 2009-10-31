@@ -40,7 +40,7 @@ import java.nio.ByteBuffer;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.3 2009-09-28 12:43:53 ickzon Exp $
+ * @version $Id: Support.java,v 1.4 2009-10-31 15:06:33 ickzon Exp $
  */
 class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -297,7 +297,7 @@ class Support {
                        return new Long(((Byte)x).byteValue() & 0xFF);
                    } else if (x instanceof BigInteger) {
                        BigInteger val = (BigInteger) x;
-                       if (val.compareTo(MIN_VALUE_LONG_BI) < 0 || val.compareTo(MIN_VALUE_LONG_BI) > 0) {
+                       if (val.compareTo(MIN_VALUE_LONG_BI) < 0 || val.compareTo(MAX_VALUE_LONG_BI) > 0) {
                            throw new SQLException(Messages.get("error.convert.numericoverflow", x, getJdbcTypeName(jdbcType)), "22003");
                        } else {
                            return new Long(val.longValue());

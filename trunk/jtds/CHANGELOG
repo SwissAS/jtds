@@ -1,6 +1,9 @@
 Changes from jTDS 1.2.2
 =======================
 
+10/31/2009 - Holger Rehn
+ o Corrected bug [2883066], Numeric overflow in conversion BigInteger/BIGINT.
+
 10/30/2009 - Holger Rehn
  o Corrected bug [2021846], encoding specifications missing in ant tasks 
  o Corrected bug [2886423], meta data support for Sybase SQL Anywhere is wrong
