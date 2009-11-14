@@ -45,7 +45,7 @@ import java.util.List;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  *  created  17 March 2001
- * @version $Id: DatabaseMetaDataImplASA.java,v 1.3 2009-10-30 10:17:34 ickzon Exp $
+ * @version $Id: DatabaseMetaDataImplASA.java,v 1.4 2009-11-14 13:49:43 ickzon Exp $
  */
 public class DatabaseMetaDataImplASA implements java.sql.DatabaseMetaData {
     
@@ -1590,21 +1590,7 @@ public class DatabaseMetaDataImplASA implements java.sql.DatabaseMetaData {
      */
     public java.sql.ResultSet getSchemas() throws SQLException {
         java.sql.Statement statement = connection.createStatement();
-
-        String sql = "SELECT name AS TABLE_SCHEM, NULL as TABLE_CATALOG FROM dbo.sysusers";
-
-        //
-        // MJH - isLogin column only in MSSQL >= 7.0
-        //
-        if (tdsVersion >= TdsCore.TDS70) {
-            sql += " WHERE islogin=1";
-        } else {
-            sql += " WHERE uid>0";
-        }
-
-        sql += " ORDER BY TABLE_SCHEM";
-
-        return statement.executeQuery(sql);
+        return statement.executeQuery("SELECT name AS TABLE_SCHEM, NULL as TABLE_CATALOG FROM dbo.sysusers ORDER BY TABLE_SCHEM");
     }
 
     /**
@@ -1863,6 +1849,8 @@ public class DatabaseMetaDataImplASA implements java.sql.DatabaseMetaData {
         // REVIEW: limit to TABLE and VIEW, there are other types handled differently between ASA versions 
         ResultSetImpl rsTmp = new ResultSetImpl((StatementImpl)s, new String[]{"TABLE_TYPE"}, new int[]{Types.VARCHAR});
         rsTmp.moveToInsertRow();
+        rsTmp.updateString(1, "SYSTEM TABLE");
+        rsTmp.insertRow();
         rsTmp.updateString(1, "TABLE");
         rsTmp.insertRow();
         rsTmp.updateString(1, "VIEW");
@@ -3553,7 +3541,7 @@ public class DatabaseMetaDataImplASA implements java.sql.DatabaseMetaData {
      * tests.
      *
      * @author David Eaves
-     * @version $Id: DatabaseMetaDataImplASA.java,v 1.3 2009-10-30 10:17:34 ickzon Exp $
+     * @version $Id: DatabaseMetaDataImplASA.java,v 1.4 2009-11-14 13:49:43 ickzon Exp $
      */
     static class TypeInfo implements Comparable {
         static final int NUM_COLS = 18;

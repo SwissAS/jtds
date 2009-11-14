@@ -82,7 +82,7 @@ import net.sourceforge.jtds.util.MSSqlServerInfo;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionImpl.java,v 1.8 2009-09-27 12:59:02 ickzon Exp $
+ * @version $Id: ConnectionImpl.java,v 1.9 2009-11-14 13:49:43 ickzon Exp $
  */
 public class ConnectionImpl implements java.sql.Connection {
     /** Constant for SNAPSHOT isolation on MS SQL Server 2005.*/
@@ -555,12 +555,29 @@ public class ConnectionImpl implements java.sql.Connection {
                 tdsVersion =baseTds.getTdsVersion();
                 if (tdsVersion < TdsCore.TDS70 && ds.getDatabaseName().length() > 0) {
                     // Need to select the default database
-                    if (serverType == TdsCore.ANYWHERE) {
-                        // ASA already opens database during login
-                        currentDatabase = ds.getDatabaseName();
-                    }
                     setCatalog(ds.getDatabaseName());
                 }
+
+                // ASA already opened database during login
+                if (serverType == TdsCore.ANYWHERE) {
+                    String db = ds.getDatabaseName();
+
+                    if (db == null || db.length() == 0) {
+                        ResultSet rs = null;
+                        try {
+                            rs = baseStmt.executeQuery("SELECT db_name()");
+                            if (rs.next()) {
+                               db = rs.getString(1);
+                            }
+                        } finally {
+                            if (rs != null)
+                                rs.close();
+                        }
+                        ds.setDatabaseName(db);
+                    }
+                    currentDatabase = db;
+                }
+
                 // Will retry if using TDS8 and attempting to connect to SQL Server 7 or 6.5
             } while (retry);
             //
@@ -2957,7 +2974,7 @@ public class ConnectionImpl implements java.sql.Connection {
     /**
      * jTDS implementation of the <code>Xid</code> interface.
      *
-     * @version $Id: ConnectionImpl.java,v 1.8 2009-09-27 12:59:02 ickzon Exp $
+     * @version $Id: ConnectionImpl.java,v 1.9 2009-11-14 13:49:43 ickzon Exp $
      */
     private static class XidImpl implements Xid {
         /** The size of an XID in bytes. */

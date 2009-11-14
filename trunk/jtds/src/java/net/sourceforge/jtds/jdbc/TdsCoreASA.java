@@ -34,7 +34,7 @@ import net.sourceforge.jtds.util.Logger;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author FreeTDS project
- * @version $Id: TdsCoreASA.java,v 1.4 2009-10-30 10:17:34 ickzon Exp $
+ * @version $Id: TdsCoreASA.java,v 1.5 2009-11-14 13:49:42 ickzon Exp $
  */
 class TdsCoreASA extends TdsCore50 {
 
@@ -1076,8 +1076,7 @@ class TdsCoreASA extends TdsCore50 {
                 severity = 9; // Ensure treated as warning
             }
         }
-System.out.println( message );
-new Exception().printStackTrace();
+
         cx.getMessages().addDiagnostic(number, severity, message);
     }
 

@@ -1,12 +1,21 @@
 Changes from jTDS 1.2.2
 =======================
 
+11/14/2009 - Holger Rehn
+ o Corrected a bug leading to an empty string being returned by
+   Connection.getCatalog() if ASA has been connected without specifying
+   a server instance.
+ o Corrected a bug that prevented 'SYS' from being returned by
+   DatabaseMetaData.getSchemas().
+ o Corrected a bug that prevented 'SYSTEM TABLE' to be returned by
+   DatabaseMetaData.getTableTypes().
+
 10/31/2009 - Holger Rehn
  o Corrected bug [2883066], Numeric overflow in conversion BigInteger/BIGINT.
 
 10/30/2009 - Holger Rehn
- o Corrected bug [2021846], encoding specifications missing in ant tasks 
- o Corrected bug [2886423], meta data support for Sybase SQL Anywhere is wrong
+ o Corrected bug [2021846], encoding specifications missing in ant tasks.
+ o Corrected bug [2886423], meta data support for Sybase SQL Anywhere is wrong.
 
 09/28/2009 - Holger Rehn
  o Corrected bug [2860742], getByte() causes overflow error for negative
@@ -16,7 +25,7 @@ Changes from jTDS 1.2.2
  o Workaround for bug [2856350], JDBC4 method stubs make jTDS unusable.
 
 08/20/2009 - Holger Rehn
- o Corrected bug [2349058], DateTime allows invalid dates through
+ o Corrected bug [2349058], DateTime allows invalid dates through.
 
 08/14/2009 - Holger Rehn
  o Corrected bug [2181003], attempt to set a BC date invalidates
