@@ -25,7 +25,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * @version $Id: ResultSetTest.java,v 1.56 2009-09-28 12:41:14 ickzon Exp $
+ * @version $Id: ResultSetTest.java,v 1.57 2009-12-07 12:45:21 ickzon Exp $
  */
 public class ResultSetTest extends DatabaseTestCase {
     public ResultSetTest(String name) {
@@ -1251,6 +1251,41 @@ public class ResultSetTest extends DatabaseTestCase {
             int length = is.read(buf);
             assertEquals(4 * 2, length);
         }
+
+        rs.close();
+        stmt.close();
+    }
+
+    /**
+     * Check whether <code>Statement.setMaxRows()</code> works okay, bug
+     * [1812686].
+     */
+    public void testMaxRows() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.executeUpdate("create table #statementMaxRows (val int)");
+        stmt.close();
+
+        // insert 1000 rows
+        PreparedStatement pstmt = con.prepareStatement("insert into #statementMaxRows values (?)");
+        for (int i = 0; i < 1000; i++) {
+            pstmt.setInt(1, i);
+            assertEquals(1, pstmt.executeUpdate());
+        }
+        pstmt.close();
+
+        stmt = con.createStatement();
+
+        // set maxRows to 100
+        stmt.setMaxRows(100);
+
+        // select all rows (should only return 100 rows)
+        ResultSet rs = stmt.executeQuery("select * from #statementMaxRows");
+        int rows = 0;
+        while (rs.next()) {
+           rows++;
+        }
+
+        assertEquals(100, rows);
 
         rs.close();
         stmt.close();
