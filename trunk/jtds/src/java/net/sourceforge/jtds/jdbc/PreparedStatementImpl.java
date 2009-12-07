@@ -63,12 +63,14 @@ import java.util.concurrent.Semaphore;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: PreparedStatementImpl.java,v 1.5 2009-09-27 12:59:02 ickzon Exp $
+ * @version $Id: PreparedStatementImpl.java,v 1.6 2009-12-07 08:56:33 ickzon Exp $
  */
 public class PreparedStatementImpl extends StatementImpl implements PreparedStatement {
 
     /** The SQL statement being prepared. */
     final String sql;
+    /** The original SQL statement provided at construction time. */
+    private final String originalSql;
     /** The procedure name for CallableStatements. */
     String procName;
     /** The parameter list for the call. */
@@ -102,6 +104,9 @@ public class PreparedStatementImpl extends StatementImpl implements PreparedStat
     {
         super(connection, resultSetType, concurrency);
 
+        // returned by toString()
+        originalSql = sql;
+
         ArrayList<ParamInfo> params = new ArrayList<ParamInfo>();
         String[] parsedSql = SQLParser.parse(sql, params, connection, false);
 
@@ -130,6 +135,13 @@ public class PreparedStatementImpl extends StatementImpl implements PreparedStat
         }
         
         parameters = params.toArray(new ParamInfo[params.size()]);
+    }
+
+    /**
+     * Returns the SQL command provided at construction time.
+     */
+    public String toString() {
+        return originalSql;
     }
 
     /**

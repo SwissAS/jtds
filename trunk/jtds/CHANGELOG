@@ -1,6 +1,9 @@
 Changes from jTDS 1.2.2
 =======================
 
+12/07/2009 - Holger Rehn
+ o Implemented PreparedStatement.toString(), feature request [2909009].
+
 11/14/2009 - Holger Rehn
  o Corrected a bug leading to an empty string being returned by
    Connection.getCatalog() if ASA has been connected without specifying
