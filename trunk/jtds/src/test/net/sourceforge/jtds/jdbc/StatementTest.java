@@ -295,7 +295,7 @@ public class StatementTest extends TestBase {
      * Test set/get query timeout
      * @throws Exception
      */
-    public void testQueryTimeout() throws Exception {
+    public void testQueryTimeout1() throws Exception {
         try {
             dropTable("jtdsStmtTest");
             Statement stmt = con.createStatement();
@@ -336,6 +336,57 @@ public class StatementTest extends TestBase {
         }
     }
     
+
+    /**
+     * Test for bug [1694194], queryTimeout does not work on MSSQL2005 when
+     * property 'useCursors' is set to 'true'. Furthermore, the test also
+     * checks timeout with a query that cannot use a cursor. <p>
+     *
+     * This test requires property 'queryTimeout' to be set to true.
+     */
+    public void testQueryTimeout2() throws Exception {
+        Statement st = con.createStatement();
+        st.setQueryTimeout(1);
+
+        st.execute("create procedure #testTimeout as begin waitfor delay '00:00:30'; select 1; end");
+
+        long start = System.currentTimeMillis();
+        try {
+            // this query doesn't use a cursor
+            st.executeQuery("exec #testTimeout");
+            fail("query did not time out");
+        } catch (SQLException e) {
+            assertEquals("HYT00", e.getSQLState());
+            assertEquals(1000, System.currentTimeMillis() - start, 10);
+        }
+
+        st.execute("create table #dummy1(A varchar(200))");
+        st.execute("create table #dummy2(B varchar(200))");
+        st.execute("create table #dummy3(C varchar(200))");
+
+        // create test data
+        con.setAutoCommit(false);
+        for(int i = 0; i < 100; i++) {
+            st.execute("insert into #dummy1 values('" + i + "')");
+            st.execute("insert into #dummy2 values('" + i + "')");
+            st.execute("insert into #dummy3 values('" + i + "')");
+        }
+        con.commit();
+        con.setAutoCommit(true);
+
+        start = System.currentTimeMillis();
+        try {
+            // this query can use a cursor
+            st.executeQuery("select * from #dummy1, #dummy2, #dummy3 order by A desc, B asc, C desc");
+            fail("query did not time out");
+        } catch (SQLException e) {
+            assertEquals("HYT00", e.getSQLState());
+            assertEquals(1000, System.currentTimeMillis() - start, 10);
+        }
+
+        st.close();
+    }
+
     /**
      * Test getMoreResults, getUpdateCount and execute().
      * @throws Exception
@@ -745,7 +796,6 @@ public class StatementTest extends TestBase {
         assertFalse(rs.next());
     }
 
-    
     public static void main(String[] args) {
         junit.textui.TestRunner.run(StatementTest.class);
     }
