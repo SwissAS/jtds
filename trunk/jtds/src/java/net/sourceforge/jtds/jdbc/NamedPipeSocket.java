@@ -20,6 +20,8 @@ import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+
+import jcifs.Config;
 import jcifs.smb.NtlmPasswordAuthentication;
 import jcifs.smb.SmbNamedPipe;
 
@@ -45,6 +47,10 @@ class NamedPipeSocket extends TdsSocket {
                     final int port) throws IOException 
     {
         super(ds, host, port);
+
+        // apply socketTimeout as responseTimeout
+        int timeout = ds.getSocketTimeout() * 1000;
+        Config.setProperty("jcifs.smb.client.responseTimeout", String.valueOf(timeout > 0 ? timeout : Integer.MAX_VALUE));
 
         NtlmPasswordAuthentication auth = new NtlmPasswordAuthentication(
                 ds.getDomain(), ds.getUser(), ds.getPassword());
