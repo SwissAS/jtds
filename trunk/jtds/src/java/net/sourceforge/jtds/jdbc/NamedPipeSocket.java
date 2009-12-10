@@ -50,7 +50,9 @@ class NamedPipeSocket extends TdsSocket {
 
         // apply socketTimeout as responseTimeout
         int timeout = ds.getSocketTimeout() * 1000;
-        Config.setProperty("jcifs.smb.client.responseTimeout", String.valueOf(timeout > 0 ? timeout : Integer.MAX_VALUE));
+        String val = String.valueOf(timeout > 0 ? timeout : Integer.MAX_VALUE);
+        Config.setProperty("jcifs.smb.client.responseTimeout", val);
+        Config.setProperty("jcifs.smb.client.soTimeout", val);
 
         NtlmPasswordAuthentication auth = new NtlmPasswordAuthentication(
                 ds.getDomain(), ds.getUser(), ds.getPassword());
