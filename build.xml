@@ -1,0 +1,110 @@
+<project name="jtds" default="compile" basedir=".">
+
+  <target name="init">
+
+    <tstamp/>
+
+    <property name="build" value="build" />
+    <property name="src"  value="src" />
+    <property name="dist"  value="dist" />
+    <property name="test"  value="test" />
+
+    <property name="version" value="0.1.1" />
+    <property name="year" value="2001" />
+
+  </target>
+
+  <target name="clean" depends="init">
+    <deltree dir="${build}" />
+    <deltree dir="${dist}" />
+  </target>
+
+  <target name="prepare" depends="init">
+    <mkdir dir="${build}" />
+    <mkdir dir="${build}/classes" />
+  </target>
+
+  <target name="compile" depends="prepare">
+    <mkdir dir="${build}/src" />
+    <copydir src="${src}/main"
+           dest="${build}/src"
+           includes="**/*.java"
+    />
+    <copydir src="${src}/test"
+           dest="${build}/src"
+           includes="**/*.java"
+    />
+    <javac srcdir="${build}/src" destdir="${build}/classes"/>
+
+  </target>
+
+  <target name="javadoc" depends="prepare">
+
+    <mkdir dir="${build}/doc" />
+
+    <javadoc packagenames="com.*,freetds"
+           sourcepath="${build}/src"
+           destdir="${build}/doc"
+           author="true"
+           version="true"
+           use="true"
+           windowtitle="${ant.project.name} API"
+           doctitle="jTDS API Documentation"
+           bottom="Released under the LGPL">
+    </javadoc>
+
+  </target>
+
+  <target name="test" depends="compile">
+
+    <taskdef name="junit" classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask" />
+
+    <junit printsummary="yes" fork="yes" haltonfailure="yes">
+
+        <classpath>
+            <pathelement path="build/classes" />
+            <pathelement path="${java.class.path}" />
+        </classpath>
+
+      <formatter type="plain" />
+
+      <batchtest>
+        <fileset dir="${build}/src">
+          <include name="**/*Test.java" />
+          <exclude name="**/AllTests.java" />
+        </fileset>
+      </batchtest>
+
+    </junit>
+
+  </target>
+
+  <target name="dist" depends="clean,compile,javadoc">
+    <mkdir dir="${dist}" />
+    <!-- Runtime jar only -->
+    <jar jarfile="${dist}/${ant.project.name}-${version}.jar"
+        basedir="${build}/classes"
+        excludes="**Test/*"
+        includes="**/*"
+    />
+    <!-- Full dist -->
+    <mkdir dir="${dist}/doc" />
+    <copydir src="${build}/doc"
+           dest="${dist}/tmp/doc"
+           includes="**/*"
+    />
+    <mkdir dir="${dist}/tmp"/>
+    <copydir src="."
+        dest="${dist}/tmp"
+        includes="README,*.bat,*.xml,*.jpx,*.library,src/**/*,lib/**/*,conf/**/*"
+    />
+    <zip zipfile="${dist}/${ant.project.name}-${version}-src.zip"
+        basedir="${dist}/tmp"
+        includes="**/*"
+    />
+    <deltree dir="${dist}/tmp" />
+  </target>
+
+</project>
+
+
