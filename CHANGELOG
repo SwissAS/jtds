@@ -1,3 +1,24 @@
+Changes from jTDS 1.2.6
+=======================
+
+08/16/2012 - Holger Rehn
+ o Removed WebRing code from the project web site (Bug #660).
+
+
+|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+||                                                                           ||
+||                      SourceForge Project Upgrade                          ||
+||																			 ||
+|| The previous tracker item IDs have been replaced by individual bug/patch  ||
+|| IDs and are no longer valid.                                              ||
+||                                                                           ||
+|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+
+===============================================================================
+08/15/2012 - jTDS 1.2.6 released
+===============================================================================
+
 Changes from jTDS 1.2.2
 =======================
 
