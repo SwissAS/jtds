@@ -183,7 +183,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      * @throws SQLException if statement closed.
      */
     protected void checkOpen() throws SQLException {
-        if (closed) {
+        if (isClosed()) {
             throw new SQLException(
                     Messages.get("error.generic.closed", "PreparedStatement"), "HY010");
         }
