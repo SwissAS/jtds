@@ -2,6 +2,7 @@ Changes from jTDS 1.2.6
 =======================
 
 08/16/2012 - Holger Rehn
+ o Fixed typos in Messages.properties (Bug #608).
  o Removed WebRing code from the project web site (Bug #660).
  o Fixed a race condition when closing a JtdsStatement in multiple threads
    concurrently (Patch #121, #118).
@@ -10,7 +11,7 @@ Changes from jTDS 1.2.6
 |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 ||                                                                           ||
 ||                      SourceForge Project Upgrade                          ||
-||																			 ||
+||                                                                           ||
 || The previous tracker item IDs have been replaced by individual bug/patch  ||
 || IDs and are no longer valid.                                              ||
 ||                                                                           ||
