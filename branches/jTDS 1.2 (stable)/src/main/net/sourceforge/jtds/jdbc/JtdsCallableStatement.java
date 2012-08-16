@@ -116,7 +116,7 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
      * @throws SQLException if statement closed.
      */
     protected void checkOpen() throws SQLException {
-        if (closed) {
+        if (isClosed()) {
             throw new SQLException(
                     Messages.get("error.generic.closed", "CallableStatement"), "HY010");
         }

@@ -1122,7 +1122,7 @@ public class JtdsResultSet implements ResultSet {
 
         // If this is a DatabaseMetaData built result set, avoid getting an
         // exception because the statement is closed and assume no LOBs
-        boolean useLOBs = this instanceof CachedResultSet && statement.closed
+        boolean useLOBs = this instanceof CachedResultSet && statement.isClosed()
                 ? false
                 : getConnection().getUseLOBs();
         return new JtdsResultSetMetaData(this.columns, this.columnCount,
