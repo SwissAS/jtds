@@ -1,6 +1,9 @@
 Changes from jTDS 1.2.6
 =======================
 
+08/17/2012 - Holger Rehn
+ o Added service provider configuration file for JDBC driver class (Bug #659).
+
 08/16/2012 - Holger Rehn
  o Removed WebRing code from the project web site (Bug #660).
 
