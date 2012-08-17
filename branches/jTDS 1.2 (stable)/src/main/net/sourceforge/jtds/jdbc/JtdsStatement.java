@@ -1213,7 +1213,6 @@ public class JtdsStatement implements java.sql.Statement {
         return executeImpl(sql, RETURN_GENERATED_KEYS, false);
     }
 
-    @Override
     public Connection getConnection() throws SQLException {
         checkOpen();
         return this.connection;

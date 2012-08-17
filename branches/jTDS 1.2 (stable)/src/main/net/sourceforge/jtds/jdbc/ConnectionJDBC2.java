@@ -237,7 +237,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     private boolean useNTLMv2 = false;
 
     /** the number of currently open connections */
-    private static int connections;
+    private static int[] connections = new int[1];
 
     /**
      * Default constructor.
@@ -245,7 +245,9 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * Used for testing.
      */
     private ConnectionJDBC2() {
-        connections++;
+        synchronized( connections ) {
+            connections[0] ++;
+        }
         url = null;
         socket = null;
         baseTds = null;
@@ -261,7 +263,9 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      */
     ConnectionJDBC2(String url, Properties info)
             throws SQLException {
-        connections++;
+        synchronized( connections ) {
+            connections[0] ++;
+        }
         this.url = url;
         //
         // Extract properties into instance variables
@@ -2082,8 +2086,10 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                 // Ignore
             } finally {
                 closed = true;
-                if (--connections == 0) {
-                    TimerThread.stopTimer();
+                synchronized( connections ) {
+                    if (--connections[0] == 0) {
+                        TimerThread.stopTimer();
+                    }
                 }
             }
         }
