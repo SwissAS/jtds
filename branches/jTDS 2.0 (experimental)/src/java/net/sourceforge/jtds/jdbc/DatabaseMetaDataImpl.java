@@ -3827,4 +3827,18 @@ public class DatabaseMetaDataImpl implements java.sql.DatabaseMetaData {
         // TODO Auto-generated method stub
         throw new AbstractMethodError();
     }
-}
+
+    //// JDBC4.1 demarcation, do NOT put any JDBC3/4.0 code below this line ////
+
+    @Override
+    public ResultSet getPseudoColumns(String catalog, String schemaPattern, String tableNamePattern, String columnNamePattern) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new AbstractMethodError();
+    }
+
+    @Override
+    public boolean generatedKeyAlwaysReturned() throws SQLException {
+        // TODO Auto-generated method stub
+       throw new AbstractMethodError();
+    }
+ }

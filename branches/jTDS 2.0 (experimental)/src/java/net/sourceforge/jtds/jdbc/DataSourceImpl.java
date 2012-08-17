@@ -19,8 +19,10 @@ package net.sourceforge.jtds.jdbc;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
 
 import java.util.Properties;
+import java.util.logging.Logger;
 
 /**
  * jTDS implementation of javax.sql.DataSource.
@@ -62,4 +64,10 @@ public class DataSourceImpl extends CommonDataSource implements javax.sql.DataSo
         // TODO Auto-generated method stub
         throw new AbstractMethodError();
     }
+
+    @Override
+    public Logger getParentLogger() throws SQLFeatureNotSupportedException {
+      throw new SQLFeatureNotSupportedException();
+    }
+
 }
