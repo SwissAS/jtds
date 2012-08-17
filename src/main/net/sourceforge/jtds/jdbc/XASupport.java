@@ -352,16 +352,40 @@ public class XASupport {
             //
             // Emulate xa_commit method
             //
-            JtdsXid lxid = new JtdsXid(xid);
-            if (con.getXaState() != XA_END &&
-                con.getXaState() != XA_PREPARE) {
-                // Connection not ended or prepared
-                raiseXAException(XAException.XAER_PROTO);
-            }
+
             JtdsXid tran = (JtdsXid)con.getXid();
-            if (tran == null || !tran.equals(lxid)) {
-                raiseXAException(XAException.XAER_NOTA);
+
+            /*
+             * if tran == null, we assume recovery
+             */
+            
+            if (tran == null)
+            {
+               try
+               {
+                  connection.setAutoCommit(false);
+               }
+               catch (SQLException e)
+               {
+                  raiseXAException(XAException.XAER_RMERR);
+               }
             }
+            else
+            {
+               if (con.getXaState() != XA_END && con.getXaState() != XA_PREPARE)
+               {
+                // Connection not ended or prepared
+                  raiseXAException(XAException.XAER_PROTO);
+               }
+
+               JtdsXid lxid = new JtdsXid(xid);
+
+               if (!tran.equals(lxid))
+               {
+                  raiseXAException(XAException.XAER_NOTA);
+               }
+            }
+
             con.setXid(null);
             try {
                 con.commit();
@@ -478,6 +502,7 @@ public class XASupport {
             // will have been rolled back by the server.
             if (flags != XAResource.TMSTARTRSCAN &&
                 flags != XAResource.TMENDRSCAN &&
+                flags != ( XAResource.TMSTARTRSCAN | XAResource.TMENDRSCAN ) &&
                 flags != XAResource.TMNOFLAGS) {
                 raiseXAException(XAException.XAER_INVAL);
             }
@@ -537,7 +562,12 @@ public class XASupport {
             //
             JtdsXid lxid = new JtdsXid(xid);
             JtdsXid tran = (JtdsXid)con.getXid();
-            if (tran == null || !tran.equals(lxid)) {
+
+            /*
+             * if tran == null, we assume recovery
+             */
+
+            if (tran != null && !tran.equals(lxid)) {
                 raiseXAException(XAException.XAER_NOTA);
             }
             if (con.getXaState() != XA_END && con.getXaState() != XA_PREPARE) {
