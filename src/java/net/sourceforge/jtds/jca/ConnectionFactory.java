@@ -21,6 +21,7 @@ import java.io.PrintWriter;
 import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
 
 import javax.naming.NamingException;
 import javax.naming.Reference;
@@ -178,6 +179,8 @@ public class ConnectionFactory implements DataSource, Referenceable,
         return this.jndiRef;
     }
 
+    //// JDBC4.1 demarcation, do NOT put any JDBC3/4.0 code below this line ////
+
     @Override
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
         // TODO Auto-generated method stub
@@ -186,6 +189,13 @@ public class ConnectionFactory implements DataSource, Referenceable,
 
     @Override
     public <T> T unwrap(Class<T> iface) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new AbstractMethodError();
+    }
+
+    @Override
+    public java.util.logging.Logger getParentLogger()
+        throws SQLFeatureNotSupportedException {
         // TODO Auto-generated method stub
         throw new AbstractMethodError();
     }

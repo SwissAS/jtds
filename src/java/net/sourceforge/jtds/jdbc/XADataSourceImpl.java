@@ -18,7 +18,9 @@
 package net.sourceforge.jtds.jdbc;
 
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
 import java.util.Properties;
+import java.util.logging.Logger;
 
 import javax.sql.XAConnection;
 
@@ -60,6 +62,11 @@ public class XADataSourceImpl extends CommonDataSource implements javax.sql.XADa
         ConnectionImpl con = new ConnectionImpl(this, user, password);
         con.open();
         return new XAConnectionImpl(con);
+    }
+
+    @Override
+    public Logger getParentLogger() throws SQLFeatureNotSupportedException {
+        throw new SQLFeatureNotSupportedException();
     }
 
 }

@@ -18,7 +18,9 @@
 package net.sourceforge.jtds.jdbc;
 
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
 import java.util.Properties;
+import java.util.logging.Logger;
 
 import javax.sql.PooledConnection;
 
@@ -51,4 +53,10 @@ public class ConnectionPoolDataSourceImpl extends CommonDataSource implements ja
         con.open();
         return new PooledConnectionImpl(con);
     }
+
+    @Override
+    public Logger getParentLogger() throws SQLFeatureNotSupportedException {
+        throw new SQLFeatureNotSupportedException();
+    }
+
 }
