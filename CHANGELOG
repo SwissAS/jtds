@@ -2,7 +2,7 @@ Changes from jTDS 1.2.6
 =======================
 
 08/21/2012 - Holger Rehn
- o Applied build system changes proposed by Rainer Schwarze in patch 122.
+ o Applied build system changes proposed by Rainer Schwarze in patch #105.
  o Added compiler settings missing in some build files.
 
 08/17/2012 - Holger Rehn
