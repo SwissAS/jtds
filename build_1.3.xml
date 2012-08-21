@@ -30,7 +30,10 @@
   <target name="prepare" depends="init">
     <mkdir dir="${build}"/>
     <mkdir dir="${build}/classes"/>
+    <mkdir dir="${build}/testclasses"/>
     <mkdir dir="${build}/src"/>
+    <mkdir dir="${build}/testsrc"/>
+    <mkdir dir="${build}/testrep"/>
 
   	 <copy todir="${build}/src">
       <fileset dir="${src}/main" includes="**/*.java">
@@ -43,7 +46,7 @@
          <replaceregex byline="off" flags="s" pattern=" *//* JDBC4.*" replace="}"/>
       </filterchain>
     </copy>
-    <copy todir="${build}/src">
+    <copy todir="${build}/testsrc">
       <fileset dir="${src}/test" includes="**/*.java">
         <exclude name="**/GenKeyTest.java"/>
         <exclude name="**/JDBC3Test.java"/>
@@ -58,15 +61,22 @@
     <copy todir="${build}/classes">
       <fileset dir="${src}/main" includes="**/*.properties"/>
     </copy>
+    <copy todir="${build}/testclasses">
+      <fileset dir="${src}/test" includes="**/*.properties"/>
+    </copy>
   </target>
 
   <target name="compile" depends="init,prepare">
-    <javac destdir="${build}/classes" srcdir="${build}/src" classpathref="libs" debug="${javac.debug}" optimize="${javac.optimize}" encoding="latin1"/>
+    <javac destdir="${build}/classes" srcdir="${build}/src" classpathref="libs" debug="${javac.debug}" optimize="${javac.optimize}" source="1.3" target="1.3" encoding="latin1"/>
+  </target>
+
+  <target name="compile-test" depends="init,prepare,compile">
+    <javac destdir="${build}/testclasses" srcdir="${build}/testsrc" classpathref="libs" classpath="${build}/classes" debug="${javac.debug}" optimize="${javac.optimize}" source="1.3" target="1.3" encoding="latin1"/>
   </target>
 
   <target name="javadoc" depends="prepare">
     <mkdir dir="${build}/doc"/>
-    <javadoc sourcepath="${build}/src" destdir="${build}/doc" packagenames="net.sourceforge.jtds.*" Author="true"
+    <javadoc sourcepath="${build}/src;${build}/testsrc" destdir="${build}/doc" packagenames="net.sourceforge.jtds.*" Author="true"
              Doctitle="jTDS API Documentation" Use="true" Version="true" bottom="Generated on ${TODAY}"
              Windowtitle="jTDS API" Private="true" classpathref="libs" encoding="latin1">
       <tag name="todo" description="To do:"/>
@@ -74,17 +84,18 @@
     </javadoc>
   </target>
 
-  <target name="test" depends="compile">
+  <target name="test" depends="compile,compile-test">
     <taskdef name="junit" classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask"/>
 
     <junit fork="no" haltonfailure="no" printsummary="yes">
       <classpath>
         <pathelement location="build/classes"/>
+        <pathelement location="build/testclasses"/>
         <path refid="libs"/>
       </classpath>
       <formatter type="plain"/>
-      <batchtest>
-        <fileset dir="${build}/src">
+      <batchtest todir="${build}/testrep" >
+        <fileset dir="${build}/testsrc">
           <include name="**/*Test.java"/>
           <exclude name="**/AllTests.java"/>
         </fileset>
@@ -95,6 +106,10 @@
   <target name="dist" depends="clean,compile,javadoc">
     <mkdir dir="${dist}"/>
     <!-- Runtime jar -->
+    <copy todir="${build}/classes/META-INF">
+      <fileset dir="${src}/META-INF" includes="**/*"/>
+    </copy>
+    
     <jar basedir="${build}/classes"
          excludes="**/*Test*/**"
          includes="**/*"
@@ -105,16 +120,15 @@
             <attribute name="Implementation-URL" value="http://jtds.sourceforge.net"/>
             <attribute name="Specification-Title" value="JDBC"/>
             <attribute name="Specification-Version" value="3.0"/>
-            <attribute name="Class-Path" value="jcifs.jar"/>
             <attribute name="Main-Class" value="net.sourceforge.jtds.jdbc.Driver"/>
         </manifest>
     </jar>
 
     <!-- Source package -->
+    <mkdir dir="${dist}/tmp"/>
     <copy todir="${dist}/tmp/doc">
       <fileset dir="${build}/doc" includes="**/*"/>
     </copy>
-    <mkdir dir="${dist}/tmp"/>
     <copy todir="${dist}/tmp">
       <fileset dir="." includes="README,README.SSL,README.XA,README.SSO,CHANGELOG,LICENSE,*.bat,*.sh,*.xml,src/**/*,lib/**/*,html/**/*,conf/**/*.xml,conf/**/*.tmpl"/>
     </copy>
