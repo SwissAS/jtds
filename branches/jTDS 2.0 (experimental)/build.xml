@@ -13,13 +13,13 @@
 
     <property name="build.compiler" value="modern"/>
     <property name="javac.debug" value="on"/>
-    <property name="javac.optimize" value="off"/>
+    <property name="javac.optimize" value="on"/>
 
     <property name="src" value="src"/>
     <property name="dist" value="dist"/>
     <property name="test" value="test"/>
 
-    <property name="version" value="2.0"/>
+    <property name="version" value="2.0.0"/>
   </target>
 
   <target name="clean" depends="init">
@@ -117,10 +117,10 @@
          jarfile="${build}/${ant.project.name}-jca-${version}.rar">
     </jar>
     <!-- Source package -->
+    <mkdir dir="${dist}/tmp"/>
     <copy todir="${dist}/tmp/doc">
       <fileset dir="${build}/doc" includes="**/*"/>
     </copy>
-    <mkdir dir="${dist}/tmp"/>
     <copy todir="${dist}/tmp">
       <fileset dir="." includes="README,README.SSL,README.XA,README.SSO,CHANGELOG,LICENSE,*.bat,*.sh,*.xml,src/**/*,lib/**/*,html/**/*,conf/**/*"/>
     </copy>
