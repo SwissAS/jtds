@@ -45,6 +45,8 @@ import org.ietf.jgss.GSSManager;
 import org.ietf.jgss.GSSName;
 import org.ietf.jgss.Oid;
 
+import sun.misc.HexDumpEncoder;
+
 /**
  * This class implements the Microsoft TDS 7.0+ protocol.
  *
@@ -52,7 +54,7 @@ import org.ietf.jgss.Oid;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author FreeTDS project
- * @version $Id: TdsCore70.java,v 1.2 2009-07-24 14:15:29 ickzon Exp $
+ * @version $Id: TdsCore70.java,v 1.2 2009/07/24 14:15:29 ickzon Exp $
  */
 class TdsCore70 extends TdsCore {
     //
@@ -830,16 +832,23 @@ class TdsCore70 extends TdsCore {
         //
         short curPos = (short)((tdsVersion > TDS81)? 94: 86);
 
-        if (user == null || user.length() == 0) {
-            ntlmAuthSSO = true;
+        boolean useKerberos = connection.getDataSource().getUseKerberos();
+        if (useKerberos || user == null || user.length() == 0) {
+             ntlmAuthSSO = true;
 	         ntlmAuth = true;
         } else if (domain != null && domain.length() > 0) {
             // Assume we want to use Windows authentication with
             // supplied user and password.
             ntlmAuth = true;
         }
-
-        if (ntlmAuthSSO && isWindowsOS()) {
+        if(useKerberos){
+            try {
+                ntlmMessage = createGssToken();
+	        }catch (GSSException gsse) {
+               throw new IOException("GSS Failed: " + gsse.getMessage());
+            }
+	         Logger.printTrace("Using Kerberos GSS authentication.");
+        }else if (ntlmAuthSSO && isWindowsOS()) {
             // See if executing on a Windows platform and if so try and
             // use the single sign on native library.
             try {
@@ -1063,26 +1072,27 @@ class TdsCore70 extends TdsCore {
      * @throws IOException
      */
     private void sendGssToken() throws IOException {
-	try {
-	    byte gssMessage[] = _gssContext.initSecContext(ntlmMessage,
-							   0,
-							   ntlmMessage.length);
-	    
-	    if (_gssContext.isEstablished()) {
-		Logger.println("GSS: Security context established.");
-	    }
-	    
-	    if (gssMessage != null) {
-		Logger.println("GSS: Sending token (length: " +
-			       ntlmMessage.length + ")");
-		out.setPacketType(NTLMAUTH_PKT);
-		out.write(gssMessage);
-		out.flush();
-	    }
-	}
-	catch (GSSException e) {
-	    throw new IOException("GSS failure: " + e.getMessage());
-	}
+			try {
+				  Logger.println(new HexDumpEncoder().encodeBuffer(ntlmMessage)); 
+			    byte gssMessage[] = _gssContext.initSecContext(ntlmMessage,
+									   0,
+									   ntlmMessage.length);
+			    
+			    if (_gssContext.isEstablished()) {
+						Logger.println("GSS: Security context established.");
+			    }
+			    
+			    if (gssMessage != null) {
+						Logger.println("GSS: Sending token (length: " +
+							       ntlmMessage.length + ")");
+						out.setPacketType(NTLMAUTH_PKT);
+						out.write(gssMessage);
+						out.flush();
+			    }
+			}
+			catch (GSSException e) {
+			    throw new IOException("GSS failure: " + e.getMessage());
+			}
     }
     
     /**

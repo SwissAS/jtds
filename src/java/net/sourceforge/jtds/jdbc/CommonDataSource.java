@@ -89,6 +89,7 @@ public class CommonDataSource implements Referenceable, Serializable, ObjectFact
         propNames.put("useJCIFS",        "false");
         propNames.put("useLOBs",         "true");
         propNames.put("useNTLMv2",       "false");
+        propNames.put("useKerberos",     "false");
         propNames.put("user",            "");
         propNames.put("wsid",            "");
         propNames.put("xaEmulation",     "false");
@@ -834,6 +835,14 @@ public class CommonDataSource implements Referenceable, Serializable, ObjectFact
     
     public boolean getUseNTLMv2() {
         return Boolean.valueOf(getProperty("useNTLMv2")).booleanValue();
+    }
+
+    public void setUseKerberos(boolean useKerberos) {
+        conProps.put("useKerberos", Boolean.toString(useKerberos));
+    }
+
+    public boolean getUseKerberos() {
+        return Boolean.valueOf(getProperty("useKerberos")).booleanValue();
     }
 
     public String getUser()
