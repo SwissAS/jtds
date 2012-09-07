@@ -1,6 +1,9 @@
 Changes from jTDS 1.2.6
 =======================
 
+09/07/2012 - Holger Rehn
+ o Fixed jTDS version reported by the driver.
+
 08/21/2012 - Holger Rehn
  o Applied build system changes proposed by Rainer Schwarze in patch #105.
  o Added compiler settings missing in some build files.
