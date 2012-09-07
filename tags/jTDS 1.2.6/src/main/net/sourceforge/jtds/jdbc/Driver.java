@@ -55,7 +55,7 @@ public class Driver implements java.sql.Driver {
     /** Driver minor version. */
     static final int MINOR_VERSION = 2;
     /** Driver version miscellanea (e.g "-rc2", ".1" or <code>null</code>). */
-    static final String MISC_VERSION = ".5";
+    static final String MISC_VERSION = ".6";
     /** Set if the JDBC specification to implement is 3.0 or greater. */
     public static final boolean JDBC3 =
             "1.4".compareTo(System.getProperty("java.specification.version")) <= 0;
