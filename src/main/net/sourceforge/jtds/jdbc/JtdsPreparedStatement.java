@@ -1079,44 +1079,4 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         throw new AbstractMethodError();
     }
 
-    /* (non-Javadoc)
-     * @see java.sql.Statement#isClosed()
-     */
-    public boolean isClosed() throws SQLException {
-        // TODO Auto-generated method stub
-        throw new AbstractMethodError();
-    }
-
-    /* (non-Javadoc)
-     * @see java.sql.Statement#isPoolable()
-     */
-    public boolean isPoolable() throws SQLException {
-        // TODO Auto-generated method stub
-        throw new AbstractMethodError();
-    }
-
-    /* (non-Javadoc)
-     * @see java.sql.Statement#setPoolable(boolean)
-     */
-    public void setPoolable(boolean poolable) throws SQLException {
-        // TODO Auto-generated method stub
-        throw new AbstractMethodError();
-    }
-
-    /* (non-Javadoc)
-     * @see java.sql.Wrapper#isWrapperFor(java.lang.Class)
-     */
-    public boolean isWrapperFor(Class arg0) throws SQLException {
-        // TODO Auto-generated method stub
-        throw new AbstractMethodError();
-    }
-
-    /* (non-Javadoc)
-     * @see java.sql.Wrapper#unwrap(java.lang.Class)
-     */
-    public Object unwrap(Class arg0) throws SQLException {
-        // TODO Auto-generated method stub
-        throw new AbstractMethodError();
-    }
-
 }
