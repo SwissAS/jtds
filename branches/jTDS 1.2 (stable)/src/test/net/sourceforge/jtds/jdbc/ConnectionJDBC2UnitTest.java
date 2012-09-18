@@ -17,17 +17,18 @@
 //
 package net.sourceforge.jtds.jdbc;
 
-import java.sql.*;
-import java.util.Properties;
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.sql.Types;
 import java.util.Enumeration;
+import java.util.Properties;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
-
-import net.sourceforge.jtds.jdbc.ConnectionJDBC2;
-import net.sourceforge.jtds.jdbc.Driver;
-import net.sourceforge.jtds.jdbc.DefaultProperties;
-import net.sourceforge.jtds.jdbc.Messages;
 
 
 /**
@@ -155,6 +156,7 @@ public class ConnectionJDBC2UnitTest extends UnitTestBase {
             setTester(
                     new DefaultPropertiesTester() {
 
+                        @Override
                         public void assertDefaultProperty(
                                 String message, String url, Properties properties, String fieldName,
                                 String key, String expected) {
@@ -341,5 +343,15 @@ public class ConnectionJDBC2UnitTest extends UnitTestBase {
         } finally {
             con.close();
         }
+    }
+
+    /**
+     * Regression test for bug #673, function expansion causes buffer overflow.
+     */
+    public void testBug673() throws Exception {
+        Connection con = getConnection();
+        Statement stmt = con.createStatement();
+
+        stmt.execute( "SELECT {fn curdate()}, {fn curdate()}, {fn curdate()}, {fn curdate()}, {fn curdate()}, {fn curdate()}, {fn curdate()}, {fn curdate()}, {fn curdate()}, {fn curdate()}, {fn curdate()}, {fn curdate()}, {fn curdate()}, {fn curdate()}, {fn curdate()}, {fn curdate()}" );
     }
 }
