@@ -156,7 +156,6 @@ public class ConnectionJDBC2UnitTest extends UnitTestBase {
             setTester(
                     new DefaultPropertiesTester() {
 
-                        @Override
                         public void assertDefaultProperty(
                                 String message, String url, Properties properties, String fieldName,
                                 String key, String expected) {

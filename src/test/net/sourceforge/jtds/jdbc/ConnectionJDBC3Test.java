@@ -107,7 +107,7 @@ public class ConnectionJDBC3Test extends DatabaseTestCase {
 
                 // create new classloader for loading the actual test
                 ClassLoader cloader = new URLClassLoader(new URL[]{new File("bin").toURI().toURL()},null) {
-                  @Override
+
                   protected void finalize() throws Throwable {
                         counter[0] ++;
                         super.finalize();
