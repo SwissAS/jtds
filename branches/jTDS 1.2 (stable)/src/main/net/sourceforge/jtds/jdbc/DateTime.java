@@ -34,7 +34,7 @@ import java.util.GregorianCalendar;
 public class DateTime {
     /** Per thread instance of Calendar used for conversions. */
     private static ThreadLocal calendar = new ThreadLocal() {
-        @Override
+
       protected synchronized Object initialValue() {
             return new GregorianCalendar();
         }
@@ -442,7 +442,6 @@ public class DateTime {
      *
      * @return the current datetime value as a <code>String</code>
      */
-    @Override
     public String toString() {
         if (stringValue == null) {
             if (!unpacked) {

@@ -49,13 +49,11 @@ public abstract class TestBase extends TestCase {
         super(name);
     }
 
-    @Override
    public void setUp() throws Exception {
         super.setUp();
         connect();
     }
 
-    @Override
    public void tearDown() throws Exception {
         disconnect();
         super.tearDown();
