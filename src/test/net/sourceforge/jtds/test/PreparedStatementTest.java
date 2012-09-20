@@ -18,8 +18,17 @@
 package net.sourceforge.jtds.test;
 
 import java.math.BigDecimal;
-import java.sql.*;
-import java.util.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Types;
+import java.util.Properties;
+import java.util.Random;
+
+import junit.framework.Assert;
 
 /**
  * @version $Id: PreparedStatementTest.java,v 1.48 2009-08-21 15:48:19 ickzon Exp $
@@ -29,6 +38,32 @@ public class PreparedStatementTest extends TestBase {
     public PreparedStatementTest(String name) {
         super(name);
     }
+
+   public void testBug657()
+      throws Exception
+   {
+      // prepare test data
+      Statement stmt = con.createStatement();
+      stmt.execute( "CREATE TABLE #Bug657 (A int)" );
+
+      for( int i = 0; i < 100; i++ )
+      {
+         stmt.executeUpdate( "INSERT INTO #Bug657(A) VALUES("+ i +")" );
+      }
+
+      stmt.close();
+
+      // select limited data subset using TOP
+      PreparedStatement pstmt = con.prepareStatement( "SELECT * from #Bug657 Bug657X WHERE (Bug657X.A IN (SELECT TOP 50 A FROM #Bug657))" );
+      ResultSet rs = pstmt.executeQuery();
+
+      // ensure the correct number of rows is returned
+      for( int i = 0; i < 50; i ++ )
+      {
+         Assert.assertTrue( rs.next() );
+      }
+      Assert.assertFalse( rs.next() );
+   }
 
     public void testPreparedStatement() throws Exception {
         PreparedStatement pstmt = con.prepareStatement("SELECT * FROM #test");
@@ -989,7 +1024,7 @@ public class PreparedStatementTest extends TestBase {
         assertEquals(29000000, rs.getBigDecimal(1).intValue());
         stmt.close();
     }
-    
+
     /**
      * Test for bug [1623668] Lost apostrophes in statement parameter values(prepareSQL=0)
      */
@@ -1002,17 +1037,17 @@ public class PreparedStatementTest extends TestBase {
             Statement stmt = con.createStatement();
             stmt.execute("CREATE TABLE #prepareSQL0 (position int, data varchar(32))");
             stmt.close();
-            
+
         	PreparedStatement ps = con.prepareStatement("INSERT INTO #prepareSQL0 (position, data) VALUES (?, ?)");
-        	
+
         	String data1 = "foo'foo";
         	String data2 = "foo''foo";
         	String data3 = "foo'''foo";
-        	
+
         	ps.setInt(1, 1);
         	ps.setString(2, data1);
         	ps.executeUpdate();
-        	
+
         	ps.setInt(1, 2);
         	ps.setString(2, data2);
         	ps.executeUpdate();
@@ -1020,20 +1055,20 @@ public class PreparedStatementTest extends TestBase {
         	ps.setInt(1, 3);
         	ps.setString(2, data3);
         	ps.executeUpdate();
-        	
+
         	ps.close();
         	ps = con.prepareStatement("SELECT data FROM #prepareSQL0 ORDER BY position");
         	ResultSet rs = ps.executeQuery();
-        	
+
         	rs.next();
         	assertEquals(data1, rs.getString(1));
-        	
+
         	rs.next();
         	assertEquals(data2, rs.getString(1));
 
         	rs.next();
         	assertEquals(data3, rs.getString(1));
-        	
+
         	rs.close();
         } finally {
             con.close();

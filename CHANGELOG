@@ -1,6 +1,9 @@
 Changes from jTDS 1.2.6
 =======================
 
+09/19/2012 - Holger Rehn
+ o Added test for bug #657.
+
 08/22/2012 - Holger Rehn
  o Applied patch #111 adding Kerberos support, provided by Tepper Tong.
  o Updated feature matrix for SQL Server 2008 compatibility (Bug #643).
