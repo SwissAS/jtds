@@ -34,12 +34,6 @@ import java.util.GregorianCalendar;
  */
 class DateTime implements Serializable {
     static final long serialVersionUID = -8519110454423916576L;
-    /** Per thread instance of Calendar used for conversions. */
-    private static ThreadLocal<Calendar> calendar = new ThreadLocal<Calendar>() {
-        protected synchronized Calendar initialValue() {
-            return new GregorianCalendar();
-        }
-    };
     /** Indicates date value not used. */
     static final int DATE_NOT_USED = Integer.MIN_VALUE;
     /** Indicates time value not used. */
@@ -79,7 +73,7 @@ class DateTime implements Serializable {
     DateTime() {
         // Default constructor
     }
-    
+
     /**
      * Constructs a DateTime object from the two integer components of a
      * datetime.
@@ -111,25 +105,23 @@ class DateTime implements Serializable {
      * @throws SQLException if the date is out of range
      */
     DateTime(final Timestamp ts) throws SQLException {
-        this.tsValue = ts;
-        GregorianCalendar cal = (GregorianCalendar)calendar.get();
+        tsValue = ts;
+        GregorianCalendar cal = new GregorianCalendar();
         cal.setTime(ts);
 
-        if (cal.get(Calendar.ERA) != GregorianCalendar.AD) {
-            cal.set(Calendar.ERA, GregorianCalendar.AD);
-            throw new SQLException(Messages.get("error.datetime.range.era"), "22007");   
-        }
+        if (cal.get(Calendar.ERA) != GregorianCalendar.AD)
+            throw new SQLException(Messages.get("error.datetime.range.era"), "22007");
 
-        this.year   = (short)cal.get(Calendar.YEAR);
-        this.month  = (short)(cal.get(Calendar.MONTH) + 1);
-        this.day    = (short)cal.get(Calendar.DAY_OF_MONTH);
-        this.hour   = (short)cal.get(Calendar.HOUR_OF_DAY);
-        this.minute = (short)cal.get(Calendar.MINUTE);
-        this.second = (short)cal.get(Calendar.SECOND);
-        this.millis = (short)cal.get(Calendar.MILLISECOND);
+        year   = (short)cal.get(Calendar.YEAR);
+        month  = (short)(cal.get(Calendar.MONTH) + 1);
+        day    = (short)cal.get(Calendar.DAY_OF_MONTH);
+        hour   = (short)cal.get(Calendar.HOUR_OF_DAY);
+        minute = (short)cal.get(Calendar.MINUTE);
+        second = (short)cal.get(Calendar.SECOND);
+        millis = (short)cal.get(Calendar.MILLISECOND);
         packDate();
         packTime();
-        this.unpacked = true;
+        unpacked = true;
     }
 
     /**
@@ -139,28 +131,26 @@ class DateTime implements Serializable {
      * @throws SQLException if the time (date) is out of range
      */
     DateTime(final Time t) throws SQLException {
-        this.timeValue = t;
-        GregorianCalendar cal = (GregorianCalendar)calendar.get();
+        timeValue = t;
+        GregorianCalendar cal = new GregorianCalendar();
         cal.setTime(t);
 
-        if (cal.get(Calendar.ERA) != GregorianCalendar.AD) {
-            cal.set(Calendar.ERA, GregorianCalendar.AD);
-            throw new SQLException(Messages.get("error.datetime.range.era"), "22007");   
-        }
+        if (cal.get(Calendar.ERA) != GregorianCalendar.AD)
+            throw new SQLException(Messages.get("error.datetime.range.era"), "22007");
 
-        this.date   = DATE_NOT_USED;
-        this.year   = 1900;
-        this.month  = 1;
-        this.day    = 1;
-        this.hour   = (short)cal.get(Calendar.HOUR_OF_DAY);
-        this.minute = (short)cal.get(Calendar.MINUTE);
-        this.second = (short)cal.get(Calendar.SECOND);
-        this.millis = (short)cal.get(Calendar.MILLISECOND);
+        date   = DATE_NOT_USED;
+        year   = 1900;
+        month  = 1;
+        day    = 1;
+        hour   = (short)cal.get(Calendar.HOUR_OF_DAY);
+        minute = (short)cal.get(Calendar.MINUTE);
+        second = (short)cal.get(Calendar.SECOND);
+        millis = (short)cal.get(Calendar.MILLISECOND);
         packTime();
-        this.year  = 1970;
-        this.month = 1;
-        this.day   = 1;
-        this.unpacked   = true;
+        year  = 1970;
+        month = 1;
+        day   = 1;
+        unpacked   = true;
     }
 
     /**
@@ -170,25 +160,23 @@ class DateTime implements Serializable {
      * @throws SQLException if the Date is out of range
      */
     DateTime(final Date d) throws SQLException {
-        this.dateValue = d;
-        GregorianCalendar cal = (GregorianCalendar)calendar.get();
+        dateValue = d;
+        GregorianCalendar cal = new GregorianCalendar();
         cal.setTime(d);
 
-        if (cal.get(Calendar.ERA) != GregorianCalendar.AD) {
-            cal.set(Calendar.ERA, GregorianCalendar.AD);
-            throw new SQLException(Messages.get("error.datetime.range.era"), "22007");   
-        }
+        if (cal.get(Calendar.ERA) != GregorianCalendar.AD)
+            throw new SQLException(Messages.get("error.datetime.range.era"), "22007");
 
-        this.year   = (short)cal.get(Calendar.YEAR);
-        this.month  = (short)(cal.get(Calendar.MONTH) + 1);
-        this.day    = (short)cal.get(Calendar.DAY_OF_MONTH);
-        this.hour   = 0;
-        this.minute = 0;
-        this.second = 0;
-        this.millis = 0;
+        year   = (short)cal.get(Calendar.YEAR);
+        month  = (short)(cal.get(Calendar.MONTH) + 1);
+        day    = (short)cal.get(Calendar.DAY_OF_MONTH);
+        hour   = 0;
+        minute = 0;
+        second = 0;
+        millis = 0;
         packDate();
-        this.time = TIME_NOT_USED;
-        this.unpacked  = true;
+        time = TIME_NOT_USED;
+        unpacked  = true;
     }
 
     /**
@@ -343,7 +331,7 @@ class DateTime implements Serializable {
             second = 0;
             millis = 0;
             if (date != DATE_NOT_USED) {
-                GregorianCalendar cal = (GregorianCalendar)calendar.get();
+                GregorianCalendar cal = new GregorianCalendar();
                 cal.set(Calendar.YEAR, year);
                 cal.set(Calendar.MONTH, month - 1);
                 cal.set(Calendar.DAY_OF_MONTH, day);
@@ -366,7 +354,7 @@ class DateTime implements Serializable {
             if (!unpacked) {
                 unpackDateTime();
             }
-            GregorianCalendar cal = (GregorianCalendar)calendar.get();
+            GregorianCalendar cal = new GregorianCalendar();
             cal.set(Calendar.YEAR, year);
             cal.set(Calendar.MONTH, month - 1);
             cal.set(Calendar.DAY_OF_MONTH, day);
@@ -389,7 +377,7 @@ class DateTime implements Serializable {
             if (!unpacked) {
                 unpackDateTime();
             }
-            GregorianCalendar cal = (GregorianCalendar)calendar.get();
+            GregorianCalendar cal = new GregorianCalendar();
             cal.set(Calendar.YEAR, year);
             cal.set(Calendar.MONTH, month - 1);
             cal.set(Calendar.DAY_OF_MONTH, day);
@@ -412,7 +400,7 @@ class DateTime implements Serializable {
             if (!unpacked) {
                 unpackDateTime();
             }
-            GregorianCalendar cal = (GregorianCalendar)calendar.get();
+            GregorianCalendar cal = new GregorianCalendar();
             cal.set(Calendar.YEAR, 1970);
             cal.set(Calendar.MONTH, 0);
             cal.set(Calendar.DAY_OF_MONTH, 1);
@@ -481,11 +469,11 @@ class DateTime implements Serializable {
                 year /= 10;
                 buf[--p] = (char)('0' + year % 10);
                 p += 10;
-                if (this.time != TIME_NOT_USED) {
+                if (time != TIME_NOT_USED) {
                     buf[p++] = ' ';
                 }
             }
-            if (this.time != TIME_NOT_USED) {
+            if (time != TIME_NOT_USED) {
                 p += 12;
                 buf[--p] = (char)('0' + millis % 10);
                 millis /= 10;
@@ -516,7 +504,7 @@ class DateTime implements Serializable {
         }
         return stringValue;
     }
-    
+
     /**
      * Convert a timestamp to a different Timezone.
      *
@@ -525,7 +513,7 @@ class DateTime implements Serializable {
      * @return the new timestamp value as a <code>long</code>
      */
      long timeToZone(final java.util.Date value, final Calendar target) {
-         GregorianCalendar cal = (GregorianCalendar)calendar.get();
+         GregorianCalendar cal = new GregorianCalendar();
          java.util.Date tmp = target.getTime();
          try {
              cal.setTime(value);
@@ -549,7 +537,7 @@ class DateTime implements Serializable {
      * @return The new timestamp value as a <code>long</code>.
      */
     long timeFromZone(final java.util.Date value , final Calendar target) {
-        GregorianCalendar cal = (GregorianCalendar)calendar.get();
+        GregorianCalendar cal = new GregorianCalendar();
         java.util.Date tmp = target.getTime();
         try {
             target.setTime(value);

@@ -17,11 +17,25 @@
 //
 package net.sourceforge.jtds.jdbc;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.io.Reader;
+import java.io.UnsupportedEncodingException;
+import java.io.Writer;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.sql.*;
+import java.sql.Blob;
+import java.sql.Clob;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.SQLWarning;
+import java.sql.Statement;
+import java.sql.Timestamp;
+import java.sql.Types;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
@@ -97,15 +111,6 @@ public class Support {
     private static final char hex[] = {'0', '1', '2', '3', '4', '5', '6','7',
         '8', '9', 'A', 'B', 'C', 'D', 'E','F'
     };
-
-    /**
-     * Thread-bound utility Calendar object.
-     */
-    private static final ThreadLocal calendar = new ThreadLocal() {
-        protected Object initialValue() {
-            return new GregorianCalendar();
-            }
-        };
 
     /**
      * Convert a byte[] object to a hex string.
@@ -184,11 +189,11 @@ public class Support {
 
     static Object castNumeric(Object orig, int sourceType, int targetType) {
 
-        
-        
+
+
         return null;
     }
-    
+
 
     /**
      * Convert an existing data object to the specified JDBC type.
@@ -210,18 +215,18 @@ public class Support {
                 case java.sql.Types.BIT:
                 case JtdsStatement.BOOLEAN:
                     return Boolean.FALSE;
-    
+
                 case java.sql.Types.TINYINT:
                 case java.sql.Types.SMALLINT:
                 case java.sql.Types.INTEGER:
                     return INTEGER_ZERO;
-    
+
                 case java.sql.Types.BIGINT:
                     return LONG_ZERO;
-    
+
                 case java.sql.Types.REAL:
                     return FLOAT_ZERO;
-    
+
                 case java.sql.Types.FLOAT:
                 case java.sql.Types.DOUBLE:
                     return DOUBLE_ZERO;
@@ -490,7 +495,7 @@ public class Support {
                     } else if (x instanceof java.sql.Time) {
                         return DATE_ZERO;
                     } else if (x instanceof java.sql.Timestamp) {
-                        GregorianCalendar cal = (GregorianCalendar) calendar.get();
+                        GregorianCalendar cal = new GregorianCalendar();
                         cal.setTime((java.util.Date) x);
                         cal.set(Calendar.HOUR_OF_DAY, 0);
                         cal.set(Calendar.MINUTE, 0);
@@ -512,7 +517,7 @@ public class Support {
                     } else if (x instanceof java.sql.Date) {
                         return TIME_ZERO;
                     } else if (x instanceof java.sql.Timestamp) {
-                        GregorianCalendar cal = (GregorianCalendar) calendar.get();
+                        GregorianCalendar cal = new GregorianCalendar();
 // VM 1.4+ only             cal.setTimeInMillis(((java.sql.Timestamp)x).getTime());
                         cal.setTime((java.util.Date)x);
                         cal.set(Calendar.YEAR, 1970);
@@ -1193,7 +1198,7 @@ public class Support {
     public static long timeToZone(java.util.Date value, Calendar target) {
         java.util.Date tmp = target.getTime();
         try {
-            GregorianCalendar cal = (GregorianCalendar) calendar.get();
+            GregorianCalendar cal = new GregorianCalendar();
             cal.setTime(value);
             if (!Driver.JDBC3 && value instanceof Timestamp) {
                 // Not Running under 1.4 so need to add milliseconds
@@ -1223,7 +1228,7 @@ public class Support {
     public static long timeFromZone(java.util.Date value , Calendar target) {
         java.util.Date tmp = target.getTime();
         try {
-            GregorianCalendar cal = (GregorianCalendar) calendar.get();
+            GregorianCalendar cal = new GregorianCalendar();
             target.setTime(value);
             if (!Driver.JDBC3 && value instanceof Timestamp) {
                 // Not Running under 1.4 so need to add milliseconds
