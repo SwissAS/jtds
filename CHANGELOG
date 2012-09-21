@@ -1,6 +1,12 @@
 Changes from jTDS 1.2.6
 =======================
 
+09/21/2012 - Holger Rehn
+ o Fixed memory pollution caused by ThreadLocal Calendar instances (bug #661).
+ o Improved fix for bug #561 and bug #619 by not re-using GregorianCalendar
+   instances anymore.
+ o Implemented ResultSet.isClosed() method defined in JDBC 4.0 (bug #665).
+
 09/19/2012 - Holger Rehn
  o Added test for bug #657.
 
@@ -15,20 +21,20 @@ Changes from jTDS 1.2.6
 08/21/2012 - Holger Rehn
  o Applied build system changes proposed by Rainer Schwarze in patch #105.
  o Added compiler settings missing in some build files.
- o Updated feature matrix for SQL Server 2008 compatibility (Bug #643).
+ o Updated feature matrix for SQL Server 2008 compatibility (bug #643).
 
 08/17/2012 - Holger Rehn
- o Added service provider configuration file for JDBC driver class (Bug #659).
+ o Added service provider configuration file for JDBC driver class (bug #659).
  o Applied patch provided by Rainer Schwarze to reduce log pollution during
-   emulated XA recovery (Bug #656).
+   emulated XA recovery (bug #656).
  o Removed @Override annotation not supported prior to Java 1.5.
  o Fixed spurious login timeouts that could occur in case multiple connections
-   are established concurrently (Bug #667).
- o Corrected bug, a stream hasn't been closed in CharsetInfo (Bug #642).
+   are established concurrently (bug #667).
+ o Corrected bug, a stream hasn't been closed in CharsetInfo (bug #642).
 
 08/16/2012 - Holger Rehn
- o Fixed typos in Messages.properties (Bug #608).
- o Removed WebRing code from the project web site (Bug #660).
+ o Fixed typos in Messages.properties (bug #608).
+ o Removed WebRing code from the project web site (bug #660).
  o Fixed a race condition when closing a JtdsStatement in multiple threads
    concurrently (Patch #121, #118).
 
