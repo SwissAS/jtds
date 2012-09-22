@@ -104,7 +104,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         if (parsedSql[1].length() > 1) {
             if (this instanceof JtdsCallableStatement) {
                 // Procedure call
-                this.procName = parsedSql[1];
+                procName = parsedSql[1];
             }
         }
         sqlWord = parsedSql[2];
@@ -146,8 +146,14 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      *
      * @param sql the SQL statement to process
      * @return the SQL, possibly in original form
+     *
+     * @throws SQLException
+     *    if the SQL statement is detected to be a normal SQL INSERT, UPDATE or
+     *    DELETE statement instead of a procedure call
      */
-    protected static String normalizeCall(String sql) {
+    protected static String normalizeCall(String sql)
+       throws SQLException
+    {
         String original = sql;
         sql = sql.trim();
 
@@ -172,6 +178,14 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
 
             // OK now reconstruct as JDBC escaped call
             return "{?=call " + sql + '}';
+        }
+
+        if( sql.length() > 6 )
+        {
+           String sub = sql.substring( 0, 6 );
+           // check for a more or less common mistake to execute a normal statement via CallableStatement
+           if( sub.equalsIgnoreCase( "insert" ) || sub.equalsIgnoreCase( "update" ) || sub.equalsIgnoreCase( "delete" ) )
+              throw new SQLException( Messages.get( "error.parsesql.noprocedurecall" ), "07000" );
         }
 
         return "{call " + sql + '}';
@@ -199,7 +213,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         throw new SQLException(
                 Messages.get("error.generic.notsup", method), "HYC00");
     }
-    
+
     /**
      * Execute the SQL batch on a MS server.
      * <p/>
@@ -456,7 +470,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      * @param value The Column meta data array.
      */
     void setColMetaData(ColInfo[] value) {
-        this.colMetaData = value;
+        colMetaData = value;
     }
 
     /**
@@ -485,9 +499,9 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
             super.close();
         } finally {
             // Null these fields to reduce memory usage while
-            // wating for Statement.finalize() to execute.
-            this.handles = null;
-            this.parameters = null;
+            // waiting for Statement.finalize() to execute.
+            handles = null;
+            parameters = null;
         }
     }
 
@@ -563,7 +577,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     }
 
     public void setByte(int parameterIndex, byte x) throws SQLException {
-        setParameter(parameterIndex, new Integer((int) (x & 0xFF)), java.sql.Types.TINYINT, 0, 0);
+        setParameter(parameterIndex, new Integer((x & 0xFF)), java.sql.Types.TINYINT, 0, 0);
     }
 
     public void setDouble(int parameterIndex, double x) throws SQLException {
@@ -717,7 +731,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
 
     public void setClob(int parameterIndex, Clob x) throws SQLException {
         if (x == null) {
-            this.setString(parameterIndex, null);
+            setString(parameterIndex, null);
         } else {
             long length = x.length();
 
