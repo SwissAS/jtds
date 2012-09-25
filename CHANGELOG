@@ -1,6 +1,10 @@
 Changes from jTDS 1.2.6
 =======================
 
+09/25/2012 - Holger Rehn
+ o Added test for bug #669.
+ o Fixed StatementTest to be less strict when checking query timeout.
+
 09/22/2012 - Holger Rehn
  o Fixed a number of incorrect error messages.
  o An attempt to execute a standard SQL statement using a CallableStatement now
