@@ -825,38 +825,46 @@ public class PreparedStatementTest extends TestBase {
     }
 
     /**
-     * Test for bug [1180777] collation-related execption on update.
-     * <p/>
-     * If a statement prepare fails the statement should still be executed
-     * (unprepared) and a warning should be added to the connection (the
-     * prepare failed, this is a connection event even if it happened on
-     * statement execute).
+     * <p> Test for bug #378, collation-related exception on update. </p>
+     *
+     * <p> If a statement prepare fails the statement should still be executed
+     * (unprepared) and a warning should be added to the connection (the prepare
+     * failed, this is a connection event even if it happened on statement
+     * execute). </p>
      */
-    public void testPrepareFailWarning() throws SQLException {
-        try {
-            PreparedStatement pstmt = con.prepareStatement(
-                    "CREATE VIEW prepFailWarning AS SELECT 1 AS value");
+   public void testPrepareFailWarning() throws SQLException
+   {
+      // preparation succeeds in SQL server 2008 and above (what about Sybase?)
+      if( con.getMetaData().getURL().toLowerCase().contains( "microsoft" ) && con.getMetaData().getDatabaseMajorVersion() < 10 )
+      {
+         try
+         {
+            // FIXME: we need another test case working for newer SQL Server versions and Sybase ASE
+            PreparedStatement pstmt = con.prepareStatement( "CREATE VIEW prepFailWarning AS SELECT 1 AS value" );
             pstmt.execute();
             // Check that a warning was generated on the connection.
             // Although not totally correct (the warning should be generated on
             // the statement) the warning is generated while preparing the
             // statement, so it belongs to the connection.
-            assertNotNull(con.getWarnings());
+            assertNotNull( con.getWarnings() );
             pstmt.close();
 
             Statement stmt = con.createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT * FROM prepFailWarning");
-            assertTrue(rs.next());
-            assertEquals(1, rs.getInt(1));
-            assertFalse(rs.next());
+            ResultSet rs = stmt.executeQuery( "SELECT * FROM prepFailWarning" );
+            assertTrue( rs.next() );
+            assertEquals( 1, rs.getInt( 1 ) );
+            assertFalse( rs.next() );
             rs.close();
             stmt.close();
-        } finally {
+         }
+         finally
+         {
             Statement stmt = con.createStatement();
-            stmt.execute("DROP VIEW prepFailWarning");
+            stmt.execute( "DROP VIEW prepFailWarning" );
             stmt.close();
-        }
-    }
+         }
+      }
+   }
 
     /**
      * Test that preparedstatement logic copes with commit modes and
