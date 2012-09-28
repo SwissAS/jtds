@@ -62,6 +62,7 @@ public abstract class TestBase extends TestCase {
     public Connection getConnection() throws Exception {
         Class.forName(props.getProperty("driver"));
         String url = props.getProperty("url");
+        props.setProperty( Messages.get(Driver.LANGUAGE), "us_english" );
         return DriverManager.getConnection(url, props);
     }
 
@@ -71,7 +72,7 @@ public abstract class TestBase extends TestCase {
             String key = (String) it.next();
             newProps.setProperty(key, override.getProperty(key));
         }
-
+        newProps.setProperty( Messages.get(Driver.LANGUAGE), "us_english" );
         Class.forName(newProps.getProperty("driver"));
         String url = newProps.getProperty("url");
         return DriverManager.getConnection(url, newProps);
