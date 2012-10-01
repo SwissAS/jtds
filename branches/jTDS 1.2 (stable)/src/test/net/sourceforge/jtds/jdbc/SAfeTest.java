@@ -360,136 +360,98 @@ public class SAfeTest extends DatabaseTestCase {
         }
     }
 
-    // MT-unsafe!!!
-    volatile int started, done;
-    volatile boolean failed;
+   /**
+    * <p> Test {@code CursorResultSet} concurrency. Create a number of threads
+    * that execute concurrent queries using scrollable result sets. All requests
+    * should be run on the same connection. </p>
+    */
+   public void testCursorResultSetConcurrency0003()
+      throws Exception
+   {
+      final int THREADS = 100;
 
-    /**
-     * Test <code>CursorResultSet</code> concurrency. Create a number of threads that execute concurrent queries using
-     * scrollable result sets. All requests should be run on the same connection (<code>Tds</code> instance).
-     */
-    public void testCursorResultSetConcurrency0003() throws Exception {
-        Statement stmt0 = con.createStatement();
-        stmt0.execute(
-                "create table #SAfe0003(id int primary key, val varchar(20) null)");
-        stmt0.execute(
-                "insert into #SAfe0003 values (1, 'Line 1') "+
-                "insert into #SAfe0003 values (2, 'Line 2')");
-        while (stmt0.getMoreResults() || stmt0.getUpdateCount() != -1);
+      Statement stmt = con.createStatement();
 
-        final Object o1=new Object(), o2=new Object();
+      stmt.execute( "create table #SAfe0003(id int primary key, val varchar(20) null)" );
+      stmt.execute( "insert into #SAfe0003 values (1, 'Line 1') " + "insert into #SAfe0003 values (2, 'Line 2')" );
 
-        int threadCount = 25;
-        Thread threads[] = new Thread[threadCount];
+      stmt.close();
 
-        started = done = 0;
-        failed = false;
+      final Thread threads[] = new Thread[THREADS];
+      final int[]  failed    = new int[1];
 
-        for (int i=0; i<threadCount; i++) {
+      for( int i = 0; i < THREADS; i ++ )
+      {
+         threads[i] = new Thread()
+         {
+            public void run()
+            {
+               ResultSet rs   = null;
+               Statement stmt = null;
 
-            threads[i] = new Thread() {
-                public void run() {
-                    ResultSet rs;
-                    Statement stmt = null;
+               try
+               {
+                  stmt = con.createStatement( ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY );
+                  rs = stmt.executeQuery( "SELECT * FROM #SAfe0003" );
 
-                    try {
-                        stmt = con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-                        rs = stmt.executeQuery("SELECT * FROM #SAfe0003");
-
-                        assertEquals(null, rs.getWarnings());
-                        assertEquals(null, stmt.getWarnings());
-
-                        // Synchronize all threads
-                        synchronized (o2) {
-                            synchronized(o1) {
-                                started++;
-                                o1.notify();
-                            }
-
-                            try {
-                                o2.wait();
-                            } catch (InterruptedException e) {
-                            }
-                        }
-
-                        assertNotNull("executeQuery should not return null", rs);
-                        assertTrue(rs.next());
-                        assertTrue(rs.next());
-                        assertTrue(!rs.next());
-                        assertTrue(rs.previous());
-                        assertTrue(rs.previous());
-                        assertTrue(!rs.previous());
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-
-                        synchronized (o1) {
-                            failed = true;
-                        }
-
-                        fail("An SQL Exception occured: "+e);
-                    } finally {
-                        if (stmt != null) {
-                            try {
-                                stmt.close();
-                            } catch (SQLException e) {
-                            }
-                        }
-
-                        // Notify that we're done
-                        synchronized (o1) {
-                            done++;
-                            o1.notify();
-                        }
-                    }
-                }
-            };
-
-            threads[i].start();
-        }
-
-        while (true) {
-            synchronized (o1) {
-                if (started == threadCount) {
-                    break;
-                }
-
-                o1.wait();
+                  assertEquals( null, rs.getWarnings() );
+                  assertEquals( null, stmt.getWarnings() );
+                  assertNotNull( "executeQuery should not return null", rs );
+                  assertTrue( rs.next() );
+                  assertTrue( rs.next() );
+                  assertTrue( ! rs.next() );
+                  assertTrue( rs.previous() );
+                  assertTrue( rs.previous() );
+                  assertTrue( ! rs.previous() );
+               }
+               catch( Throwable e )
+               {
+                  failed[0] ++;
+                  e.printStackTrace();
+                  fail( "exception occured: " + e );
+               }
+               finally
+               {
+                  if( stmt != null )
+                  {
+                     try
+                     {
+                        stmt.close();
+                     }
+                     catch( SQLException e )
+                     {
+                        // ignored
+                     }
+                  }
+               }
             }
-        }
+         };
+      }
 
-        synchronized (o2) {
-            o2.notifyAll();
-        }
+      // start all threads
+      for( int i = 0; i < THREADS; i ++ )
+      {
+         threads[i].start();
+      }
 
-        boolean passed = true;
+      // execute some dumb selects concurrently
+      for( int i = 0; i < THREADS * 10; i++ )
+      {
+         Statement st = con.createStatement();
+         ResultSet rs = st.executeQuery( "SELECT 1234" );
+         assertTrue( rs.next() );
+         assertFalse( rs.next() );
+         st.close();
+      }
 
-        for (int i = 0; i < threadCount; i++) {
-            stmt0 = con.createStatement();
-            ResultSet rs = stmt0.executeQuery("SELECT 1234");
-            passed &= rs.next();
-            passed &= !rs.next();
-            stmt0.close();
-        }
+      // wait for all threads to finish
+      for( int i = 0; i < THREADS; i++ )
+      {
+         threads[i].join();
+      }
 
-        while (true) {
-            synchronized (o1) {
-                if (done == threadCount) {
-                    break;
-                }
-
-                o1.wait();
-            }
-        }
-
-        for (int i = 0; i < threadCount; i++) {
-            threads[i].join();
-        }
-
-        stmt0.close();
-
-        assertTrue(passed);
-        assertTrue(!failed);
-    }
+      assertTrue( failed[0] == 0 );
+   }
 
     /**
      * Check that meta data information is fetched even for empty cursor-based result sets (bug #613199).
