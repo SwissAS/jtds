@@ -55,6 +55,7 @@ public abstract class TestBase extends TestCase {
     }
 
    public void tearDown() throws Exception {
+        assertFalse( Thread.currentThread().isInterrupted() );
         disconnect();
         super.tearDown();
     }
