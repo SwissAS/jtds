@@ -1047,9 +1047,9 @@ class SQLParser {
 
    private final void append( char[] chars )
    {
-      for( char c : chars )
+      for( int i = 0; i < chars.length; i ++ )
       {
-         append( c );
+         append( chars[i] );
       }
    }
 
