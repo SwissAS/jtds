@@ -18,100 +18,186 @@
 package net.sourceforge.jtds.jdbc;
 
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @version 1.0
  */
 public class StatementTest extends TestBase {
 
-    public StatementTest(String name) {
-        super(name);
-    }
+   public StatementTest( String name )
+   {
+      super( name );
+   }
 
-    /**
-     * Regression test for bug #677, deadlock in {@link JtdsStatement#close()}.
-     */
-    public void testCloseDeadlock()
-       throws Exception
-    {
-       final int THREADS    =  100;
-       final int STATEMENTS = 1000;
+   /**
+    *
+    */
+   public void testConcurrentClose()
+      throws Exception
+   {
+      final int THREADS    =  10;
+      final int STATEMENTS = 200;
+      final int RESULTSETS = 100;
 
-       Thread[] threads = new Thread[THREADS];
+      final List errors = new ArrayList<>();
 
-       for( int i = 0; i < THREADS; i ++ )
-       {
-          threads[i] = new Thread( "deadlock " + i )
-          {
-             public void run()
-             {
-                try
-                {
-                   Connection con = getConnection();
-                   final Statement[] stm = new Statement[STATEMENTS];
+      final Statement[] stm = new Statement[STATEMENTS];
+      final ResultSet[] res = new ResultSet[STATEMENTS*RESULTSETS];
 
-                   for( int i = 0; i < STATEMENTS; i ++ )
-                   {
-                      stm[i] = con.createStatement();
-                   }
+      Connection con = getConnection();
 
-                   new Thread( Thread.currentThread().getName() + " (closer)" )
-                   {
-                      public void run()
-                      {
-                         try
-                         {
-                            for( int i = 0; i < STATEMENTS; i ++ )
-                            {
-                               stm[i].close();
-                            }
-                         }
-                         catch( Exception e )
-                         {
-                           e.printStackTrace();
-                         }
+      for( int i = 0; i < STATEMENTS; i ++ )
+      {
+         stm[i] = con.createStatement();
 
-                      }
-                   }.start();
+         for( int r = 0; r < RESULTSETS; r ++ )
+         {
+            res[i * RESULTSETS + r] = stm[i].executeQuery( "select 1" );
+         }
+      }
 
-                   Thread.sleep( 1 );
-                   con.close();
-                }
-                catch( Exception e )
-                {
-                  e.printStackTrace();
-                }
-             }
-          };
-       }
+      Thread[] threads = new Thread[THREADS];
 
-       for( int i = 0; i < THREADS; i ++ )
-       {
-          threads[i].start();
-       }
+      for( int i = 0; i < THREADS; i ++ )
+      {
+         threads[i] = new Thread( "closer " + i )
+         {
+            public void run()
+            {
+               try
+               {
+                  for( int i = 0; i < STATEMENTS; i ++ )
+                  {
+                     stm[i].close();
+                  }
+               }
+               catch( Exception e )
+               {
+                  synchronized( errors )
+                  {
+                     errors.add( e );
+                  }
+               }
+            }
+         };
+      }
 
-       System.currentTimeMillis();
-       int  running = THREADS;
+      for( int i = 0; i < THREADS; i ++ )
+      {
+         threads[i].start();
+      }
 
-       while( running != 0 )
-       {
-          Thread.sleep( 500 );
+      for( int i = 0; i < THREADS; i ++ )
+      {
+         threads[i].join();
+      }
 
-          int last = running;
-          running  = THREADS;
+      for( int i = 0; i < errors.size(); i ++ )
+      {
+         ( (Exception) errors.get( i ) ).printStackTrace();
+      }
 
-          for( int i = 0; i < THREADS; i ++ )
-          {
-             if( threads[i].getState() == Thread.State.TERMINATED )
-             {
-                running --;
-             }
-          }
+      assertTrue( errors.toString(), errors.isEmpty() );
+   }
 
-          if( running == last )
-          {
+   /**
+    * Regression test for bug #677, deadlock in {@link JtdsStatement#close()}.
+    */
+   public void testCloseDeadlock()
+      throws Exception
+   {
+      final int THREADS    =  100;
+      final int STATEMENTS = 1000;
+
+      final List errors = new ArrayList<>();
+
+      Thread[] threads = new Thread[THREADS];
+
+      for( int i = 0; i < THREADS; i ++ )
+      {
+         threads[i] = new Thread( "deadlock " + i )
+         {
+            public void run()
+            {
+               try
+               {
+                  Connection con = getConnection();
+                  final Statement[] stm = new Statement[STATEMENTS];
+
+                  for( int i = 0; i < STATEMENTS; i ++ )
+                  {
+                     stm[i] = con.createStatement();
+                  }
+
+                  new Thread( Thread.currentThread().getName() + " (closer)" )
+                  {
+                     public void run()
+                     {
+                        try
+                        {
+                           for( int i = 0; i < STATEMENTS; i ++ )
+                           {
+                              stm[i].close();
+                           }
+                        }
+                        catch( SQLException e )
+                        {
+                           // statements might already be closed by closing the connection
+                           if( ! "HY010".equals( e.getSQLState() ) )
+                           {
+                              synchronized( errors )
+                              {
+                                 errors.add( e );
+                              }
+                           }
+                        }
+                     }
+                  }.start();
+
+                  Thread.sleep( 1 );
+                  con.close();
+               }
+               catch( Exception e )
+               {
+                  synchronized( errors )
+                  {
+                     errors.add( e );
+                  }
+               }
+            }
+         };
+      }
+
+      for( int i = 0; i < THREADS; i ++ )
+      {
+         threads[i].start();
+      }
+
+      System.currentTimeMillis();
+      int  running = THREADS;
+
+      while( running != 0 )
+      {
+         Thread.sleep( 2500 );
+
+         int last = running;
+         running  = THREADS;
+
+         for( int i = 0; i < THREADS; i ++ )
+         {
+            if( threads[i].getState() == Thread.State.TERMINATED )
+            {
+               running --;
+            }
+         }
+
+         if( running == last )
+         {
 //             for( int i = 0; i < THREADS; i ++ )
 //             {
 //                if( threads[i].getState() != Thread.State.TERMINATED )
@@ -122,10 +208,17 @@ public class StatementTest extends TestBase {
 //                }
 //             }
 
-             fail( "deadlock detected, none of the remaining connections closed within 500 ms" );
-          }
-       }
-    }
+            fail( "deadlock detected, none of the remaining connections closed within 2500 ms" );
+         }
+      }
+
+//      for( int i = 0; i < errors.size(); i ++ )
+//      {
+//         ( (Exception) errors.get( i ) ).printStackTrace();
+//      }
+
+      assertTrue( errors.toString(), errors.isEmpty() );
+   }
 
     /**
      * Test for #676, error in multi line comment handling.
