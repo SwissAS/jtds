@@ -139,7 +139,7 @@ public class StatementTest extends TestBase {
       final int STATEMENTS = 200;
       final int RESULTSETS = 100;
 
-      final List errors = new ArrayList<>();
+      final List errors = new ArrayList();
 
       final Statement[] stm = new Statement[STATEMENTS];
       final ResultSet[] res = new ResultSet[STATEMENTS*RESULTSETS];
@@ -209,7 +209,7 @@ public class StatementTest extends TestBase {
       final int THREADS    =  100;
       final int STATEMENTS = 1000;
 
-      final List errors = new ArrayList<>();
+      final List errors = new ArrayList();
 
       Thread[] threads = new Thread[THREADS];
 
