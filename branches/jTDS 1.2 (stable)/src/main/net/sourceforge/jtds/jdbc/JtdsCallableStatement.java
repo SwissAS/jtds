@@ -67,9 +67,14 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
      * @return The parameter index as an <code>int</code>.
      * @throws SQLException
      */
-    int findParameter(String name, boolean set)
+    final int findParameter(String name, boolean set)
         throws SQLException {
         checkOpen();
+
+        // no need to force the user to care for the param syntax
+        if(! name.startsWith( "@" ))
+           name = "@" + name;
+
         for (int i = 0; i < parameters.length; i++){
             if (parameters[i].name != null && parameters[i].name.equalsIgnoreCase(name))
                 return i + 1;
@@ -121,7 +126,7 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
                     Messages.get("error.generic.closed", "CallableStatement"), "HY010");
         }
     }
-    
+
     /**
      * Execute the SQL batch on a MS server.
      * @param size the total size of the batch.
@@ -456,7 +461,7 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
 
     public void setAsciiStream(String parameterName, InputStream x, int length)
         throws SQLException {
-        setAsciiStream(findParameter(parameterName, true), x, (int)length);
+        setAsciiStream(findParameter(parameterName, true), x, length);
     }
 
     public void setBinaryStream(String parameterName, InputStream x, int length)
@@ -629,7 +634,7 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
         throws SQLException {
         setTimestamp(findParameter(parameterName, true), x, cal);
     }
-    
+
     /////// JDBC4 demarcation, do NOT put any JDBC3 code below this line ///////
 
     /* (non-Javadoc)
