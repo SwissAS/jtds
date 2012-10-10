@@ -44,9 +44,8 @@ import java.text.NumberFormat;
  *     with all the other JDBC drivers that I have been able to test.
  * </ol>
  *
- * @author Mike Hutchinson
- * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.63.2.6 2009-12-30 11:37:21 ickzon Exp $
+ * @author
+ *    Brian Heineman, Mike Hutchinson, Holger Rehn
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -132,64 +131,254 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         return originalSql;
     }
 
-    /**
-     * This method converts native call syntax into (hopefully) valid JDBC
-     * escape syntax.
-     * <p/>
-     * <b>Note:</b> This method is required for backwards compatibility with
-     * previous versions of jTDS. Strictly speaking only the JDBC syntax needs
-     * to be recognised, constructions such as "?=#testproc ?,?" are neither
-     * valid native syntax nor valid escapes. All the substrings and trims
-     * below are not as bad as they look. The objects created all refer back to
-     * the original sql string it is just the start and length positions which
-     * change.
-     *
-     * @param sql the SQL statement to process
-     * @return the SQL, possibly in original form
-     *
-     * @throws SQLException
-     *    if the SQL statement is detected to be a normal SQL INSERT, UPDATE or
-     *    DELETE statement instead of a procedure call
-     */
-    protected static String normalizeCall(String sql)
-       throws SQLException
-    {
-        String original = sql;
-        sql = sql.trim();
+   /**
+    * <p> This method converts native call syntax into (hopefully) valid JDBC
+    * escape syntax. </p>
+    *
+    * <p><b>Note:</b> This method is required for backwards compatibility with
+    * previous versions of jTDS. Strictly speaking only the JDBC syntax needs to
+    * be recognized, constructions such as "?=#testproc ?,?" are neither valid
+    * native syntax nor valid escapes. All the substrings and trims below are
+    * not as bad as they look. The objects created all refer back to the
+    * original SQL string it is just the start and length positions which
+    * change. </p>
+    *
+    * @param sql
+    *    the SQL statement to process
+    *
+    * @return
+    *    the SQL, possibly in original form
+    *
+    * @throws SQLException
+    *    if the SQL statement is detected to be a normal SQL INSERT, UPDATE or
+    *    DELETE statement instead of a procedure call
+    */
+   protected static String normalizeCall( final String sql )
+      throws SQLException
+   {
+      try
+      {
+         return normalize( sql, 0 );
+      }
+      catch( SQLException sqle )
+      {
+         // if normalize was giving up due to an unrecognized syntax error it
+         // would have thrown an SQLException without state
+         if( sqle.getSQLState() != null )
+            throw sqle;
 
-        if (sql.length() > 0 && sql.charAt(0) == '{') {
-            return original; // Assume already escaped
-        }
+         return sql;
+      }
+   }
 
-        if (sql.length() > 4 && sql.substring(0, 5).equalsIgnoreCase("exec ")) {
-            sql = sql.substring(4).trim();
-        } else if (sql.length() > 7 && sql.substring(0, 8).equalsIgnoreCase("execute ")){
-            sql = sql.substring(7).trim();
-        }
+   /**
+    * <p> This method converts native call syntax into (hopefully) valid JDBC
+    * escape syntax. </p>
+    *
+    * <p><b>Note:</b> This method is required for backwards compatibility with
+    * previous versions of jTDS. Strictly speaking only the JDBC syntax needs to
+    * be recognized, constructions such as "?=#testproc ?,?" are neither valid
+    * native syntax nor valid escapes. All the substrings and trims below are
+    * not as bad as they look. The objects created all refer back to the
+    * original SQL string it is just the start and length positions which
+    * change. </p>
+    *
+    * @param sql
+    *    the SQL statement to process
+    *
+    * @return
+    *    the SQL, possibly in original form
+    *
+    * @throws SQLException
+    *    if the SQL statement is detected to be a normal SQL INSERT, UPDATE or
+    *    DELETE statement instead of a procedure call
+    */
+   private static String normalize( final String sql, int level )
+      throws SQLException
+   {
+      if( level > 1 )
+         throw new SQLException();
 
-        if (sql.length() > 1 && sql.charAt(0) == '?') {
-            sql = sql.substring(1).trim();
+      int len   = sql.length();
+      int qmark = -1;
+      int equal = -1;
+      int call  = -1;
 
-            if (sql.length() < 1 || sql.charAt(0) != '=') {
-                return original; // Give up, error will be reported elsewhere
-            }
+      // try to isolate the call
+      for( int i = 0; i < len && call < 0; i ++ )
+      {
+         // skip whitespace
+         while( Character.isWhitespace( sql.charAt( i ) ) )
+         {
+            i ++;
+         }
 
-            sql = sql.substring(1).trim();
+         switch( sql.charAt( i ) )
+         {
+            case '{': // escape syntax with leading comment/white space or syntax error
+                      return sql;
 
-            // OK now reconstruct as JDBC escaped call
-            return "{?=call " + sql + '}';
-        }
+            case '?': // should be leading '?'
+                      if( qmark == -1 )
+                      {
+                         qmark = i;
+                      }
+                      else
+                      {
+                         // syntax error, give up
+                         throw new SQLException();
+                      }
+                      break;
 
-        if( sql.length() > 6 )
-        {
-           String sub = sql.substring( 0, 6 );
-           // check for a more or less common mistake to execute a normal statement via CallableStatement
-           if( sub.equalsIgnoreCase( "insert" ) || sub.equalsIgnoreCase( "update" ) || sub.equalsIgnoreCase( "delete" ) )
-              throw new SQLException( Messages.get( "error.parsesql.noprocedurecall" ), "07000" );
-        }
+            case '=': // should be leading '='
+                      if( equal == -1 && qmark >= 0 )
+                      {
+                         equal = i;
+                      }
+                      else
+                      {
+                         // syntax error, give up
+                         throw new SQLException();
+                      }
+                      break;
 
-        return "{call " + sql + '}';
-    }
+            case '-': // skip single comment
+                      if( i + 1 < len && sql.charAt( i + 1 ) == '-' )
+                      {
+                         i += 2;
+
+                         while( i < len && sql.charAt( i ) != '\n' && sql.charAt( i ) != '\r' )
+                         {
+                            i ++;
+                         }
+                      }
+                      break;
+
+            case '/': // skip multi line comment
+                      if( i + 1 < len && sql.charAt( i + 1 ) == '*' )
+                      {
+                         i += 1;
+                         int block = 1;
+
+                         do
+                         {
+                            if( i >= len -1 )
+                               throw new SQLException( Messages.get( "error.parsesql.missing", "*/" ), "22025" );
+
+                            i ++;
+
+                            if( sql.charAt( i ) == '/' && sql.charAt( i + 1 ) == '*' )
+                            {
+                               i ++;
+                               block ++;
+                            }
+                            else if( sql.charAt( i ) == '*' && sql.charAt( i + 1 ) == '/' )
+                            {
+                               i ++;
+                               block --;
+                            }
+                         }
+                         while( block > 0 );
+                      }
+                      break;
+
+            default:  //
+                      if( len - i > 4 && ( sql.substring( i, i + 5 ).equalsIgnoreCase( "exec " ) ) || sql.substring( i, i + 5 ).equalsIgnoreCase( "call " ) )
+                      {
+                         return normalize( sql.substring( 0, i ) + sql.substring( i + 4, sql.length() ), level ++ );
+                      }
+                      else if( len - i > 7 && sql.substring( i, i + 8 ).equalsIgnoreCase( "execute " ) )
+                      {
+                         return normalize( sql.substring( 0, i ) + sql.substring( i + 7, sql.length() ), level ++ );
+                      }
+
+                      // keep backward compatibility, things like "testproc()" are accepted
+                      call = i;
+                      break;
+         }
+      }
+
+      if( equal == -1 && qmark != -1 )
+      {
+         // syntax error, give up
+         throw new SQLException();
+      }
+
+      // check for a more or less common mistake to execute a normal statement via CallableStatement (bug #637)
+      if( call + 7 < len )
+      {
+         String sub = sql.substring( call, call + 7 );
+
+         if( sub != null && ( sub.equalsIgnoreCase( "insert " ) || sub.equalsIgnoreCase( "update " ) || sub.equalsIgnoreCase( "delete " ) ) )
+            throw new SQLException( Messages.get( "error.parsesql.noprocedurecall" ), "07000" );
+      }
+
+      // fast scan whether the statement ends with a single line comment and append an additional line break in that case
+      return "{" + sql.substring( 0, call ) + "call " + sql.substring( call ) + ( openComment( sql, call ) ? "\n" : "" ) + "}";
+   }
+
+   /**
+    *
+    */
+   private static boolean openComment( String sql, int offset )
+      throws SQLException
+   {
+      int len = sql.length();
+
+      for( int i = offset; i < len; i ++ )
+      {
+         switch( sql.charAt( i ) )
+         {
+            case '-': // single comment
+                      if( i + 1 < len && sql.charAt( i + 1 ) == '-' )
+                      {
+                         i += 2;
+
+                         while( i < len && sql.charAt( i ) != '\n' && sql.charAt( i ) != '\r' )
+                         {
+                            i ++;
+                         }
+
+                         if( i == len )
+                         {
+                            // reached end of statement, comment still open
+                            return true;
+                         }
+                      }
+                      break;
+
+            case '/': // multi line comment
+                      if( i + 1 < len && sql.charAt( i + 1 ) == '*' )
+                      {
+                         i += 1;
+                         int block = 1;
+
+                         do
+                         {
+                            if( i >= len -1 )
+                               throw new SQLException( Messages.get( "error.parsesql.missing", "*/" ), "22025" );
+
+                            i ++;
+
+                            if( sql.charAt( i ) == '/' && sql.charAt( i + 1 ) == '*' )
+                            {
+                               i ++;
+                               block ++;
+                            }
+                            else if( sql.charAt( i ) == '*' && sql.charAt( i + 1 ) == '/' )
+                            {
+                               i ++;
+                               block --;
+                            }
+                         }
+                         while( block > 0 );
+                      }
+                      break;
+         }
+      }
+
+      return false;
+   }
 
     /**
      * Check that this statement is still open.
