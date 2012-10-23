@@ -154,66 +154,6 @@ public class StatementTest extends TestBase
    }
 
    /**
-    * Test for bug #609, slow finalization in {@link SharedSocket#closeStream()}
-    * can block JVM finalizer thread or cause OOM errors.
-    */
-   public void testStatementFinalization()
-      throws Exception
-   {
-      // without finalize() method in JtdsStatement this test completes within
-      // about 4 seconds when running through 10 million iterations
-      final int STATEMENTS = 10000000;
-
-      int  stats = 0;
-      long start = System.currentTimeMillis();
-
-      try
-      {
-         for( ; stats < STATEMENTS; stats ++ )
-         {
-            con.createStatement().close();
-         }
-      }
-      catch( OutOfMemoryError oome )
-      {
-         System.gc();
-         fail( "OOM after " + (System.currentTimeMillis() - start) + " ms, " + stats + " connections created successfully" );
-      }
-
-      System.out.println( "time: " + (System.currentTimeMillis() - start) + " ms" );
-   }
-
-   /**
-    * Test for bug #609, slow finalization in {@link SharedSocket#closeStream()}
-    * can block JVM finalizer thread or cause OOM errors.
-    */
-   public void testConnectionFinalization()
-      throws Exception
-   {
-      // without finalize() method in JtdsStatement this test completes within
-      // about 30 seconds when running through 100 million iterations
-      final int CONNECTIONS = 100000000;
-
-      int  conns = 0;
-      long start = System.currentTimeMillis();
-
-      try
-      {
-         for( ; conns < CONNECTIONS; conns ++ )
-         {
-            getConnection().close();
-         }
-      }
-      catch( OutOfMemoryError oome )
-      {
-         System.gc();
-         fail( "OOM after " + (System.currentTimeMillis() - start) + " ms, " + conns + " connections created successfully" );
-      }
-
-      System.out.println( "time: " + (System.currentTimeMillis() - start) + " ms" );
-   }
-
-   /**
     * Test for bug #624, full text search causes connection reset when connected
     * to Microsoft SQL Server 2008.
     */
