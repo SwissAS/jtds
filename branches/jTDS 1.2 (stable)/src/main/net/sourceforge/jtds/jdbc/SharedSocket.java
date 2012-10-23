@@ -83,14 +83,6 @@ class SharedSocket {
          */
         final LinkedList pktQueue;
         /**
-         * True to discard network data.
-         */
-        boolean flushInput;
-        /**
-         * True if output is complete TDS packet.
-         */
-        boolean complete;
-        /**
          * File object for disk packet queue.
          */
         File queueFile;
@@ -111,14 +103,12 @@ class SharedSocket {
          * @param streamId the Response/Request stream id.
          */
         VirtualSocket(int streamId) {
-            this.owner = streamId;
-            this.pktQueue = new LinkedList();
-            this.flushInput = false;
-            this.complete = false;
-            this.queueFile = null;
-            this.diskQueue = null;
-            this.pktsOnDisk = 0;
-            this.inputPkts = 0;
+            owner = streamId;
+            pktQueue = new LinkedList();
+            queueFile = null;
+            diskQueue = null;
+            pktsOnDisk = 0;
+            inputPkts = 0;
         }
     }
 
@@ -218,11 +208,11 @@ class SharedSocket {
      * Synchronization monitor for {@link #cancelPending} and
      * {@link #responseOwner}.
      */
-    private Object cancelMonitor = new Object();
+    private final Object cancelMonitor = new Object();
     /**
      * Buffer for TDS_DONE packets
      */
-    private byte doneBuffer[] = new byte[TDS_DONE_LEN];
+    private final byte doneBuffer[] = new byte[TDS_DONE_LEN];
     /**
      * How much of the doneBuffer has been filled with data, <TDS_DONE_LEN IFF partial packet read.
      */
@@ -255,18 +245,18 @@ class SharedSocket {
      */
     SharedSocket(ConnectionJDBC2 connection) throws IOException, UnknownHostException {
         this(connection.getBufferDir(), connection.getTdsVersion(), connection.getServerType());
-        this.host = connection.getServerName();
-        this.port = connection.getPortNumber();
+        host = connection.getServerName();
+        port = connection.getPortNumber();
         if (Driver.JDBC3) {
-            this.socket = createSocketForJDBC3(connection);
+            socket = createSocketForJDBC3(connection);
         } else {
-            this.socket = new Socket(this.host, this.port);
+            socket = new Socket(host, port);
         }
         setOut(new DataOutputStream(socket.getOutputStream()));
         setIn(new DataInputStream(socket.getInputStream()));
-        this.socket.setTcpNoDelay(connection.getTcpNoDelay());
-        this.socket.setSoTimeout(connection.getSocketTimeout() * 1000);
-        this.socket.setKeepAlive(connection.getSocketKeepAlive());
+        socket.setTcpNoDelay(connection.getTcpNoDelay());
+        socket.setSoTimeout(connection.getSocketTimeout() * 1000);
+        socket.setKeepAlive(connection.getSocketKeepAlive());
     }
 
     /**
@@ -340,7 +330,7 @@ class SharedSocket {
      */
     void enableEncryption(String ssl) throws IOException {
         Logger.println("Enabling TLS encryption");
-        SocketFactory sf = Driver.JDBC3 ? 
+        SocketFactory sf = Driver.JDBC3 ?
                  SocketFactories.getSocketFactory(ssl, socket)
                : SocketFactoriesSUN.getSocketFactory(ssl, socket);
         sslSocket = sf.createSocket(getHost(), getPort());
@@ -495,7 +485,7 @@ class SharedSocket {
      * @return <code>true</code> if the underlying socket is connected
      */
     boolean isConnected() {
-        return this.socket != null;
+        return socket != null;
     }
 
     /**
@@ -513,7 +503,7 @@ class SharedSocket {
         synchronized (cancelMonitor) {
             //
             // Only send if response pending for the caller.
-            // Caller must have aquired connection mutex first.
+            // Caller must have acquired connection mutex first.
             // NB. This method will not work with local named pipes
             // as this thread will be blocked in the write until the
             // reading thread has returned from the read.
@@ -604,27 +594,36 @@ class SharedSocket {
         }
     }
 
-    /**
-     * Deallocate a stream linked to this socket.
-     *
-     * @param streamId the <code>ResponseStream</code> id
-     */
-    void closeStream(int streamId) {
-        synchronized (socketTable) {
-            VirtualSocket vsock = lookup(streamId);
+   /**
+    * Deallocate a stream linked to this socket.
+    *
+    * @param streamId
+    *    the <code>ResponseStream</code> id
+    */
+   void closeStream( int streamId )
+   {
+      VirtualSocket vsock;
 
-            if (vsock.diskQueue != null) {
-                try {
-                    vsock.diskQueue.close();
-                    vsock.queueFile.delete();
-                } catch (IOException ioe) {
-                    // Ignore errors
-                }
-            }
+      synchronized( socketTable )
+      {
+         vsock = lookup( streamId );
+      }
 
-            socketTable.set(streamId, null);
-        }
-    }
+      if( vsock.diskQueue != null )
+      {
+         try
+         {
+            vsock.diskQueue.close();
+            vsock.queueFile.delete();
+         }
+         catch( IOException ioe )
+         {
+            // Ignore errors
+         }
+      }
+
+      socketTable.set( streamId, null );
+   }
 
     /**
      * Send a network packet. If output for another virtual socket is
@@ -982,8 +981,8 @@ class SharedSocket {
      * @return the 16 bit unsigned value as an <code>int</code>
      */
     static int getPktLen(byte buf[]) {
-        int lo = ((int) buf[3] & 0xff);
-        int hi = (((int) buf[2] & 0xff) << 8);
+        int lo = (buf[3] & 0xff);
+        int hi = ((buf[2] & 0xff) << 8);
 
         return hi | lo;
     }
@@ -1048,7 +1047,7 @@ class SharedSocket {
      * @return the host name as a <code>String</code>
      */
     protected String getHost() {
-        return this.host;
+        return host;
     }
 
     /**
@@ -1057,15 +1056,23 @@ class SharedSocket {
      * @return the host port as an <code>int</code>
      */
     protected int getPort() {
-        return this.port;
+        return port;
     }
 
-    /**
-     * Finalize this object by releasing its resources.
-     */
-    protected void finalize() throws Throwable {
-        close();
-        super.finalize();
-    }
+   /**
+    * Ensure all resources are released.
+    */
+   protected void finalize()
+      throws Throwable
+   {
+      try
+      {
+         close();
+      }
+      finally
+      {
+         super.finalize();
+      }
+   }
 
 }

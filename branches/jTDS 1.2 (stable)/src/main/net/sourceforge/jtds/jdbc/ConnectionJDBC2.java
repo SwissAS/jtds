@@ -271,7 +271,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         // Extract properties into instance variables
         //
         unpackProperties(info);
-        this.messages = new SQLDiagnostic(serverType);
+        messages = new SQLDiagnostic(serverType);
         //
         // Get the instance port, if it is specified.
         // Named pipes use instance names differently.
@@ -380,7 +380,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                 // Need to select the default database
                 setCatalog(databaseName);
             }
-             
+
             // If charset is still unknown and the collation is not set either,
             // determine the charset by querying (we're using Sybase or SQL Server
             // 6.5)
@@ -449,18 +449,21 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         messages.warnings = warn;
     }
 
-    /**
-     * Ensure all resources are released.
-     */
-    protected void finalize() throws Throwable {
-        try {
-            close();
-        } catch (Exception e) {
-            // ignore any error
-        } finally {
-            super.finalize();
-        }
-    }
+   /**
+    * Ensure all resources are released.
+    */
+   protected void finalize()
+      throws Throwable
+   {
+      try
+      {
+         close();
+      }
+      finally
+      {
+         super.finalize();
+      }
+   }
 
     /**
      * Creates a {@link SharedSocket} object representing a connection to a named
@@ -544,7 +547,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return The <code>SharedSocket</code> object.
      */
     SharedSocket getSocket() {
-        return this.socket;
+        return socket;
     }
 
     /**
@@ -553,7 +556,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return The TDS version as an <code>int</code>.
      */
     int getTdsVersion() {
-        return this.tdsVersion;
+        return tdsVersion;
     }
 
     /**
@@ -785,7 +788,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      *         2 == SYBASE.
      */
     public int getServerType() {
-        return this.serverType;
+        return serverType;
     }
 
     /**
@@ -794,7 +797,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @param size the new packet size
      */
     void setNetPacketSize(int size) {
-        this.netPacketSize = size;
+        netPacketSize = size;
     }
 
     /**
@@ -803,7 +806,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return the packet size as an <code>int</code>
      */
     int getNetPacketSize() {
-        return this.netPacketSize;
+        return netPacketSize;
     }
 
     /**
@@ -812,7 +815,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return the row count as an <code>int</code>
      */
     int getRowCount() {
-        return this.rowCount;
+        return rowCount;
     }
 
     /**
@@ -848,7 +851,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return the lastUpdateCount flag as a <code>boolean</code>
      */
     boolean getLastUpdateCount() {
-        return this.lastUpdateCount;
+        return lastUpdateCount;
     }
 
     /**
@@ -857,7 +860,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return the precision as an <code>int</code>
      */
     int getMaxPrecision() {
-        return this.maxPrecision;
+        return maxPrecision;
     }
 
     /**
@@ -866,7 +869,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return the LOB buffer size as a <code>long</code>
      */
     long getLobBuffer() {
-        return this.lobBuffer;
+        return lobBuffer;
     }
 
     /**
@@ -875,7 +878,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return the Prepared SQL method
      */
     int getPrepareSql() {
-        return this.prepareSql;
+        return prepareSql;
     }
 
     /**
@@ -884,7 +887,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return the batch size as an <code>int</code>
      */
     int getBatchSize() {
-        return this.batchSize;
+        return batchSize;
     }
 
     /**
@@ -895,7 +898,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      *         <code>false</code> if caching is disabled
      */
     boolean getUseMetadataCache() {
-        return this.useMetadataCache;
+        return useMetadataCache;
     }
 
     /**
@@ -905,7 +908,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return <code>true</code> if fast forward cursors are requested
      */
     boolean getUseCursors() {
-        return this.useCursors;
+        return useCursors;
     }
 
     /**
@@ -917,7 +920,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      *         <code>false</code> otherwise
      */
     boolean getUseLOBs() {
-        return this.useLOBs;
+        return useLOBs;
     }
 
     /**
@@ -928,7 +931,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * cases, this property should be set to "true".
      */
     boolean getUseNTLMv2() {
-        return this.useNTLMv2;
+        return useNTLMv2;
     }
 
     /**
@@ -937,7 +940,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return the application name
      */
     String getAppName() {
-        return this.appName;
+        return appName;
     }
 
     /**
@@ -946,7 +949,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return the bind address
      */
     String getBindAddress() {
-        return this.bindAddress;
+        return bindAddress;
     }
 
     /**
@@ -955,7 +958,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return the directory where data should be buffered to.
      */
     File getBufferDir() {
-        return this.bufferDir;
+        return bufferDir;
     }
 
     /**
@@ -964,7 +967,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return the maximum amount of memory in Kb to buffer for <em>all</em> connections
      */
     int getBufferMaxMemory() {
-        return this.bufferMaxMemory;
+        return bufferMaxMemory;
     }
 
     /**
@@ -973,7 +976,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return the minimum number of packets to buffer per {@link Statement}
      */
     int getBufferMinPackets() {
-        return this.bufferMinPackets;
+        return bufferMinPackets;
     }
 
     /**
@@ -982,7 +985,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return the database name
      */
     String getDatabaseName() {
-        return this.databaseName;
+        return databaseName;
     }
 
     /**
@@ -991,7 +994,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return the domain name
      */
     String getDomainName() {
-        return this.domainName;
+        return domainName;
     }
 
     /**
@@ -1000,7 +1003,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return the instance name
      */
     String getInstanceName() {
-        return this.instanceName;
+        return instanceName;
     }
 
     /**
@@ -1009,7 +1012,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return the login timeout
      */
     int getLoginTimeout() {
-        return this.loginTimeout;
+        return loginTimeout;
     }
 
     /**
@@ -1018,7 +1021,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return the socket timeout
      */
     int getSocketTimeout() {
-        return this.socketTimeout;
+        return socketTimeout;
     }
 
     /**
@@ -1027,7 +1030,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return <code>true</code> if the socket keep alive is enabled
      */
     boolean getSocketKeepAlive() {
-        return this.socketKeepAlive;
+        return socketKeepAlive;
     }
 
     /**
@@ -1037,7 +1040,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return the process ID
      */
     int getProcessId() {
-        return this.processId.intValue();
+        return processId.intValue();
     }
 
     /**
@@ -1046,7 +1049,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return the MAC (ethernet) address
      */
     String getMacAddress() {
-        return this.macAddress;
+        return macAddress;
     }
 
     /**
@@ -1055,7 +1058,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return the named pipe setting
      */
     boolean getNamedPipe() {
-        return this.namedPipe;
+        return namedPipe;
     }
 
     /**
@@ -1064,7 +1067,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return the packet size
      */
     int getPacketSize() {
-        return this.packetSize;
+        return packetSize;
     }
 
     /**
@@ -1073,7 +1076,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return the password
      */
     String getPassword() {
-        return this.password;
+        return password;
     }
 
     /**
@@ -1082,7 +1085,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return the port number
      */
     int getPortNumber() {
-        return this.portNumber;
+        return portNumber;
     }
 
     /**
@@ -1091,7 +1094,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return the program name
      */
     String getProgName() {
-        return this.progName;
+        return progName;
     }
 
     /**
@@ -1100,7 +1103,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return the server name
      */
     String getServerName() {
-        return this.serverName;
+        return serverName;
     }
 
     /**
@@ -1109,7 +1112,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return the tcpNoDelay setting
      */
     boolean getTcpNoDelay() {
-        return this.tcpNoDelay;
+        return tcpNoDelay;
     }
 
     /**
@@ -1118,7 +1121,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return the useJCIFS setting
      */
     boolean getUseJCIFS() {
-        return this.useJCIFS;
+        return useJCIFS;
     }
 
     /**
@@ -1127,7 +1130,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return the user
      */
     String getUser() {
-        return this.user;
+        return user;
     }
 
     /**
@@ -1136,7 +1139,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return the workstation ID (WSID)
      */
     String getWsid() {
-        return this.wsid;
+        return wsid;
     }
 
     /**
@@ -1246,7 +1249,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             throw new SQLException(Messages.get("error.connection.badprop",
                     Messages.get(Driver.BATCHSIZE)), "08001");
         }
-        
+
         bufferDir = new File(info.getProperty(Messages.get(Driver.BUFFERDIR)));
         if (!bufferDir.isDirectory()) {
         	if (!bufferDir.mkdirs()) {
@@ -1359,7 +1362,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return <code>boolean</code> true if parameters should be sent as unicode.
      */
     protected boolean getUseUnicode() {
-        return this.useUnicode;
+        return useUnicode;
     }
 
     /**
@@ -1368,7 +1371,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return Capability bit mask as an <code>int</code>.
      */
     protected boolean getSybaseInfo(int flag) {
-        return (this.sybaseInfo & flag) != 0;
+        return (sybaseInfo & flag) != 0;
     }
 
     /**
@@ -1377,7 +1380,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @param mask The capability bit mask.
      */
     protected void setSybaseInfo(int mask) {
-        this.sybaseInfo = mask;
+        sybaseInfo = mask;
     }
 
     /**
@@ -1534,7 +1537,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return The collation as a <code>byte[5]</code>.
      */
     byte[] getCollation() {
-        return this.collation;
+        return collation;
     }
 
     /**
@@ -1604,7 +1607,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                 buf.insert(6, '0');
             }
 
-            this.databaseProductVersion = buf.toString();
+            databaseProductVersion = buf.toString();
         } else {
             databaseProductVersion =
             databaseMajorVersion + "." + databaseMinorVersion;
@@ -1689,7 +1692,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
                 // FIXME: entries from statements should be dropped immediately
                 // on GC, instead of being kept until overwritten or connection
-                // being closed  
+                // being closed
 
                 if (wr == null || wr.get() == null) {
                     statements.set(i, new WeakReference(statement));
@@ -1743,7 +1746,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return the version as an <code>int</code>
      */
     public int getDatabaseMajorVersion() {
-        return this.databaseMajorVersion;
+        return databaseMajorVersion;
     }
 
     /**
@@ -1752,7 +1755,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return the version as an <code>int</code>
      */
     public int getDatabaseMinorVersion() {
-        return this.databaseMinorVersion;
+        return databaseMinorVersion;
     }
 
     /**
@@ -1761,7 +1764,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return the name as a <code>String</code>
      */
     String getDatabaseProductName() {
-        return this.databaseProductName;
+        return databaseProductName;
     }
 
     /**
@@ -1770,7 +1773,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return the version as a <code>String</code>
      */
     String getDatabaseProductVersion() {
-        return this.databaseProductVersion;
+        return databaseProductVersion;
     }
 
     /**
@@ -1779,7 +1782,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return the connection url as a <code>String</code>
      */
     String getURL() {
-        return this.url;
+        return url;
     }
 
     /**
@@ -1887,7 +1890,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             throws SQLException {
         if (oleTranID != null) {
             // TODO: Stored procs are no good but maybe prepare will be OK.
-            this.prepareSql = TdsCore.EXECUTE_SQL;
+            prepareSql = TdsCore.EXECUTE_SQL;
             baseTds.enlistConnection(1, oleTranID);
             xaTransaction = true;
         } else {
@@ -1921,7 +1924,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @param value the XA state value
      */
     void setXaState(int value) {
-        this.xaState = value;
+        xaState = value;
     }
 
     /**
@@ -1930,7 +1933,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return the xa state variable as an <code>int</code>
      */
     int getXaState() {
-        return this.xaState;
+        return xaState;
     }
 
     /**
@@ -1950,19 +1953,19 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     Semaphore getMutex() {
         // Thread.interrupted() will clear the interrupt status
         boolean interrupted = Thread.interrupted();
-        
+
         try {
-            this.mutex.acquire();
+            mutex.acquire();
         } catch (InterruptedException e) {
             throw new IllegalStateException("Thread execution interrupted");
         }
-        
+
         if (interrupted) {
             // Bug [1596743] do not absorb interrupt status
             Thread.currentThread().interrupt();
         }
-        
-        return this.mutex;
+
+        return mutex;
     }
 
 
@@ -2011,7 +2014,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     synchronized public int getTransactionIsolation() throws SQLException {
         checkOpen();
 
-        return this.transactionIsolation;
+        return transactionIsolation;
     }
 
     synchronized public void clearWarnings() throws SQLException {
@@ -2136,7 +2139,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     synchronized public boolean getAutoCommit() throws SQLException {
         checkOpen();
 
-        return this.autoCommit;
+        return autoCommit;
     }
 
     public boolean isClosed() throws SQLException {
@@ -2146,7 +2149,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     public boolean isReadOnly() throws SQLException {
         checkOpen();
 
-        return this.readOnly;
+        return readOnly;
     }
 
     public void setHoldability(int holdability) throws SQLException {
@@ -2271,7 +2274,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     synchronized public String getCatalog() throws SQLException {
         checkOpen();
 
-        return this.currentDatabase;
+        return currentDatabase;
     }
 
     synchronized public void setCatalog(String catalog) throws SQLException {
@@ -2280,9 +2283,9 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         if (currentDatabase != null && currentDatabase.equals(catalog)) {
             return;
         }
-        
+
         int maxlength = tdsVersion >= Driver.TDS70 ? 128 : 30;
-        
+
         if (catalog.length() > maxlength || catalog.length() < 1) {
             throw new SQLException(
                     Messages.get("error.generic.badparam",
