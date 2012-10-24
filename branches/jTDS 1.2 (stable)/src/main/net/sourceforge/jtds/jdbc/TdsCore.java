@@ -302,7 +302,7 @@ public class TdsCore {
     private static final byte DONE_ERROR            = (byte) 0x02;
     /** Done: There is a valid row count. */
     private static final byte DONE_ROW_COUNT        = (byte) 0x10;
-    /** Done: Cancel acknowledgement. */
+    /** Done: Cancel acknowledgment. */
     static final byte DONE_CANCEL                   = (byte) 0x20;
     /**
      * Done: Response terminator (if more than one request packet is sent, each
@@ -1610,7 +1610,7 @@ public class TdsCore {
     }
 
     /**
-     * Process the pre login acknowledgement from the server.
+     * Process the pre login acknowledgment from the server.
      * <p>Packet contains; server version no, SSL mode, instance name
      * and process id.
      * <p>Server returns the following values for SSL mode:
@@ -4022,7 +4022,7 @@ public class TdsCore {
             tables = null;
             computedColumns = null;
             computedRowData = null;
-            // Clean up warnings; any exceptions will be cleared when thrown
+            // clean up warnings
             messages.clearWarnings();
         }
     }
