@@ -154,6 +154,70 @@ public class StatementTest extends TestBase
    }
 
    /**
+    * Test for bug #473, Statement.setMaxRows() also effects INSERT, UPDATE,
+    * DELETE and SELECT INTO.
+    */
+   public void testBug473()
+      throws Exception
+   {
+      Statement sta = con.createStatement();
+
+      // create test table and fill with data
+      sta.executeUpdate( "create table #Bug473( X int )" );
+      sta.executeUpdate( "insert into #Bug473 values( 1 )" );
+      sta.executeUpdate( "insert into #Bug473 values( 2 )" );
+
+      // copy all data (maxRows shouldn't have any effect)
+      sta.setMaxRows( 1 );
+      sta.executeUpdate( "select * into #copy from #Bug473" );
+
+      // ensure all table data has been copied
+      sta.setMaxRows( 0 );
+      ResultSet res = sta.executeQuery( "select * from #copy" );
+      assertTrue ( res.next() );
+      assertTrue ( res.next() );
+      assertFalse( res.next() );
+
+      res.close();
+      sta.close();
+   }
+
+   /**
+    * Test for bug #635, select from a view with order by clause doesn't work if
+    * correctly if using Statement.setMaxRows().
+    */
+   public void testBug635()
+      throws Exception
+   {
+      final int[] data = new int[] { 1, 3, 5, 7, 9, 2, 4, 6, 8, 10 };
+
+      dropTable( "Bug635T" );
+      dropView ( "Bug635V" );
+
+      Statement sta = con.createStatement();
+      sta.setMaxRows( 7 );
+
+      sta.executeUpdate( "create table Bug635T( X int )" );
+      sta.executeUpdate( "create view Bug635V as select * from Bug635T" );
+
+      for( int i = 0; i < data.length; i ++ )
+      {
+         sta.executeUpdate( "insert into Bug635T values( " + data[i] + " )" );
+      }
+
+      ResultSet res = sta.executeQuery( "select X from Bug635V order by X" );
+
+      for( int i = 1; i <= 7; i ++ )
+      {
+         assertTrue( res.next() );
+         assertEquals( i, res.getInt( 1 ) );
+      }
+
+      res.close();
+      sta.close();
+   }
+
+   /**
     * Test for bug #624, full text search causes connection reset when connected
     * to Microsoft SQL Server 2008.
     */
