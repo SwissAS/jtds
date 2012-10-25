@@ -1,6 +1,12 @@
 Changes from jTDS 1.2.6
 =======================
 
+10/25/2012 - Holger Rehn
+ o Improved the database meta data by adding (JDBC4) column IS_AUTOINCREMENT.
+ o Removed unnecessary console logging from various unit tests.
+ o Improved overall driver performance by avoiding blocking (and potentially
+   slow) lookup of virtual data streams, required for any request/response.
+
 10/24/2012 - Holger Rehn
  o Fixed a bug that caused Statement.close() to throw an exception for errors
    caused by previously executed SQL statements.
