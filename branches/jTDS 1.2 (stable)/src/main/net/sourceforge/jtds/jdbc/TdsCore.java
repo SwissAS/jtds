@@ -873,7 +873,7 @@ public class TdsCore {
             mutex = connection.getMutex();
             synchronized (cancelMonitor) {
                 if (!cancelPending && !endOfResponse) {
-                    cancelPending = socket.cancel(out.getStreamId());
+                    cancelPending = socket.cancel(out.getVirtualSocket());
                 }
                 // If a cancel request was sent, reset the end of response flag
                 if (cancelPending) {

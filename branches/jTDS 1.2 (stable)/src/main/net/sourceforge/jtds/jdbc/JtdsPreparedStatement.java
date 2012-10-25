@@ -696,7 +696,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
 
     public int executeUpdate() throws SQLException {
         checkOpen();
-        initialize();
+        reset();
 
         if (procName == null && !(this instanceof JtdsCallableStatement)) {
             // Sync on the connection to make sure rollback() isn't called
@@ -749,7 +749,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
 
     public boolean execute() throws SQLException {
         checkOpen();
-        initialize();
+        reset();
         boolean useCursor = useCursor(returnKeys, sqlWord);
 
         if (procName == null && !(this instanceof JtdsCallableStatement)) {
@@ -967,7 +967,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
 
     public ResultSet executeQuery() throws SQLException {
         checkOpen();
-        initialize();
+        reset();
         boolean useCursor = useCursor(false, null);
 
         if (procName == null && !(this instanceof JtdsCallableStatement)) {
