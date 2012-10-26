@@ -141,19 +141,16 @@ public class ColInfo implements Cloneable
    // overridden methods of class Object
    /////////////////////////////////////////////////////////////////////////////
 
-   @Override
    public String toString()
    {
       return name;
    }
 
-   @Override
    public int hashCode()
    {
       return System.identityHashCode( this );
    }
 
-   @Override
    public boolean equals( Object other )
    {
       if( ! ( other instanceof ColInfo ) )
