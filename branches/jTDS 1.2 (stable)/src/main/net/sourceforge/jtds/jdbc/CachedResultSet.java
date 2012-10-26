@@ -72,8 +72,6 @@ public class CachedResultSet extends JtdsResultSet {
     protected boolean rowUpdated;
     /** Indicates that row has been deleted. */
     protected boolean rowDeleted;
-    /** The row count of the initial result set. */
-    protected int initialRowCnt;
     /** True if this is a local temporary result set. */
     protected final boolean tempResultSet;
     /** Cursor TdsCore object. */
@@ -119,8 +117,8 @@ public class CachedResultSet extends JtdsResultSet {
             int resultSetType,
             int concurrency) throws SQLException {
         super(statement, resultSetType, concurrency, null);
-        this.connection = (ConnectionJDBC2) statement.getConnection();
-        this.cursorTds = statement.getTds();
+        connection = (ConnectionJDBC2) statement.getConnection();
+        cursorTds = statement.getTds();
         this.sql = sql;
         this.procName = procName;
         this.procedureParams = procedureParams;
@@ -128,12 +126,12 @@ public class CachedResultSet extends JtdsResultSet {
                 && concurrency != ResultSet.CONCUR_READ_ONLY
                 && cursorName != null) {
             // Need an addtional TDS for positioned updates
-            this.updateTds = new TdsCore(connection, statement.getMessages());
+            updateTds = new TdsCore(connection, statement.getMessages());
         } else {
-            this.updateTds = this.cursorTds;
+            updateTds = cursorTds;
         }
-        this.isSybase = Driver.SYBASE == connection.getServerType();
-        this.tempResultSet = false;
+        isSybase = Driver.SYBASE == connection.getServerType();
+        tempResultSet = false;
         //
         // Now create the specified type of cursor
         //
@@ -154,7 +152,7 @@ public class CachedResultSet extends JtdsResultSet {
         //
         // Construct the column descriptor array
         //
-        this.columns = new ColInfo[colName.length];
+        columns = new ColInfo[colName.length];
         for (int i = 0; i < colName.length; i++) {
             ColInfo ci = new ColInfo();
             ci.name     = colName[i];
@@ -168,17 +166,16 @@ public class CachedResultSet extends JtdsResultSet {
             TdsData.fillInType(ci);
             columns[i] = ci;
         }
-        this.columnCount   = getColumnCount(columns);
-        this.rowData       = new ArrayList(INITIAL_ROW_COUNT);
-        this.rowsInResult  = 0;
-        this.initialRowCnt = 0;
-        this.pos           = POS_BEFORE_FIRST;
-        this.tempResultSet = true;
-        this.cursorName    = null;
-        this.cursorTds     = null;
-        this.updateTds     = null;
-        this.procName      = null;
-        this.procedureParams = null;
+        columnCount   = getColumnCount(columns);
+        rowData       = new ArrayList(INITIAL_ROW_COUNT);
+        rowsInResult  = 0;
+        pos           = POS_BEFORE_FIRST;
+        tempResultSet = true;
+        cursorName    = null;
+        cursorTds     = null;
+        updateTds     = null;
+        procName      = null;
+        procedureParams = null;
     }
 
     /**
@@ -216,18 +213,17 @@ public class CachedResultSet extends JtdsResultSet {
                              "TYPE_SCROLL_INSENSITIVE"), "01000"));
         }
 
-        this.columns       = rs.getColumns();
-        this.columnCount   = getColumnCount(columns);
-        this.rowData       = new ArrayList(INITIAL_ROW_COUNT);
-        this.rowsInResult  = 0;
-        this.initialRowCnt = 0;
-        this.pos           = POS_BEFORE_FIRST;
-        this.tempResultSet = true;
-        this.cursorName    = null;
-        this.cursorTds     = null;
-        this.updateTds     = null;
-        this.procName      = null;
-        this.procedureParams = null;
+        columns       = rs.getColumns();
+        columnCount   = getColumnCount(columns);
+        rowData       = new ArrayList(INITIAL_ROW_COUNT);
+        rowsInResult  = 0;
+        pos           = POS_BEFORE_FIRST;
+        tempResultSet = true;
+        cursorName    = null;
+        cursorTds     = null;
+        updateTds     = null;
+        procName      = null;
+        procedureParams = null;
         //
         // Load result set into buffer
         //
@@ -235,8 +231,7 @@ public class CachedResultSet extends JtdsResultSet {
             while (rs.next()) {
                 rowData.add(copyRow(rs.getCurrentRow()));
             }
-            this.rowsInResult  = rowData.size();
-            this.initialRowCnt = rowsInResult;
+            rowsInResult  = rowData.size();
         }
     }
 
@@ -252,19 +247,32 @@ public class CachedResultSet extends JtdsResultSet {
             ColInfo columns[], Object data[]) throws SQLException {
         super(statement, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, null);
         this.columns       = columns;
-        this.columnCount   = getColumnCount(columns);
-        this.rowData       = new ArrayList(1);
-        this.rowsInResult  = 1;
-        this.initialRowCnt = 1;
-        this.pos           = POS_BEFORE_FIRST;
-        this.tempResultSet = true;
-        this.cursorName    = null;
-        this.rowData.add(copyRow(data));
-        this.cursorTds     = null;
-        this.updateTds     = null;
-        this.procName      = null;
-        this.procedureParams = null;
+        columnCount   = getColumnCount(columns);
+        rowData       = new ArrayList(1);
+        rowsInResult  = 1;
+        pos           = POS_BEFORE_FIRST;
+        tempResultSet = true;
+        cursorName    = null;
+        rowData.add(copyRow(data));
+        cursorTds     = null;
+        updateTds     = null;
+        procName      = null;
+        procedureParams = null;
     }
+
+   /**
+    * <p> <b>Warning! Ensure the provided data matches the column layout of this
+    * {@link ResultSet}. All kind of weird behavior and errors could be expected
+    * otherwise. </b></p>
+    *
+    * @param data
+    *    data of the row to add
+    */
+   void addRow( Object data[] )
+   {
+      rowsInResult ++;
+      rowData.add( copyRow( data ) );
+   }
 
     /**
      * Modify the concurrency of the result set.
@@ -436,7 +444,6 @@ public class CachedResultSet extends JtdsResultSet {
                 //
                 cacheResultSetRows();
                 rowsInResult  = rowData.size();
-                initialRowCnt = rowsInResult;
                 pos = POS_BEFORE_FIRST;
                 //
                 // If cursor is built over one table and the table has
@@ -474,7 +481,6 @@ public class CachedResultSet extends JtdsResultSet {
                 //
                 cacheResultSetRows();
                 rowsInResult  = rowData.size();
-                initialRowCnt = rowsInResult;
                 pos = POS_BEFORE_FIRST;
             }
         }
@@ -1177,7 +1183,6 @@ public class CachedResultSet extends JtdsResultSet {
              rowData.add(row);
          }
          rowsInResult++;
-         initialRowCnt++;
          //
          // Clear row data
          //
@@ -1440,7 +1445,7 @@ public class CachedResultSet extends JtdsResultSet {
         checkOpen();
         // Hide internal cursor names
         if (cursorName != null && !cursorName.startsWith("_jtds")) {
-            return this.cursorName;
+            return cursorName;
         }
         throw new SQLException(Messages.get("error.resultset.noposupdate"), "24000");
     }
