@@ -18,7 +18,6 @@
 package net.sourceforge.jtds.jdbc;
 
 import junit.framework.Test;
-import junit.framework.TestCase;
 import junit.framework.TestSuite;
 import net.sourceforge.jtds.jdbc.DefaultProperties;
 import net.sourceforge.jtds.jdbc.Driver;
@@ -76,6 +75,25 @@ public class DriverUnitTest extends UnitTestBase {
         super(name);
     }
 
+   /**
+    * Test to ensure that the version reported by the driver matches the JAR
+    * file's name.
+    */
+   public void testDriverVersion()
+      throws Exception
+   {
+      String file = Driver.class.getResource( '/' + Driver.class.getName().replace( '.', '/' ) + ".class" ).toString();
+
+      // only check if jTDS has been loaded from a jar
+      if( file.startsWith( "jar" ) )
+      {
+         // parse path, e.g. jar:file:/lib/jtds-1.3.0.jar!/net/sourceforge/jtds/jdbc/Driver.class
+         file = file.substring( 0, file.indexOf( ".jar!" ) );
+         file = file.substring( file.lastIndexOf( '/' ) + 1 );
+
+         assertEquals( Driver.getVersion(), file.substring( file.lastIndexOf( '-' ) + 1 ) );
+      }
+   }
 
     /**
      * Tests that passing in a null properties argument to
@@ -438,7 +456,7 @@ public class DriverUnitTest extends UnitTestBase {
 //                                url.append(host);
 //                            }
 //
-//                            
+//
 //                            if (port != null) {
 //                                url.append(':').append(port);
 //                            }
