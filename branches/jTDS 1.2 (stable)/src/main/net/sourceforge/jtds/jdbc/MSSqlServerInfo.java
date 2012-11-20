@@ -69,15 +69,15 @@ public class MSSqlServerInfo {
                 try {
                     DatagramPacket responsep;
                     byte[] buf = new byte[0]; // init with an array of length 0, will be expanded with every iteration
-                    int length = buf.length;
+                    int length;
 
                     do {
                         buf = new byte[buf.length + 4096];
                         responsep = new DatagramPacket(buf, buf.length);
                         socket.send(requestp);
                         socket.receive(responsep);
+                        length = responsep.getLength();
                     } while(length==buf.length); // retry until the whole server response can be buffered
-
 
                     String infoString = extractString(buf, length);
                     serverInfoStrings = split(infoString, ';');
@@ -127,7 +127,7 @@ public class MSSqlServerInfo {
         String curInstance = null;
         String curPort = null;
 
-        // format: "ServerName, HOSTNAME, InstanceName, INSTANCENAME, IsClustered, No, Version, 9.00.1399.06, tcp, PORT, ,"
+        // format: "ServerName,HOSTNAME,InstanceName,INSTANCENAME,IsClustered,No,Version,9.00.1399.06,tcp,PORT,np;\HOSTNAME\pipe\MSSQL$HOSTNAME\sql, ,"
         for (int index = 0; index < serverInfoStrings.length; index++) {
             if (serverInfoStrings[index].length() == 0) {
                 curInstance = null;
