@@ -1492,7 +1492,7 @@ public class TdsData {
                         }
 
                         pi.tdsType = SYBIMAGE;
-                        pi.sqlType = "varbinary(max)";
+                        pi.sqlType = isMSSQL2005Plus(connection) ?  "varbinary(max)" : "image";
                     }
                 }
 
@@ -2765,4 +2765,9 @@ public class TdsData {
             return false;
         }
     }
+
+   static boolean isMSSQL2005Plus( ConnectionJDBC2 connection )
+   {
+      return connection.getServerType() == Driver.SQLSERVER && connection.getDatabaseMajorVersion() > 8;
+   }
 }
