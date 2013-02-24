@@ -25,7 +25,6 @@ import java.util.Calendar;
 import java.util.TimeZone;
 import java.util.GregorianCalendar;
 
-import net.sourceforge.jtds.jdbc.Driver;
 import net.sourceforge.jtds.util.Logger;
 
 import junit.framework.ComparisonFailure;
@@ -41,6 +40,27 @@ public class TimestampTest extends DatabaseTestCase {
     public TimestampTest(String name) {
         super(name);
     }
+
+   /**
+    * <p> Regression test for bug #682, calling a procedure with a parameter of
+    * type date, time or datetime fails with an error. </p>
+    *
+    */
+   public void testBug682()
+      throws SQLException
+   {
+      Statement st = con.createStatement();
+      st.executeUpdate( "create procedure #sp_bug682 @A datetime as select 1" );
+
+      try
+      {
+         st.execute( "{call #sp_bug682({ts '2000-01-01 20:59:00.123'})}" );
+      }
+      finally
+      {
+         st.close();
+      }
+   }
 
    /**
     * Test for bug #638, preparedStatement.setTimestamp sets seconds to 0.
@@ -279,7 +299,7 @@ public class TimestampTest extends DatabaseTestCase {
       throws Exception
    {
       String tmp = con.nativeSQL( sql );
-      assertEquals( tmp, expected );
+      assertEquals( expected, tmp );
    }
 
    public void testEscapes0006()
