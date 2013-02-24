@@ -43,9 +43,6 @@ import net.sourceforge.jtds.jdbc.cache.SimpleLRUCache;
  * <ol>
  * <li>This code is designed to be as efficient as possible and as
  * result the validation done here is limited.
- * <li>SQL comments are parsed correctly thanks to code supplied by
- * Joel Fouse.
- * </ol>
  *
  * @author Mike Hutchinson
  * @version $Id: SQLParser.java,v 1.29 2007-07-08 17:28:23 bheineman Exp $
@@ -613,7 +610,13 @@ class SQLParser {
             return in[s] == terminator;
         }
 
-        append( "convert(datetime,".toCharArray() );
+        // fix for bug #682, CONVERT not allowed in procedure or function calls
+        boolean sel = keyWord.equals( "select" );
+        if( sel )
+        {
+           append( "convert(datetime,".toCharArray() );
+        }
+
         append('\'');
         terminator = (in[s] == '\'' || in[s] == '"') ? in[s++] : '}';
         skipWhiteSpace();
@@ -675,7 +678,11 @@ class SQLParser {
 
         skipWhiteSpace();
         append('\'');
-        append(')');
+
+        if( sel )
+        {
+           append(')');
+        }
 
         return true;
     }

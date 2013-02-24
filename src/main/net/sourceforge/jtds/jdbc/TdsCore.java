@@ -432,6 +432,11 @@ public class TdsCore {
     private final int[] cancelMonitor = new int[1];
 
     /**
+     * flag set to {@code true} whenever a TDS_ERROR token is received
+     */
+    private boolean _ErrorReceived;
+
+    /**
      * Construct a TdsCore object.
      *
      * @param connection The connection which owns this object.
@@ -944,6 +949,7 @@ public class TdsCore {
                                  boolean sendNow)
             throws SQLException {
         boolean sendFailed = true; // Used to ensure mutex is released.
+        _ErrorReceived = false; // reset error token flag
 
         try {
             //
@@ -2870,6 +2876,8 @@ public class TdsCore {
 
         if (currentToken.token == TDS_ERROR_TOKEN)
         {
+           _ErrorReceived = true;
+
             if (severity < 10) {
                 severity = 11; // Ensure treated as error
             }
@@ -3527,6 +3535,7 @@ public class TdsCore {
      */
     private void tdsDoneToken() throws IOException {
         currentToken.status = (byte)in.read();
+
         in.skip(1);
         currentToken.operation = (byte)in.read();
         in.skip(1);
@@ -3555,6 +3564,19 @@ public class TdsCore {
                 }
             }
         }
+        else
+        {
+           // check whether the DONE token signals an error but no ERROR token has been received before (see bug #508)
+           if( ! _ErrorReceived && ( currentToken.status & DONE_ERROR ) != 0 )
+           {
+              messages.addException( new SQLException( Messages.get( "error.generic.unspecified" ), "HY000" ) );
+           }
+        }
+
+        // reset flag, just in case this is an intermediate ERROR token, so
+        // the fix for bug #508 will also work if the problematic operation
+        // is preceeded by another statement that causes an error
+        _ErrorReceived = false;
 
         if ((currentToken.status & DONE_MORE_RESULTS) == 0) {
             //
