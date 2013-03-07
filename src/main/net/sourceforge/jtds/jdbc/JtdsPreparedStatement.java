@@ -1020,7 +1020,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
                StringBuffer testSql = new StringBuffer( sql.length() + 128 );
                testSql.append( "SET FMTONLY ON; " );
                testSql.append( Support.substituteParameters( sql, params, connection ) );
-               testSql.append( "; SET FMTONLY OFF" );
+               testSql.append( "\r\n; SET FMTONLY OFF" );
 
                try
                {
