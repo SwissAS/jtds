@@ -1,6 +1,9 @@
 Changes from jTDS 1.2.7
 =======================
 
+04/02/2013 - Holger Rehn
+ o Fixed bug #699, conversion from timestamp String to Date fails.
+
 03/08/2013 - Holger Rehn
  o Improved fix for bug #694, the previous attempt wasn't sufficient.
 
