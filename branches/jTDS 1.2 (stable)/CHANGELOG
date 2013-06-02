@@ -1,6 +1,9 @@
 Changes from jTDS 1.2.7
 =======================
 
+06/02/2013 - Holger Rehn
+ o Fixed bug #702, ConnectionJDBC2.getMutex() isn't thread-safe.
+
 05/16/2013 - Holger Rehn
  o Added range check to class BlobBuffer as proposed by Benedict Elliott Smith.
  o Applied patch for explicitly creating an in-memory BlobBuffer provided by
