@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project basedir="." default="compile" name="jtds" name="jtds" xmlns:artifact="antlib:org.apache.maven.artifact.ant">
+<project basedir="." default="compile" name="jtds" xmlns:artifact="antlib:org.apache.maven.artifact.ant">
 
   <path id="libs">
     <fileset dir="lib" includes="*.jar"/>
