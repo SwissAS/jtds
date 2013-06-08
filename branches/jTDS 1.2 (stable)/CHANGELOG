@@ -1,3 +1,7 @@
+===============================================================================
+06/08/2013 - jTDS 1.2.8 released
+===============================================================================
+
 Changes from jTDS 1.2.7
 =======================
 
@@ -50,7 +54,8 @@ Changes from jTDS 1.2.7
 
 10/28/2012 - Holger Rehn
  o Added test for bug #575, parameter types not available via ParameterMetaData.
- o Fixed build scripts, Maven artifacts are no included in the distro package.
+ o Fixed build scripts, Maven artifacts are no longer included in the distro
+   package.
 
 ===============================================================================
 10/27/2012 - jTDS 1.2.7 released
