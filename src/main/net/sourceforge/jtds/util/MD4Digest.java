@@ -25,7 +25,7 @@ package net.sourceforge.jtds.util;
  * implementation of MD4 as RFC 1320 by R. Rivest, MIT Laboratory for
  * Computer Science and RSA Data Security, Inc.
  * <p>
- * <b>NOTE</b>: This algorithm is only included for backwards compatability
+ * <b>NOTE</b>: This algorithm is only included for backwards compatibility
  * with legacy applications, it's not secure, don't use it for anything new!
  *
  * @version $Id: MD4Digest.java,v 1.2 2004-06-27 17:00:55 bheineman Exp $
@@ -59,7 +59,7 @@ public class MD4Digest extends GeneralDigest {
 
     private int H1, H2, H3, H4;         // IV's
 
-    private int[] X = new int[16];
+    private final int[] X = new int[16];
     private int xOff;
 
     /**
