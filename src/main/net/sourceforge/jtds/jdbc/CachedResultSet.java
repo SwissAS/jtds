@@ -75,9 +75,9 @@ public class CachedResultSet extends JtdsResultSet {
     /** True if this is a local temporary result set. */
     protected final boolean tempResultSet;
     /** Cursor TdsCore object. */
-    protected final TdsCore cursorTds;
+    protected TdsCore cursorTds;
     /** Updates TdsCore object used for positioned updates. */
-    protected final TdsCore updateTds;
+    protected TdsCore updateTds;
     /** Flag to indicate Sybase. */
     protected boolean isSybase;
     /** Fetch size has been changed. */
@@ -172,8 +172,6 @@ public class CachedResultSet extends JtdsResultSet {
         pos           = POS_BEFORE_FIRST;
         tempResultSet = true;
         cursorName    = null;
-        cursorTds     = null;
-        updateTds     = null;
         procName      = null;
         procedureParams = null;
     }
@@ -220,8 +218,6 @@ public class CachedResultSet extends JtdsResultSet {
         pos           = POS_BEFORE_FIRST;
         tempResultSet = true;
         cursorName    = null;
-        cursorTds     = null;
-        updateTds     = null;
         procName      = null;
         procedureParams = null;
         //
@@ -254,8 +250,6 @@ public class CachedResultSet extends JtdsResultSet {
         tempResultSet = true;
         cursorName    = null;
         rowData.add(copyRow(data));
-        cursorTds     = null;
-        updateTds     = null;
         procName      = null;
         procedureParams = null;
     }
@@ -1031,6 +1025,8 @@ public class CachedResultSet extends JtdsResultSet {
              } finally {
                  closed    = true;
                  statement = null;
+                 updateTds = null;
+                 cursorTds = null;
              }
          }
      }
