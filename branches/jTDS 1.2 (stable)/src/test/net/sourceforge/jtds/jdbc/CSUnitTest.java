@@ -445,185 +445,185 @@ public class CSUnitTest extends DatabaseTestCase
     */
 
     public void testDataTypes0027() throws Exception {
-        output.println("Test all the SQLServer datatypes in Statement\n"
-                       + "and PreparedStatement using the preferred getXXX()\n"
-                       + "instead of getObject like #t0017.java does.");
-        output.println("!!!Note- This test is not fully implemented yet!!!");
-        Statement   stmt = con.createStatement();
-        ResultSet   rs;
-        stmt.execute("set dateformat ymd");
-        dropTable("#t0027");
-        String sql =
-        "create table #t0027 (                                  " +
-        " mybinary                   binary(5) not null,       " +
-        " myvarbinary                varbinary(4) not null,    " +
-        " mychar                     char(10) not null,        " +
-        " myvarchar                  varchar(8) not null,      " +
-        " mydatetime                 datetime not null,        " +
-        " mysmalldatetime            smalldatetime not null,   " +
-        " mydecimal10_3              decimal(10,3) not null,   " +
-        " mynumeric5_4               numeric (5,4) not null,   " +
-        " myfloat6                   float(6) not null,        " +
-        " myfloat14                  float(6) not null,        " +
-        " myreal                     real not null,            " +
-        " myint                      int not null,             " +
-        " mysmallint                 smallint not null,        " +
-        " mytinyint                  tinyint not null,         " +
-        " mymoney                    money not null,           " +
-        " mysmallmoney               smallmoney not null,      " +
-        " mybit                      bit not null,             " +
-        " mytimestamp                timestamp not null,       " +
-        " mytext                     text not null,            " +
-        " myimage                    image not null,           " +
-        " mynullbinary               binary(3) null,          " +
-        " mynullvarbinary            varbinary(6) null,       " +
-        " mynullchar                 char(10) null,            " +
-        " mynullvarchar              varchar(40) null,         " +
-        " mynulldatetime             datetime null,            " +
-        " mynullsmalldatetime        smalldatetime null,       " +
-        " mynulldecimal10_3          decimal(10,3) null,       " +
-        " mynullnumeric15_10         numeric(15,10) null,      " +
-        " mynullfloat6               float(6) null,            " +
-        " mynullfloat14              float(14) null,           " +
-        " mynullreal                 real null,                " +
-        " mynullint                  int null,                 " +
-        " mynullsmallint             smallint null,            " +
-        " mynulltinyint              tinyint null,             " +
-        " mynullmoney                money null,               " +
-        " mynullsmallmoney           smallmoney null,          " +
-        " mynulltext                 text null,                " +
-        " mynullimage                image null)               ";
+       output.println("Test all the SQLServer datatypes in Statement\n"
+                      + "and PreparedStatement using the preferred getXXX()\n"
+                      + "instead of getObject like #t0017.java does.");
+       output.println("!!!Note- This test is not fully implemented yet!!!");
+       Statement   stmt = con.createStatement();
+       ResultSet   rs;
+       stmt.execute("set dateformat ymd");
+       dropTable("#t0027");
+       String sql =
+       "create table #t0027 (                                  " +
+       " mybinary                   binary(5) not null,       " +
+       " myvarbinary                varbinary(4) not null,    " +
+       " mychar                     char(10) not null,        " +
+       " myvarchar                  varchar(8) not null,      " +
+       " mydatetime                 datetime not null,        " +
+       " mysmalldatetime            smalldatetime not null,   " +
+       " mydecimal10_3              decimal(10,3) not null,   " +
+       " mynumeric5_4               numeric (5,4) not null,   " +
+       " myfloat6                   float(6) not null,        " +
+       " myfloat14                  float(6) not null,        " +
+       " myreal                     real not null,            " +
+       " myint                      int not null,             " +
+       " mysmallint                 smallint not null,        " +
+       " mytinyint                  tinyint not null,         " +
+       " mymoney                    money not null,           " +
+       " mysmallmoney               smallmoney not null,      " +
+       " mybit                      bit not null,             " +
+       " mytimestamp                timestamp not null,       " + // auto-updated column, MS SQL only accepts null values, Sybase doesn't accept values at all
+       " mytext                     text not null,            " +
+       " myimage                    image not null,           " +
+       " mynullbinary               binary(3) null,          " +
+       " mynullvarbinary            varbinary(6) null,       " +
+       " mynullchar                 char(10) null,            " +
+       " mynullvarchar              varchar(40) null,         " +
+       " mynulldatetime             datetime null,            " +
+       " mynullsmalldatetime        smalldatetime null,       " +
+       " mynulldecimal10_3          decimal(10,3) null,       " +
+       " mynullnumeric15_10         numeric(15,10) null,      " +
+       " mynullfloat6               float(6) null,            " +
+       " mynullfloat14              float(14) null,           " +
+       " mynullreal                 real null,                " +
+       " mynullint                  int null,                 " +
+       " mynullsmallint             smallint null,            " +
+       " mynulltinyint              tinyint null,             " +
+       " mynullmoney                money null,               " +
+       " mynullsmallmoney           smallmoney null,          " +
+       " mynulltext                 text null,                " +
+       " mynullimage                image null)               ";
 
-        assertEquals(stmt.executeUpdate(sql), 0);
+       assertEquals(stmt.executeUpdate(sql), 0);
 
 
-        // Insert a row without nulls via a Statement
-        sql =
-        "insert into #t0027               " +
-        "  (mybinary,                    " +
-        "   myvarbinary,                 " +
-        "   mychar,                      " +
-        "   myvarchar,                   " +
-        "   mydatetime,                  " +
-        "   mysmalldatetime,             " +
-        "   mydecimal10_3,               " +
-        "   mynumeric5_4,              " +
-        "   myfloat6,                    " +
-        "   myfloat14,                   " +
-        "   myreal,                      " +
-        "   myint,                       " +
-        "   mysmallint,                  " +
-        "   mytinyint,                   " +
-        "   mymoney,                     " +
-        "   mysmallmoney,                " +
-        "   mybit,                       " +
-        "   mytimestamp,                 " +
-        "   mytext,                      " +
-        "   myimage,                     " +
-        "   mynullbinary,                " +
-        "   mynullvarbinary,             " +
-        "   mynullchar,                  " +
-        "   mynullvarchar,               " +
-        "   mynulldatetime,              " +
-        "   mynullsmalldatetime,         " +
-        "   mynulldecimal10_3,           " +
-        "   mynullnumeric15_10,          " +
-        "   mynullfloat6,                " +
-        "   mynullfloat14,               " +
-        "   mynullreal,                  " +
-        "   mynullint,                   " +
-        "   mynullsmallint,              " +
-        "   mynulltinyint,               " +
-        "   mynullmoney,                 " +
-        "   mynullsmallmoney,            " +
-        "   mynulltext,                  " +
-        "   mynullimage)                 " +
-        " values                         " +
-        "   (0x1213141516,               " + //   mybinary,
-        "    0x1718191A,                 " + //   myvarbinary
-        "    '1234567890',               " + //   mychar
-        "    '12345678',                 " + //   myvarchar
-        "    '19991015 21:29:59.01',     " + //   mydatetime
-        "    '19991015 20:45',           " + //   mysmalldatetime
-        "    1234567.089,                " + //   mydecimal10_3
-        "    1.2345,                     " + //   mynumeric5_4
-        "    65.4321,                    " + //   myfloat6
-        "    1.123456789,                " + //   myfloat14
-        "    987654321.0,                " + //   myreal
-        "    4097,                       " + //   myint
-        "    4094,                       " + //   mysmallint
-        "    200,                        " + //   mytinyint
-        "    19.95,                      " + //   mymoney
-        "    9.97,                       " + //   mysmallmoney
-        "    1,                          " + //   mybit
-        "    null,                       " + //   mytimestamp
-        "    'abcdefg',                  " + //   mytext
-        "    0x0AAABB,                   " + //   myimage
-        "    0x123456,                   " + //   mynullbinary
-        "    0xAB,                       " + //   mynullvarbinary
-        "    'z',                        " + //   mynullchar
-        "    'zyx',                      " + //   mynullvarchar
-        "    '1976-07-04 12:00:00.04',   " + //   mynulldatetime
-        "    '2000-02-29 13:46',         " + //   mynullsmalldatetime
-        "     1.23,                      " + //   mynulldecimal10_3
-        "     7.1234567891,              " + //   mynullnumeric15_10
-        "     987654,                    " + //   mynullfloat6
-        "     0,                         " + //   mynullfloat14
-        "     -1.1,                      " + //   mynullreal
-        "     -10,                       " + //   mynullint
-        "     126,                       " + //   mynullsmallint
-        "     7,                         " + //   mynulltinyint
-        "     -19999.00,                 " + //   mynullmoney
-        "     -9.97,                     " + //   mynullsmallmoney
-        "     '1234',                    " + //   mynulltext
-        "     0x1200340056)              " + //   mynullimage)
-        "";
+       // Insert a row without nulls via a Statement
+       sql =
+       "insert into #t0027               " +
+       "  (mybinary,                    " +
+       "   myvarbinary,                 " +
+       "   mychar,                      " +
+       "   myvarchar,                   " +
+       "   mydatetime,                  " +
+       "   mysmalldatetime,             " +
+       "   mydecimal10_3,               " +
+       "   mynumeric5_4,              " +
+       "   myfloat6,                    " +
+       "   myfloat14,                   " +
+       "   myreal,                      " +
+       "   myint,                       " +
+       "   mysmallint,                  " +
+       "   mytinyint,                   " +
+       "   mymoney,                     " +
+       "   mysmallmoney,                " +
+       "   mybit,                       " +
+       // "   mytimestamp,                 " // auto-updated column, MS SQL only accepts null values, Sybase doesn't accept any value at all
+       "   mytext,                      " +
+       "   myimage,                     " +
+       "   mynullbinary,                " +
+       "   mynullvarbinary,             " +
+       "   mynullchar,                  " +
+       "   mynullvarchar,               " +
+       "   mynulldatetime,              " +
+       "   mynullsmalldatetime,         " +
+       "   mynulldecimal10_3,           " +
+       "   mynullnumeric15_10,          " +
+       "   mynullfloat6,                " +
+       "   mynullfloat14,               " +
+       "   mynullreal,                  " +
+       "   mynullint,                   " +
+       "   mynullsmallint,              " +
+       "   mynulltinyint,               " +
+       "   mynullmoney,                 " +
+       "   mynullsmallmoney,            " +
+       "   mynulltext,                  " +
+       "   mynullimage)                 " +
+       " values                         " +
+       "   (0x1213141516,               " + //   mybinary,
+       "    0x1718191A,                 " + //   myvarbinary
+       "    '1234567890',               " + //   mychar
+       "    '12345678',                 " + //   myvarchar
+       "    '19991015 21:29:59.01',     " + //   mydatetime
+       "    '19991015 20:45',           " + //   mysmalldatetime
+       "    1234567.089,                " + //   mydecimal10_3
+       "    1.2345,                     " + //   mynumeric5_4
+       "    65.4321,                    " + //   myfloat6
+       "    1.123456789,                " + //   myfloat14
+       "    987654321.0,                " + //   myreal
+       "    4097,                       " + //   myint
+       "    4094,                       " + //   mysmallint
+       "    200,                        " + //   mytinyint
+       "    19.95,                      " + //   mymoney
+       "    9.97,                       " + //   mysmallmoney
+       "    1,                          " + //   mybit
+       // "    null,                       "     mytimestamp - auto-updated column, MS SQL only accepts null values, Sybase doesn't accept any value at all
+       "    'abcdefg',                  " + //   mytext
+       "    0x0AAABB,                   " + //   myimage
+       "    0x123456,                   " + //   mynullbinary
+       "    0xAB,                       " + //   mynullvarbinary
+       "    'z',                        " + //   mynullchar
+       "    'zyx',                      " + //   mynullvarchar
+       "    '1976-07-04 12:00:00.04',   " + //   mynulldatetime
+       "    '2000-02-29 13:46',         " + //   mynullsmalldatetime
+       "     1.23,                      " + //   mynulldecimal10_3
+       "     7.1234567891,              " + //   mynullnumeric15_10
+       "     987654,                    " + //   mynullfloat6
+       "     0,                         " + //   mynullfloat14
+       "     -1.1,                      " + //   mynullreal
+       "     -10,                       " + //   mynullint
+       "     126,                       " + //   mynullsmallint
+       "     7,                         " + //   mynulltinyint
+       "     -19999.00,                 " + //   mynullmoney
+       "     -9.97,                     " + //   mynullsmallmoney
+       "     '1234',                    " + //   mynulltext
+       "     0x1200340056)              " + //   mynullimage)
+       "";
 
-        assertEquals(stmt.executeUpdate(sql), 1);
+       assertEquals(stmt.executeUpdate(sql), 1);
 
-        sql = "select * from #t0027";
-        rs = stmt.executeQuery(sql);
-        assertTrue(rs.next());
-        output.println("mybinary is " + rs.getObject("mybinary"));
-        output.println("myvarbinary is " + rs.getObject("myvarbinary"));
-        output.println("mychar is " + rs.getString("mychar"));
-        output.println("myvarchar is " + rs.getString("myvarchar"));
-        output.println("mydatetime is " + rs.getTimestamp("mydatetime"));
-        output.println("mysmalldatetime is " + rs.getTimestamp("mysmalldatetime"));
-        output.println("mydecimal10_3 is " + rs.getObject("mydecimal10_3"));
-        output.println("mynumeric5_4 is " + rs.getObject("mynumeric5_4"));
-        output.println("myfloat6 is " + rs.getDouble("myfloat6"));
-        output.println("myfloat14 is " + rs.getDouble("myfloat14"));
-        output.println("myreal is " + rs.getDouble("myreal"));
-        output.println("myint is " + rs.getInt("myint"));
-        output.println("mysmallint is " + rs.getShort("mysmallint"));
-        output.println("mytinyint is " + rs.getShort("mytinyint"));
-        output.println("mymoney is " + rs.getObject("mymoney"));
-        output.println("mysmallmoney is " + rs.getObject("mysmallmoney"));
-        output.println("mybit is " + rs.getObject("mybit"));
-        output.println("mytimestamp is " + rs.getObject("mytimestamp"));
-        output.println("mytext is " + rs.getObject("mytext"));
-        output.println("myimage is " + rs.getObject("myimage"));
-        output.println("mynullbinary is " + rs.getObject("mynullbinary"));
-        output.println("mynullvarbinary is " + rs.getObject("mynullvarbinary"));
-        output.println("mynullchar is " + rs.getString("mynullchar"));
-        output.println("mynullvarchar is " + rs.getString("mynullvarchar"));
-        output.println("mynulldatetime is " + rs.getTimestamp("mynulldatetime"));
-        output.println("mynullsmalldatetime is " + rs.getTimestamp("mynullsmalldatetime"));
-        output.println("mynulldecimal10_3 is " + rs.getObject("mynulldecimal10_3"));
-        output.println("mynullnumeric15_10 is " + rs.getObject("mynullnumeric15_10"));
-        output.println("mynullfloat6 is " + rs.getDouble("mynullfloat6"));
-        output.println("mynullfloat14 is " + rs.getDouble("mynullfloat14"));
-        output.println("mynullreal is " + rs.getDouble("mynullreal"));
-        output.println("mynullint is " + rs.getInt("mynullint"));
-        output.println("mynullsmallint is " + rs.getShort("mynullsmallint"));
-        output.println("mynulltinyint is " + rs.getByte("mynulltinyint"));
-        output.println("mynullmoney is " + rs.getObject("mynullmoney"));
-        output.println("mynullsmallmoney is " + rs.getObject("mynullsmallmoney"));
-        output.println("mynulltext is " + rs.getObject("mynulltext"));
-        output.println("mynullimage is " + rs.getObject("mynullimage"));
-        stmt.close();
-    }
+       sql = "select * from #t0027";
+       rs = stmt.executeQuery(sql);
+       assertTrue(rs.next());
+       output.println("mybinary is " + rs.getObject("mybinary"));
+       output.println("myvarbinary is " + rs.getObject("myvarbinary"));
+       output.println("mychar is " + rs.getString("mychar"));
+       output.println("myvarchar is " + rs.getString("myvarchar"));
+       output.println("mydatetime is " + rs.getTimestamp("mydatetime"));
+       output.println("mysmalldatetime is " + rs.getTimestamp("mysmalldatetime"));
+       output.println("mydecimal10_3 is " + rs.getObject("mydecimal10_3"));
+       output.println("mynumeric5_4 is " + rs.getObject("mynumeric5_4"));
+       output.println("myfloat6 is " + rs.getDouble("myfloat6"));
+       output.println("myfloat14 is " + rs.getDouble("myfloat14"));
+       output.println("myreal is " + rs.getDouble("myreal"));
+       output.println("myint is " + rs.getInt("myint"));
+       output.println("mysmallint is " + rs.getShort("mysmallint"));
+       output.println("mytinyint is " + rs.getShort("mytinyint"));
+       output.println("mymoney is " + rs.getObject("mymoney"));
+       output.println("mysmallmoney is " + rs.getObject("mysmallmoney"));
+       output.println("mybit is " + rs.getObject("mybit"));
+       output.println("mytimestamp is " + rs.getObject("mytimestamp"));
+       output.println("mytext is " + rs.getObject("mytext"));
+       output.println("myimage is " + rs.getObject("myimage"));
+       output.println("mynullbinary is " + rs.getObject("mynullbinary"));
+       output.println("mynullvarbinary is " + rs.getObject("mynullvarbinary"));
+       output.println("mynullchar is " + rs.getString("mynullchar"));
+       output.println("mynullvarchar is " + rs.getString("mynullvarchar"));
+       output.println("mynulldatetime is " + rs.getTimestamp("mynulldatetime"));
+       output.println("mynullsmalldatetime is " + rs.getTimestamp("mynullsmalldatetime"));
+       output.println("mynulldecimal10_3 is " + rs.getObject("mynulldecimal10_3"));
+       output.println("mynullnumeric15_10 is " + rs.getObject("mynullnumeric15_10"));
+       output.println("mynullfloat6 is " + rs.getDouble("mynullfloat6"));
+       output.println("mynullfloat14 is " + rs.getDouble("mynullfloat14"));
+       output.println("mynullreal is " + rs.getDouble("mynullreal"));
+       output.println("mynullint is " + rs.getInt("mynullint"));
+       output.println("mynullsmallint is " + rs.getShort("mynullsmallint"));
+       output.println("mynulltinyint is " + rs.getByte("mynulltinyint"));
+       output.println("mynullmoney is " + rs.getObject("mynullmoney"));
+       output.println("mynullsmallmoney is " + rs.getObject("mynullsmallmoney"));
+       output.println("mynulltext is " + rs.getObject("mynulltext"));
+       output.println("mynullimage is " + rs.getObject("mynullimage"));
+       stmt.close();
+   }
     public void testCallStoredProcedures0028() throws Exception {
         Statement   stmt = con.createStatement();
         ResultSet   rs;
