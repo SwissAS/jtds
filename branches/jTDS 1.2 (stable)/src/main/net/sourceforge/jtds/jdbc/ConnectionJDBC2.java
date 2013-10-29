@@ -102,7 +102,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     /** The server port number. */
     private int portNumber;
     /** The make of SQL Server (sybase/microsoft). */
-    private int serverType;
+    protected int serverType;
     /** The SQL Server instance. */
     private String instanceName;
     /** The requested database name. */

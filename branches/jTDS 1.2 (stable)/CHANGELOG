@@ -1,6 +1,10 @@
 Changes from jTDS 1.2.8
 =======================
 
+10/29/2013 - Holger Rehn
+ o Fixed savepoint functionality for Sybase ASE that has been broken by the fix
+   for bug #569.
+
 10/15/2013 - Holger Rehn
  o Implemented support for the COMPUTE (BY) operator (bug #678) for Sybase ASE.
 
