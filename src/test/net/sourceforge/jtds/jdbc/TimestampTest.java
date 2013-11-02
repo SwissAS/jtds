@@ -356,7 +356,7 @@ public class TimestampTest extends DatabaseTestCase {
         pstmt.close();
     }
 
-   public void testEscape( String sql, String expected )
+   public void checkEscape( String sql, String expected )
       throws Exception
    {
       String tmp = con.nativeSQL( sql );
@@ -366,19 +366,19 @@ public class TimestampTest extends DatabaseTestCase {
    public void testEscapes0006()
       throws Exception
    {
-      testEscape( "select * from tmp where d={d 1999-09-19}", "select * from tmp where d=convert(datetime,'19990919')" );
-      testEscape( "select * from tmp where d={d '1999-09-19'}", "select * from tmp where d=convert(datetime,'19990919')" );
-      testEscape( "select * from tmp where t={t 12:34:00}", "select * from tmp where t=convert(datetime,'12:34:00')" );
-      testEscape( "select * from tmp where ts={ts 1998-12-15 12:34:00.1234}", "select * from tmp where ts=convert(datetime,'19981215 12:34:00.123')" );
-      testEscape( "select * from tmp where ts={ts 1998-12-15 12:34:00}", "select * from tmp where ts=convert(datetime,'19981215 12:34:00.000')" );
-      testEscape( "select * from tmp where ts={ts 1998-12-15 12:34:00.1}", "select * from tmp where ts=convert(datetime,'19981215 12:34:00.100')" );
-      testEscape( "select * from tmp where ts={ts 1998-12-15 12:34:00}", "select * from tmp where ts=convert(datetime,'19981215 12:34:00.000')" );
-      testEscape( "select * from tmp where d={d 1999-09-19}", "select * from tmp where d=convert(datetime,'19990919')" );
-      testEscape( "select * from tmp where a like '\\%%'", "select * from tmp where a like '\\%%'" );
-      testEscape( "select * from tmp where a like 'b%%' {escape 'b'}", "select * from tmp where a like 'b%%' escape 'b'" );
-      testEscape( "select * from tmp where a like 'bbb' {escape 'b'}", "select * from tmp where a like 'bbb' escape 'b'" );
-      testEscape( "select * from tmp where a='{fn user}'", "select * from tmp where a='{fn user}'" );
-      testEscape( "select * from tmp where a={fn user()}", "select * from tmp where a=user_name()" );
+      checkEscape( "select * from tmp where d={d 1999-09-19}", "select * from tmp where d=convert(datetime,'19990919')" );
+      checkEscape( "select * from tmp where d={d '1999-09-19'}", "select * from tmp where d=convert(datetime,'19990919')" );
+      checkEscape( "select * from tmp where t={t 12:34:00}", "select * from tmp where t=convert(datetime,'12:34:00')" );
+      checkEscape( "select * from tmp where ts={ts 1998-12-15 12:34:00.1234}", "select * from tmp where ts=convert(datetime,'19981215 12:34:00.123')" );
+      checkEscape( "select * from tmp where ts={ts 1998-12-15 12:34:00}", "select * from tmp where ts=convert(datetime,'19981215 12:34:00.000')" );
+      checkEscape( "select * from tmp where ts={ts 1998-12-15 12:34:00.1}", "select * from tmp where ts=convert(datetime,'19981215 12:34:00.100')" );
+      checkEscape( "select * from tmp where ts={ts 1998-12-15 12:34:00}", "select * from tmp where ts=convert(datetime,'19981215 12:34:00.000')" );
+      checkEscape( "select * from tmp where d={d 1999-09-19}", "select * from tmp where d=convert(datetime,'19990919')" );
+      checkEscape( "select * from tmp where a like '\\%%'", "select * from tmp where a like '\\%%'" );
+      checkEscape( "select * from tmp where a like 'b%%' {escape 'b'}", "select * from tmp where a like 'b%%' escape 'b'" );
+      checkEscape( "select * from tmp where a like 'bbb' {escape 'b'}", "select * from tmp where a like 'bbb' escape 'b'" );
+      checkEscape( "select * from tmp where a='{fn user}'", "select * from tmp where a='{fn user}'" );
+      checkEscape( "select * from tmp where a={fn user()}", "select * from tmp where a=user_name()" );
    }
 
    public void testEscapes0007()
