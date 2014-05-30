@@ -365,9 +365,7 @@ public class CachedResultSet extends JtdsResultSet {
                 }
             }
             cursorSQL.append(sql);
-            cursorTds.executeSQL(cursorSQL.toString(), null, parameters,
-                    false, statement.getQueryTimeout(), statement.getMaxRows(),
-                    statement.getMaxFieldSize(), true);
+            cursorTds.executeSQL(cursorSQL.toString(), null, parameters, false, statement.getQueryTimeout(), statement.getMaxRows(), statement.getMaxFieldSize(), true);
             cursorTds.clearResponseQueue();
             cursorTds.getMessages().checkErrors();
             //
@@ -380,9 +378,7 @@ public class CachedResultSet extends JtdsResultSet {
                 cursorSQL.append(" FOR ").append(cursorName);
             }
             cursorSQL.append("\r\nFETCH ").append(cursorName);
-            cursorTds.executeSQL(cursorSQL.toString(), null, null, false,
-                    statement.getQueryTimeout(), statement.getMaxRows(),
-                    statement.getMaxFieldSize(), true);
+            cursorTds.executeSQL(cursorSQL.toString(), null, null, false, statement.getQueryTimeout(), statement.getMaxRows(), statement.getMaxFieldSize(), true);
             //
             // Check we have a result set
             //
@@ -418,15 +414,11 @@ public class CachedResultSet extends JtdsResultSet {
                 // OK Should have an SQL select statement
                 // append " FOR BROWSE" to obtain table names
                 // NB. We can't use any jTDS temporary stored proc
-                    cursorTds.executeSQL(sql + " FOR BROWSE", null, procedureParams,
-                            false, statement.getQueryTimeout(),
-                            statement.getMaxRows(), statement.getMaxFieldSize(),
-                            true);
+                    cursorTds.executeSQL(sql + " FOR BROWSE", null, procedureParams, false, statement.getQueryTimeout(), statement.getMaxRows(), statement.getMaxFieldSize(), true);
                 while (!cursorTds.getMoreResults() && !cursorTds.isEndOfResponse());
                 if (!cursorTds.isResultSet()) {
                     // Throw exception but queue up any others
-                    SQLException ex = new SQLException(
-                            Messages.get("error.statement.noresult"), "24000");
+                    SQLException ex = new SQLException( Messages.get("error.statement.noresult"), "24000");
                     ex.setNextException(statement.getMessages().exceptions);
                     throw ex;
                 }

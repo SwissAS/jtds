@@ -36,6 +36,47 @@ public class BatchTest extends DatabaseTestCase {
         super(name);
     }
 
+   /**
+    * Test for Bug #726, calling setMaxRows() affects unrelated statement.
+    */
+   public void testBug726()
+      throws Exception
+   {
+      Statement stmt = con.createStatement();
+
+      // create test table
+      stmt.execute( "create table #testBug726( id int )" );
+
+      // insert some data
+      stmt.executeUpdate( "insert into #testBug726( id ) values (0)" );
+      stmt.executeUpdate( "insert into #testBug726( id ) values (0)" );
+      stmt.executeUpdate( "insert into #testBug726( id ) values (1)" );
+      stmt.executeUpdate( "insert into #testBug726( id ) values (1)" );
+
+      // prepare update
+      PreparedStatement ps = con.prepareStatement( "update #testBug726 set id = ? where id = ?" );
+
+      // execute update without ROWCOUNT set
+      ps.setInt( 1, 10 );
+      ps.setInt( 2,  0 );
+      ps.addBatch();
+
+      // ensure we really updated 2 rows
+      assertEquals( 2, ps.executeBatch()[0] );
+
+      // set ROWCOUNT to 1 and issue a query
+      stmt.setMaxRows( 1 );
+      stmt.executeQuery( "select count(*) from #testBug726" );
+
+      // execute update with ROWCOUNT set by another statement
+      ps.setInt( 1, 11 );
+      ps.setInt( 2,  1 );
+      ps.addBatch();
+
+      // ensure we still update 2 rows
+      assertEquals( 2, ps.executeBatch()[0] );
+   }
+
     /**
      * This test should generate an error as the second statement in the batch
      * returns a result set.
