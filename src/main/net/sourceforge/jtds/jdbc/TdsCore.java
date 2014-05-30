@@ -921,24 +921,34 @@ public class TdsCore {
         }
     }
 
-    /**
-     * Submit a simple SQL statement to the server and process all output.
-     *
-     * @param sql the statement to execute
-     * @throws SQLException if an error is returned by the server
-     */
-    void submitSQL(String sql) throws SQLException {
-        checkOpen();
-        messages.clearWarnings();
+   /**
+    * <p> Submit a simple SQL statement to the server and discard all output.
+    * </p>
+    *
+    * <p> <b>Warning:</b> The statement is processed without re-setting the
+    * ROWCOUNT. Because ROWCOUNT also affects updates, sending multiple SQL
+    * commands at once might yield unexpected results! </p>
+    *
+    * @param sql
+    *    statement to execute
+    *
+    * @throws SQLException
+    *    if an error is returned by the server
+    */
+   void submitSQL( String sql )
+      throws SQLException
+   {
+      checkOpen();
+      messages.clearWarnings();
 
-        if (sql.length() == 0) {
-            throw new IllegalArgumentException("submitSQL() called with empty SQL String");
-        }
+      if( sql.isEmpty() )
+         throw new IllegalArgumentException( "submitSQL() called with empty SQL String" );
 
-        executeSQL(sql, null, null, false, 0, -1, -1, true);
-        clearResponseQueue();
-        messages.checkErrors();
-    }
+      executeSQL( sql, null, null, false, 0, -1, -1, true );
+      clearResponseQueue();
+
+      messages.checkErrors();
+   }
 
     /**
      * Notifies the <code>TdsCore</code> that a batch is starting. This is so
@@ -1117,7 +1127,7 @@ public class TdsCore {
      * @param resultSetType        value of the resultSetType parameter when
      *                             the Statement was created
      * @param resultSetConcurrency value of the resultSetConcurrency parameter
-     *                             whenthe Statement was created
+     *                             when the Statement was created
      * @return name of the procedure or prepared statement handle.
      * @exception SQLException
      */
@@ -1188,7 +1198,7 @@ public class TdsCore {
                     Support.getParameterDefinitions(params),
                     ParamInfo.UNICODE);
 
-            // Setup sql statemement param
+            // Setup sql statement param
             prepParam[2] = new ParamInfo(Types.LONGVARCHAR,
                     Support.substituteParamMarkers(sql, params),
                     ParamInfo.UNICODE);
