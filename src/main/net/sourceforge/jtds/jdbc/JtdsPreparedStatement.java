@@ -443,7 +443,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
             boolean executeNow = (i % executeSize == 0) || i == size;
 
             tds.startBatch();
-            tds.executeSQL(sql, proc, (ParamInfo[]) value, false, 0, -1, -1, executeNow);
+            tds.executeSQL(sql, proc, (ParamInfo[]) value, false, 0, maxRows, maxFieldSize, executeNow);
 
             // If the batch has been sent, process the results
             if (executeNow) {
@@ -508,7 +508,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
             if (executeNow) {
                 ParamInfo args[];
                 args = (ParamInfo[]) paramList.toArray(new ParamInfo[paramList.size()]);
-                tds.executeSQL(sqlBuf.toString(), null, args, false, 0, -1, -1, true);
+                tds.executeSQL(sqlBuf.toString(), null, args, false, 0, maxRows, maxFieldSize, true);
                 sqlBuf.setLength(0);
                 paramList.clear();
                 // If the batch has been sent, process the results

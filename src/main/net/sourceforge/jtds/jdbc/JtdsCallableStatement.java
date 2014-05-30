@@ -149,7 +149,7 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
             boolean executeNow = (i % executeSize == 0) || i == size;
 
             tds.startBatch();
-            tds.executeSQL(sql, procName, (ParamInfo[]) value, false, 0, -1, -1, executeNow);
+            tds.executeSQL(sql, procName, (ParamInfo[]) value, false, 0, maxRows, maxFieldSize, executeNow);
 
             // If the batch has been sent, process the results
             if (executeNow) {
@@ -192,7 +192,7 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
         for (int i = 0; i < size;) {
             Object value = batchValues.get(i);
             ++i;
-            tds.executeSQL(sql, procName, (ParamInfo[]) value, false, 0, -1, -1, true);
+            tds.executeSQL(sql, procName, (ParamInfo[]) value, false, 0, maxRows, maxFieldSize, true);
 
             // If the batch has been sent, process the results
             sqlEx = tds.getBatchCounts(counts, sqlEx);

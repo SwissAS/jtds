@@ -372,7 +372,7 @@ public class JtdsStatement implements java.sql.Statement
             boolean executeNow = (i % executeSize == 0) || i == size;
 
             tds.startBatch();
-            tds.executeSQL((String) value, null, null, false, 0, -1, -1, executeNow);
+            tds.executeSQL((String) value, null, null, false, 0, maxRows, maxFieldSize, executeNow);
 
             // If the batch has been sent, process the results
             if (executeNow) {
@@ -413,7 +413,7 @@ public class JtdsStatement implements java.sql.Statement
             sql.append((String) value).append(' ');
 
             if (executeNow) {
-                tds.executeSQL(sql.toString(), null, null, false, 0, -1, -1, true);
+                tds.executeSQL(sql.toString(), null, null, false, 0, maxRows, maxFieldSize, true);
                 sql.setLength(0);
                 // If the batch has been sent, process the results
                 sqlEx = tds.getBatchCounts(counts, sqlEx);

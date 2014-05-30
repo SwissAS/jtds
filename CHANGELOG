@@ -1,6 +1,10 @@
 Changes from jTDS 1.2.8
 =======================
 
+05/30/2014 - Holger Rehn
+ o Fixed bug #726, using setMaxRows() may affect batch operations performed on
+   another Statement object using the same (physical) connection.
+
 10/29/2013 - Holger Rehn
  o Fixed savepoint functionality for Sybase ASE that has been broken by the fix
    for bug #569.
