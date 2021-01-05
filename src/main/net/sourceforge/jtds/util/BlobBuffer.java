@@ -491,12 +491,14 @@ public class BlobBuffer {
      */
     public void close() throws IOException {
         if (openCount > 0) {
-            if (--openCount == 0 && raFile != null) {
-                if (bufferDirty) {
-                    writePage(currentPage);
+            if (--openCount == 0) {
+                if (raFile != null) { 
+                    if (bufferDirty) {
+                        writePage(currentPage);
+                    }
+                    raFile.close();
+                    raFile = null;
                 }
-                raFile.close();
-                raFile = null;
                 // Allow buffer to be garbage collected
                 buffer = EMPTY_BUFFER;
                 currentPage = INVALID_PAGE;
